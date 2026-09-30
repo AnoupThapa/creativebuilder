@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{APP_NAME}} — Social media post &amp; video maker for small businesses</title>
+<meta name="description" content="Turn one photo into ready-to-post designs and MP4 videos for Instagram, Facebook, TikTok, LinkedIn and more. Templates for cafés, restaurants, salons and shops. Free to start.">
+<link rel="canonical" href="{{APP_URL}}/">
+<meta name="theme-color" content="#1d1b2e">
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{APP_NAME}}">
+<meta property="og:title" content="{{APP_NAME}} — one photo in, every social post out">
+<meta property="og:description" content="Promo and customer-review posts sized for every platform in one click. Built for cafés, shops and local services.">
+<meta property="og:url" content="{{APP_URL}}/">
+<meta property="og:image" content="{{APP_URL}}/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{APP_NAME}} — social posts for small business">
+<meta name="twitter:description" content="One photo in. Every social post out.">
+<meta name="twitter:image" content="{{APP_URL}}/img/og.png">
+<script type="application/ld+json">{{JSON_LD}}</script>
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+nav.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+nav.top .links{display:flex;gap:6px;align-items:center}
+nav.top .links a.l{color:var(--slate);font-weight:600;padding:8px 12px;border-radius:8px}
+nav.top .links a.l:hover{background:var(--paper-deep);text-decoration:none}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding-top:48px;padding-bottom:72px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:700;color:var(--coral-deep);background:var(--coral-soft);padding:6px 12px;border-radius:50px;margin-bottom:18px}
+.hero h1{font-size:clamp(34px,5vw,58px);font-weight:800;letter-spacing:-.035em}
+.hero h1 em{font-style:normal;color:var(--coral)}
+.hero p.lead{font-size:18px;color:var(--muted);margin:18px 0 26px;max-width:520px}
+.hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+.hero .note{font-size:12.5px;color:var(--muted);margin-top:14px}
+.mock{position:relative;height:460px}
+.post{position:absolute;border-radius:18px;overflow:hidden;box-shadow:0 30px 60px -24px rgba(26,26,46,.45);color:#fff;font-family:var(--F);display:flex;flex-direction:column;justify-content:flex-end;padding:22px}
+.post .b{position:absolute;top:16px;left:16px;background:var(--yellow);color:var(--ink);font-weight:800;font-size:11px;padding:4px 10px;border-radius:50px}
+.post h4{color:#fff;font-size:26px;font-weight:800;line-height:1.05}
+.post .p{color:var(--yellow);font-weight:700;font-size:20px;margin-top:6px}
+.post .c{display:inline-block;margin-top:10px;background:var(--coral);padding:7px 14px;border-radius:50px;font-size:12px;font-weight:700;width:max-content}
+.p1{width:300px;height:300px;left:0;top:70px;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.75)),radial-gradient(circle at 30% 30%,#f6a55b,#b8452c 70%);z-index:2}
+.p2{width:190px;height:338px;right:10px;top:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.8)),radial-gradient(circle at 60% 30%,#6fc9a8,#1a2e2a 75%);transform:rotate(4deg)}
+.p2 .c{background:#3ecf8e;color:var(--ink)}
+.p3{width:250px;height:130px;right:40px;bottom:10px;background:linear-gradient(90deg,#1a1a2e,#3b3b6e);z-index:3;padding:16px}
+.p3 h4{font-size:18px}
+.chip-float{position:absolute;background:#fff;color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12px;font-weight:700;box-shadow:var(--shadow);z-index:4;display:flex;gap:6px;align-items:center}
+section.wrap{padding-top:64px;padding-bottom:64px}
+section h2{font-size:clamp(26px,3.4vw,38px);font-weight:800;text-align:center}
+section .sub{text-align:center;color:var(--muted);font-size:16px;margin:10px auto 36px;max-width:620px}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
+.feat .i{width:40px;height:40px;border-radius:11px;background:var(--coral-soft);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px}
+.feat h3{font-size:16px;margin-bottom:6px}
+.feat p{color:var(--muted);font-size:13.5px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
+.step{padding:22px;border-radius:16px;background:var(--ink);color:#d9d8e6}
+.step h3{color:#fff;font-size:17px;margin:10px 0 6px}
+.step .n{font-family:var(--F);font-weight:800;color:var(--coral);font-size:14px}
+.pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;max-width:980px;margin:0 auto}
+.plan{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column}
+.plan.hl{border-color:var(--coral);box-shadow:0 20px 40px -24px var(--coral-glow)}
+.plan .nm{font-family:var(--F);font-weight:700;font-size:18px;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+.plan .pr{font-family:var(--F);font-size:40px;font-weight:800;color:var(--ink);margin:10px 0 2px}
+.plan .pr small{font-size:14px;font-weight:600;color:var(--muted)}
+.plan .d{color:var(--muted);font-size:13px;min-height:40px}
+.plan ul{list-style:none;margin:16px 0 22px;display:grid;gap:8px;font-size:13.5px}
+.plan li{display:flex;gap:8px}
+.plan li::before{content:'✓';color:var(--green);font-weight:800}
+.plan li.no{color:var(--faint)}
+.plan li.no::before{content:'–';color:var(--faint)}
+.plan .btn{margin-top:auto}
+.trust{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.trust div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;font-size:13px;color:var(--muted)}
+.trust strong{display:block;color:var(--ink);font-family:var(--F);margin-bottom:3px}
+.faq{max-width:760px;margin:0 auto}
+.faq details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+.faq summary{cursor:pointer;font-weight:700;color:var(--ink)}
+.faq p{color:var(--muted);margin-top:8px}
+.demo{max-width:900px;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--ink);box-shadow:0 30px 60px -24px rgba(26,26,46,.45)}
+.demo video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.ba-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+.ba{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px}
+.ba .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative}
+.ba figure{margin:0;position:relative}
+.ba img{width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block;background:var(--paper)}
+.ba figcaption{position:absolute;left:8px;top:8px;background:rgba(26,26,46,.8);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:50px}
+.ba figure.after figcaption{background:var(--coral)}
+.ba .pair::after{content:'→';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--coral)}
+.ba .cap{font-size:13.5px;color:var(--muted);margin-top:10px}
+.ba .cap b{color:var(--ink)}
+.sample-note{text-align:center;font-size:12px;color:var(--faint);margin-top:14px}
+.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.quote{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.quote .st{color:#ffb400;letter-spacing:2px}
+.quote p{margin:8px 0 12px;color:var(--slate);font-size:15px}
+.quote .who{font-size:13px;color:var(--muted)}.quote .who b{color:var(--ink)}
+.tabs{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:50px;padding:3px}
+.tabs button{padding:8px 16px;border-radius:50px;font-weight:700;font-size:13px;color:var(--muted)}
+.tabs button.active{background:var(--ink);color:#fff}
+.int-toggle{display:flex;justify-content:center;margin:-18px 0 26px}
+.beta-band{background:var(--ink);color:#d9d8e6;border-radius:20px;padding:28px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.beta-band h3{color:#fff;font-size:22px}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding-top:24px;gap:28px}
+  .mock{height:380px;max-width:420px}
+  .features,.steps{grid-template-columns:1fr}
+  .trust{grid-template-columns:1fr 1fr}
+  nav.top .links a.l.hide-m{display:none}
+}
+@media(max-width:420px){.p1{width:240px;height:240px}.p2{width:150px;height:270px}.p3{width:200px}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <nav class="top">
+    <a class="brand" href="/"><span class="brand-mark">P</span>PostForge</a>
+    <div class="links" id="navLinks">
+      <a class="l hide-m" href="#features">Features</a>
+      <a class="l hide-m" href="#examples">Examples</a>
+      <a class="l hide-m" href="#pricing">Pricing</a>
+      <a class="l hide-m" href="/help">Help</a>
+      <a class="l" href="/login">Log in</a>
+      <a class="btn btn-primary btn-sm" href="/signup" data-cta>Start free</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <span class="eyebrow">✨ Made for cafés, shops, salons &amp; services</span>
+      <h1>One photo in.<br><em>Every social post</em> out.</h1>
+      <p class="lead">Upload a product photo or customer video, add your offer, and PostForge sizes it perfectly for Instagram, Facebook, TikTok, LinkedIn, Pinterest, YouTube and WhatsApp — in one click.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="/signup" data-cta>Create your first post — free</a>
+        <a class="btn btn-ghost" href="#demo">▶ Watch the 30-second demo</a>
+      </div>
+      <p class="note">No design skills needed · No card required for the free trial</p>
+    </div>
+    <div class="mock" aria-hidden="true">
+      <div class="post p1"><span class="b">WEEKEND SPECIAL</span><h4>Lunch Combo Deal</h4><div class="p">20% OFF</div><span class="c">Order Now →</span></div>
+      <div class="post p2"><span class="b">NEW</span><h4>Fresh Arrivals</h4><span class="c">Shop Now →</span></div>
+      <div class="post p3"><h4>Happy Hour · 2–5 PM</h4><span class="c">Visit Store →</span></div>
+      <div class="chip-float" style="left:10px;top:12px">📐 14 platform sizes</div>
+      <div class="chip-float" style="left:10px;bottom:30px">⚡ 1-click ZIP export</div>
+    </div>
+  </div>
+
+  <section id="demo" class="wrap" style="padding-top:8px">
+    <h2>See it in 30 seconds</h2>
+    <p class="sub">A real recording of the app: photo in, offer added, posts out.</p>
+    <div class="demo"><video id="demoVideo" controls playsinline muted preload="none" poster="/media-site/demo-poster.jpg">
+      <source src="/media-site/demo.mp4" type="video/mp4"></video></div>
+  </section>
+
+  <section id="examples" class="wrap">
+    <h2>Before and after</h2>
+    <p class="sub">An everyday phone photo on the left. A post ready for Instagram and Facebook on the right — made in PostForge in about a minute.</p>
+    <div class="ba-grid" id="baGrid"></div>
+    <p class="sample-note hidden" id="sampleNote">Sample photos for illustration. Customer examples coming soon.</p>
+  </section>
+
+  <section id="features" class="wrap">
+    <h2>Everything a small business needs to post daily</h2>
+    <p class="sub">Simple enough for anyone, polished enough to look like you hired a designer.</p>
+    <div class="features">
+      <div class="feat"><div class="i">📐</div><h3>Auto-resize for every platform</h3><p>Instagram posts, stories and reels, Facebook, TikTok, LinkedIn, Pinterest, X, YouTube and WhatsApp — all from one design.</p></div>
+      <div class="feat"><div class="i">✂️</div><h3>Background removal</h3><p>Turn product shots on plain backgrounds into clean cut-outs on your brand colour — instantly, in the browser.</p></div>
+      <div class="feat"><div class="i">🎨</div><h3>Brand kits</h3><p>Save your logo, colours, phone and website once. Colours are picked straight from your logo.</p></div>
+      <div class="feat"><div class="i">💬</div><h3>Customer review posts</h3><p>Turn a 5-star review or a customer video into a testimonial post that builds trust.</p></div>
+      <div class="feat"><div class="i">🗂</div><h3>Ready-made templates</h3><p>Specials, flash sales, new arrivals, festivals and more for restaurants, cafés, retail, salons and services.</p></div>
+      <div class="feat"><div class="i">👥</div><h3>Team access</h3><p>Invite staff as designers or viewers, share designs with the team, and keep private drafts private.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2>Three steps. Under a minute.</h2>
+    <p class="sub">Most posts are done before your coffee cools.</p>
+    <div class="steps">
+      <div class="step"><span class="n">01</span><h3>Upload a photo or video</h3><p>Use what you already have on your phone.</p></div>
+      <div class="step"><span class="n">02</span><h3>Add your offer</h3><p>Headline, price and a call-to-action — or start from a template.</p></div>
+      <div class="step"><span class="n">03</span><h3>Download every size</h3><p>One image, or every platform in a single ZIP.</p></div>
+    </div>
+  </section>
+
+  <section id="reviews" class="wrap hidden">
+    <h2>What business owners say</h2>
+    <p class="sub">From our beta users.</p>
+    <div class="quotes" id="quotes"></div>
+  </section>
+
+  <section id="pricing" class="wrap">
+    <h2>Simple per-user pricing</h2>
+    <p class="sub">Every person on your team gets their own download allowance. Prices in US dollars. Cancel any time.</p>
+    <div class="int-toggle"><div class="tabs" id="intToggle"><button class="active" data-int="month">Monthly</button><button data-int="year">Yearly · 2 months free</button></div></div>
+    <div class="pricing" id="pricingGrid"><p class="center muted">Loading plans…</p></div>
+  </section>
+
+  <section class="wrap">
+    <h2>Your account is protected</h2>
+    <p class="sub">Security controls you'd expect from much bigger software.</p>
+    <div class="trust">
+      <div><strong>🔐 2-step login</strong>Optional authenticator-app codes on every account.</div>
+      <div><strong>🛡 Locked-down sessions</strong>Secure cookies, automatic sign-out and device management.</div>
+      <div><strong>👥 Role-based access</strong>Owner, admin, designer and viewer permissions.</div>
+      <div><strong>🧾 Activity log</strong>Sign-ins, sharing and billing changes are recorded.</div>
+    </div>
+  </section>
+
+  <section class="wrap hidden" id="betaBand">
+    <div class="beta-band">
+      <div class="grow" style="flex:1;min-width:240px"><h3>We're in private beta</h3><p>We're working closely with 20 small businesses before launch. Beta users get Pro free for 60 days in return for honest feedback.</p></div>
+      <a class="btn btn-primary" href="/help?topic=beta#contact">Apply for an invite</a>
+      <a class="btn btn-ghost" style="color:#fff;border-color:#555" href="/signup">I have a code</a>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2>Questions</h2>
+    <div class="faq" style="margin-top:28px">
+      <details><summary>What counts as one image?</summary><p>Each downloaded file counts once. Generating 5 platform sizes in one ZIP uses 5 images. Editing and previewing are always free and unlimited.</p></details>
+      <details><summary>Does it work on my phone?</summary><p>Yes. PostForge runs in the browser on iPhone, Android, tablets and computers — nothing to install. Downloads save straight to your phone so you can post from the Instagram or Facebook app.</p></details>
+      <details><summary>Which plan should I pick?</summary><p>Starter gives each user up to 5 images a day (100 a month) — enough for most single-location businesses posting daily. Pro gives 15 a day (300 a month), video posts and every template, for busier businesses or agencies.</p></details>
+      <details><summary>What does "per user" mean?</summary><p>Your subscription is priced per seat. Each team member you add gets their own allowance on your plan.</p></details>
+      <details><summary>Can I post videos?</summary><p>Yes — the Pro plan lets you add your branding and offer to short customer videos and download them as MP4, the format Instagram, Facebook and TikTok expect.</p></details>
+      <details><summary>What happens to my data?</summary><p>Your photos and designs are private to your team. You can download everything or delete your account yourself at any time from Account &amp; security. We use cookie-free analytics and never sell data.</p></details>
+      <details><summary>Can I change or cancel my plan?</summary><p>Any time from Billing. Cancelling keeps your plan active until the end of the period you've paid for.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>© <span id="yr"></span> PostForge</span><span><a href="/help">Help &amp; FAQ</a> · <a href="/help#contact">Contact</a> · <a href="/login">Log in</a> · <a href="/signup">Sign up</a></span></div>
+</footer>
+<script src="/js/api.js"></script>
+<script src="/js/landing.js"></script>
+<script src="/js/telemetry.js"></script>
+</body>
+</html>

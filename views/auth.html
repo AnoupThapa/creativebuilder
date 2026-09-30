@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostForge — Sign in</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+body{display:grid;grid-template-columns:1fr 1fr;min-height:100vh}
+.side{background:var(--ink);color:#cfcde0;padding:40px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.side .brand{color:#fff}
+.side h2{color:#fff;font-size:34px;font-weight:800;max-width:420px}
+.side h2 em{font-style:normal;color:var(--coral)}
+.side ul{list-style:none;display:grid;gap:10px;margin-top:22px;font-size:14px}
+.side li::before{content:'✓  ';color:var(--coral);font-weight:800}
+.side .blob{position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,74,.35),transparent 65%);right:-140px;bottom:-140px}
+.main{display:flex;align-items:center;justify-content:center;padding:32px 20px}
+.box{width:100%;max-width:400px}
+.box h1{font-size:28px;font-weight:800;margin-bottom:6px}
+.box .lead{color:var(--muted);margin-bottom:22px}
+.pw-meter{display:flex;gap:4px;margin-top:6px}
+.pw-meter span{flex:1;height:4px;border-radius:3px;background:var(--paper-deep)}
+.pw-meter[data-s="1"] span:nth-child(-n+1){background:var(--red)}
+.pw-meter[data-s="2"] span:nth-child(-n+2){background:#e59e1a}
+.pw-meter[data-s="3"] span:nth-child(-n+3){background:#8bc34a}
+.pw-meter[data-s="4"] span{background:var(--green)}
+.pw-wrap{position:relative}
+.pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:var(--muted);padding:4px 6px}
+.alt{margin-top:18px;text-align:center;font-size:13.5px;color:var(--muted)}
+.totp-input{letter-spacing:.4em;font-size:22px!important;text-align:center;font-family:var(--F)!important}
+@media(max-width:860px){body{grid-template-columns:1fr}.side{display:none}}
+</style>
+</head>
+<body>
+<aside class="side">
+  <a class="brand" href="/"><span class="brand-mark">P</span>PostForge</a>
+  <div>
+    <h2>Post like a pro — <em>without</em> a designer.</h2>
+    <ul>
+      <li>Every platform size from one design</li>
+      <li>Your logo &amp; colours on every post</li>
+      <li>Promo and customer-review layouts</li>
+      <li>Team access with roles &amp; sharing</li>
+    </ul>
+  </div>
+  <p class="small">🔐 Protected with secure sessions and optional 2-step login.</p>
+  <div class="blob"></div>
+</aside>
+
+<main class="main">
+  <div class="box">
+    <div id="alert"></div>
+
+    <!-- LOGIN -->
+    <form id="f-login" class="hidden" novalidate>
+      <h1>Welcome back</h1>
+      <p class="lead">Log in to your PostForge account.</p>
+      <div id="loginCreds">
+        <div class="field"><label for="li-email">Email</label><input id="li-email" type="email" autocomplete="username" required></div>
+        <div class="field"><label for="li-pw">Password</label>
+          <div class="pw-wrap"><input id="li-pw" type="password" autocomplete="current-password" required><button type="button" class="pw-toggle" data-for="li-pw">Show</button></div>
+        </div>
+        <div class="row" style="justify-content:flex-end;margin:-4px 0 14px"><a href="/forgot" class="small">Forgot password?</a></div>
+      </div>
+      <div id="loginTotp" class="hidden">
+        <div class="field"><label for="li-totp">6-digit code from your authenticator app</label>
+          <input id="li-totp" class="totp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*"></div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Log in</button>
+      <p class="alt">New here? <a href="/signup">Create a free account</a> · <a href="/help">Help</a></p>
+    </form>
+
+    <!-- SIGNUP -->
+    <form id="f-signup" class="hidden" novalidate>
+      <h1>Create your account</h1>
+      <p class="lead" id="signupLead">Start with a free trial — no card needed.</p>
+      <div class="field hidden" id="codeField"><label for="su-code">Invite code</label><input id="su-code" autocomplete="off" maxlength="30" placeholder="e.g. BETA-3F9A21" style="text-transform:uppercase"></div>
+      <div class="field"><label for="su-name">Your name</label><input id="su-name" autocomplete="name" maxlength="80" required></div>
+      <div class="field"><label for="su-biz">Business name</label><input id="su-biz" autocomplete="organization" maxlength="80" placeholder="e.g. Sunrise Café"></div>
+      <div class="field"><label for="su-email">Work email</label><input id="su-email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="su-pw">Password</label>
+        <div class="pw-wrap"><input id="su-pw" type="password" autocomplete="new-password" minlength="10" required><button type="button" class="pw-toggle" data-for="su-pw">Show</button></div>
+        <div class="pw-meter" id="su-meter"><span></span><span></span><span></span><span></span></div>
+        <div class="hint">At least 10 characters with a letter and a number.</div>
+      </div>
+      <label class="check" style="margin-bottom:16px"><input type="checkbox" id="su-terms"> <span>I agree to the Terms of Service and Privacy Policy.</span></label>
+      <button class="btn btn-primary btn-block" type="submit">Create account</button>
+      <p class="alt">Already have an account? <a href="/login">Log in</a></p>
+    </form>
+
+    <!-- FORGOT -->
+    <form id="f-forgot" class="hidden" novalidate>
+      <h1>Reset your password</h1>
+      <p class="lead">We'll email you a link to choose a new one.</p>
+      <div class="field"><label for="fg-email">Email</label><input id="fg-email" type="email" autocomplete="email" required></div>
+      <button class="btn btn-primary btn-block" type="submit">Send reset link</button>
+      <p class="alt"><a href="/login">Back to log in</a></p>
+    </form>
+
+    <!-- RESET -->
+    <form id="f-reset" class="hidden" novalidate>
+      <h1>Choose a new password</h1>
+      <p class="lead">You'll be signed out of all other devices.</p>
+      <div class="field"><label for="rs-pw">New password</label>
+        <div class="pw-wrap"><input id="rs-pw" type="password" autocomplete="new-password" required><button type="button" class="pw-toggle" data-for="rs-pw">Show</button></div>
+        <div class="pw-meter" id="rs-meter"><span></span><span></span><span></span><span></span></div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Save password</button>
+    </form>
+
+    <!-- INVITE -->
+    <form id="f-invite" class="hidden" novalidate>
+      <h1>Join your team</h1>
+      <p class="lead" id="inviteLead">Loading invite…</p>
+      <div class="field"><label>Email</label><input id="iv-email" disabled></div>
+      <div class="field"><label for="iv-name">Your name</label><input id="iv-name" autocomplete="name" maxlength="80" required></div>
+      <div class="field"><label for="iv-pw">Password</label>
+        <div class="pw-wrap"><input id="iv-pw" type="password" autocomplete="new-password" required><button type="button" class="pw-toggle" data-for="iv-pw">Show</button></div>
+        <div class="pw-meter" id="iv-meter"><span></span><span></span><span></span><span></span></div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Accept invite</button>
+    </form>
+  </div>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/telemetry.js"></script>
+</body>
+</html>

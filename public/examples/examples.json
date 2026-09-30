@@ -1,0 +1,20 @@
+[
+ {
+  "industry": "Café",
+  "caption": "Morning combo special — Café theme, Instagram post",
+  "before": "/examples/cafe-before.jpg",
+  "after": "/examples/cafe-after.jpg"
+ },
+ {
+  "industry": "Bakery",
+  "caption": "Friday donut deal — Dozen Deal template",
+  "before": "/examples/bakery-before.jpg",
+  "after": "/examples/bakery-after.jpg"
+ },
+ {
+  "industry": "Retail",
+  "caption": "New product launch — New Arrival template",
+  "before": "/examples/retail-before.jpg",
+  "after": "/examples/retail-after.jpg"
+ }
+]

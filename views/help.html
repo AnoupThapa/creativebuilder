@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help centre — PostForge</title>
+<meta name="description" content="Answers to common questions about PostForge: making posts, removing backgrounds, downloads, plans, billing, teams and privacy. Contact support any time.">
+<link rel="canonical" href="/help">
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+nav.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.hero{text-align:center;padding:28px 0 18px}
+.hero h1{font-size:clamp(28px,4vw,40px);font-weight:800}
+.hero p{color:var(--muted);margin:8px 0 18px}
+.search{max-width:560px;margin:0 auto;position:relative}
+.search input{width:100%;padding:14px 18px 14px 44px;border-radius:50px;border:1px solid var(--line);font-size:15px;background:#fff;box-shadow:var(--shadow)}
+.search input:focus{outline:none;border-color:var(--coral)}
+.search span{position:absolute;left:16px;top:50%;transform:translateY(-50%);opacity:.5}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:24px 0 8px}
+.quick a{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--ink);font-weight:700;font-size:13px;text-align:center;text-decoration:none}
+.quick a:hover{border-color:var(--coral)}
+.quick a span{display:block;font-size:22px;margin-bottom:4px}
+.cat{margin-top:28px}
+.cat h2{font-size:18px;margin-bottom:10px}
+details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin-bottom:8px}
+summary{cursor:pointer;font-weight:700;color:var(--ink);list-style-position:outside}
+details p,details li{color:var(--slate);font-size:14px;line-height:1.6}
+details p{margin-top:8px}
+details ol,details ul{margin:8px 0 0 20px}
+.contact{margin:40px 0 60px}
+.contact-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.side-box{display:grid;gap:10px;align-content:start}
+.side-box a.btn{justify-content:flex-start}
+.none{display:none;text-align:center;color:var(--muted);padding:20px}
+@media(max-width:720px){.quick{grid-template-columns:1fr 1fr}.contact-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <nav class="top">
+    <a class="brand" href="/"><span class="brand-mark">P</span>PostForge</a>
+    <div class="row"><a class="btn btn-ghost btn-sm" href="/app" id="navApp">Open app</a></div>
+  </nav>
+</header>
+<main class="wrap">
+  <div class="hero">
+    <h1>How can we help?</h1>
+    <p>Quick answers, step-by-step guides, and a real person when you need one.</p>
+    <div class="search"><span>🔍</span><input id="q" placeholder="Search e.g. background, download, invoice, team…" aria-label="Search help"></div>
+  </div>
+  <div class="quick">
+    <a href="#start"><span>🚀</span>Getting started</a>
+    <a href="#design"><span>🎨</span>Designing posts</a>
+    <a href="#billing"><span>💳</span>Plans & billing</a>
+    <a href="#contact"><span>💬</span>Contact support</a>
+  </div>
+
+  <div id="faq">
+    <section class="cat" id="start">
+      <h2>🚀 Getting started</h2>
+      <details><summary>How do I make my first post?</summary>
+        <ol><li>Sign up and confirm your email (check spam if it doesn't arrive).</li>
+        <li>Click <b>New design</b>, upload a photo, then pick a template or type your offer.</li>
+        <li>Choose a size (e.g. Instagram Post) at the top of the canvas and click <b>Download</b>.</li></ol></details>
+      <details><summary>Which sizes are supported?</summary>
+        <p>Instagram post, portrait & story/reels, Facebook post, story & cover, LinkedIn post & banner, Pinterest, X (Twitter), TikTok, YouTube thumbnail & Shorts, and WhatsApp status. Use <b>Generate all platforms</b> to get every size in one ZIP.</p></details>
+      <details><summary>Does it work on my phone?</summary>
+        <p>Yes — PostForge works in Safari on iPhone and Chrome on Android. For the most comfortable editing use a tablet or computer, but everything, including downloads, works on a phone.</p></details>
+      <details><summary>I didn't get the confirmation email</summary>
+        <p>Check your spam or promotions folder. In the dashboard, click <b>Resend email</b> on the yellow banner. Still nothing after 10 minutes? Contact us below.</p></details>
+    </section>
+
+    <section class="cat" id="design">
+      <h2>🎨 Designing posts</h2>
+      <details><summary>How do I move text, the badge or the logo?</summary>
+        <p>Click it on the design and drag it. Drag the round corner handle to resize. For precise moves use the arrow pad and sliders in the <b>Layout</b> tab, or pick a one-click <b>Layout</b> (Classic, Centred, Text on top, Middle) under Style.</p></details>
+      <details><summary>How do I remove the background from a product photo?</summary>
+        <p>Switch on <b>Remove background</b> under your photo. If anything needs fixing, click <b>✨ Refine</b>: drag a <b>Subject box</b> around the product for busy backgrounds, then use the <b>Keep</b> and <b>Erase</b> brushes or <b>Magic erase</b>. Choose a backdrop (gradient, spotlight, blurred photo) behind the cut-out.</p></details>
+      <details><summary>Can I use my own logo, colours and fonts?</summary>
+        <p>Yes. Save a <b>Brand kit</b> (logo, colour, phone, website) in the dashboard or the editor's Brand Kit tab and apply it in one click. Pick heading and text fonts under <b>Style</b>.</p></details>
+      <details><summary>Can I make video posts?</summary>
+        <p>On the Pro plan, upload a video (MP4, MOV or WEBM), add your branding, choose <b>MP4 video</b> in Export and download. Videos come out as MP4 (H.264 + AAC) — the format Instagram, Facebook and TikTok expect.</p></details>
+      <details><summary>How do I make a customer-review post?</summary>
+        <p>Choose <b>Customer review</b> at the top of the left panel, type the review, the customer's name and star rating, and add their photo if you have permission to use it.</p></details>
+    </section>
+
+    <section class="cat" id="downloads">
+      <h2>⬇ Downloads & allowances</h2>
+      <details><summary>What counts as one image?</summary>
+        <p>Every file you download counts once. A ZIP with 4 sizes uses 4. Editing and previewing are always unlimited.</p></details>
+      <details><summary>When does my allowance reset?</summary>
+        <p>Daily limits reset at midnight in the time zone set in <b>Account & security</b>. Monthly limits reset on the 1st.</p></details>
+      <details><summary>Why is there a watermark?</summary>
+        <p>Free-trial downloads carry a small watermark. Any paid plan removes it.</p></details>
+      <details><summary>My download looks blurry</summary>
+        <p>Use a photo at least 1080 px on its shortest side, and choose <b>HD 2×</b> (Starter/Pro) or <b>Print 3×</b> (Pro) in Export.</p></details>
+    </section>
+
+    <section class="cat" id="billing">
+      <h2>💳 Plans & billing</h2>
+      <details><summary>What do the plans include?</summary>
+        <p><b>Starter</b> — US$10 per user per month: 5 images a day (up to 100 a month), HD quality, all templates. <b>Pro</b> — US$20 per user per month: 15 images a day (up to 300 a month), video posts, print quality and 5 brand kits. Yearly billing gives you 2 months free.</p></details>
+      <details><summary>What does "per user" mean?</summary>
+        <p>Each person on your team uses one seat and gets their own download allowance. Add seats under <b>Plan & billing</b>.</p></details>
+      <details><summary>How do I cancel or change my plan?</summary>
+        <p>Open <b>Plan & billing</b>. Switching plans applies straight away (the price difference is prorated). Cancelling keeps your plan until the end of the period you've paid for.</p></details>
+      <details><summary>Where are my invoices?</summary>
+        <p>Plan & billing → <b>Invoices & card</b> opens your secure billing portal, where you can download invoices and update your card.</p></details>
+    </section>
+
+    <section class="cat" id="team">
+      <h2>👥 Teams & sharing</h2>
+      <details><summary>How do I invite staff?</summary>
+        <p>Dashboard → <b>Team</b> → enter their email and pick a role: <b>Admin</b> (manages the team), <b>Designer</b> (creates and downloads) or <b>Viewer</b> (views shared designs only).</p></details>
+      <details><summary>Who can see my designs?</summary>
+        <p>New designs are <b>Private</b>. Change a design to <b>Team can view</b> or <b>Team can edit</b> from its card in the dashboard.</p></details>
+    </section>
+
+    <section class="cat" id="privacy">
+      <h2>🔐 Account, security & privacy</h2>
+      <details><summary>How do I turn on 2-step login?</summary>
+        <p>Account & security → <b>2-step verification</b> → scan the QR code with Google Authenticator, Authy or 1Password and enter the 6-digit code.</p></details>
+      <details><summary>How do I download or delete my data?</summary>
+        <p>Account & security → <b>Download my data</b> gives you a ZIP of everything we hold, including your uploads. <b>Delete my account</b> removes it permanently (if you own the business account, the whole workspace is deleted and billing cancelled).</p></details>
+      <details><summary>I forgot my password / I'm locked out</summary>
+        <p>Use <b>Forgot password?</b> on the login page. After 5 wrong attempts an account locks for 15 minutes to keep it safe — a password reset unlocks it straight away.</p></details>
+    </section>
+
+    <section class="cat" id="trouble">
+      <h2>🛠 Troubleshooting</h2>
+      <details><summary>The editor is slow or a button doesn't respond</summary>
+        <p>Refresh the page (your work saves automatically). Use the latest Chrome, Edge, Safari or Firefox. Very large photos (over 20 MP) can be slow on older phones.</p></details>
+      <details><summary>My video export failed</summary>
+        <p>Keep the video under 3 minutes and 100 MB, keep the tab open while it records (it plays through once), and try Chrome or Safari.</p></details>
+    </section>
+    <p class="none" id="none">No answers match — try other words, or ask us below.</p>
+  </div>
+
+  <section class="contact" id="contact">
+    <h2 style="font-size:22px;margin-bottom:12px">💬 Contact support</h2>
+    <div class="contact-grid">
+      <div class="card">
+        <div id="sentMsg"></div>
+        <form id="supportForm">
+          <div class="row wrap" style="gap:10px">
+            <div class="field grow"><label for="sName">Your name</label><input id="sName" maxlength="80" required></div>
+            <div class="field grow"><label for="sEmail">Email</label><input id="sEmail" type="email" maxlength="254" required></div>
+          </div>
+          <div class="field"><label for="sTopic">What's it about?</label>
+            <select id="sTopic"><option value="question">A question</option><option value="problem">Something isn't working</option><option value="billing">Billing</option><option value="account">My account</option><option value="beta">Joining the beta</option><option value="feature">A feature idea</option><option value="other">Something else</option></select></div>
+          <div class="field"><label for="sMsg">Message</label><textarea id="sMsg" rows="5" maxlength="4000" required placeholder="Tell us what happened and what you expected…"></textarea></div>
+          <input type="text" id="sWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+          <button class="btn btn-primary" type="submit">Send message</button>
+          <span class="small muted" style="margin-left:8px">We reply within one business day.</span>
+        </form>
+      </div>
+      <div class="side-box">
+        <a class="btn btn-ghost hidden" id="waLink" target="_blank" rel="noopener">🟢 Chat on WhatsApp</a>
+        <a class="btn btn-ghost hidden" id="mailLink">✉️ <span id="mailText"></span></a>
+        <div class="card small muted">Tip: include the design name and what device/browser you're using — it helps us fix things faster.</div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="wrap" style="border-top:1px solid var(--line);padding:24px 20px;color:var(--muted);font-size:13px">© <span id="yr"></span> PostForge · <a href="/">Home</a> · <a href="/#pricing">Pricing</a></footer>
+<script src="/js/api.js"></script>
+<script src="/js/help.js"></script>
+<script src="/js/telemetry.js"></script>
+</body>
+</html>

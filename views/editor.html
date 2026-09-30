@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostForge — Editor</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/editor.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="tb-left">
+      <a class="back" href="/app" title="Back to designs">←</a>
+      <a class="brand" href="/app"><span class="brand-mark">P</span><span class="brand-txt">PostForge</span></a>
+      <input class="design-name" id="designName" maxlength="100" value="Untitled design" aria-label="Design name">
+      <span class="save-status" id="saveStatus"></span>
+    </div>
+    <div class="topbar-pills">
+      <a class="pill hide-s" href="/help" target="_blank" rel="noopener" title="Help & support">❓</a>
+      <button class="pill hide-s" id="fbSlot" type="button" title="Send feedback">💬</button>
+      <button class="pill" id="btnTemplates">🗂 <span class="hide-s">Templates</span></button>
+      <button class="pill hide-s" id="btnBrandKit">🎨 Brand Kit</button>
+      <span class="pill usage-pill" id="usagePill" title="Downloads left">⬇ <span id="usageText">…</span></span>
+      <button class="pill pill-dark" id="btnSave">💾 <span class="hide-s">Save</span></button>
+    </div>
+  </div>
+
+  <!-- ===== LEFT RAIL ===== -->
+  <div class="rail rail-left">
+    <div class="readonly-note" id="readonlyNote" style="display:none">👁 View only — you can look but not change or download this design.</div>
+
+    <!-- 1. CONTENT TYPE -->
+    <div class="section">
+      <div class="sec-label"><span class="n">1</span>What are you posting?</div>
+      <div class="ct-toggle" id="ctToggle">
+        <button class="ct-btn active" data-type="promo"><span class="ico">🏷</span>Promo post</button>
+        <button class="ct-btn" data-type="review"><span class="ico">💬</span>Customer review</button>
+      </div>
+    </div>
+
+    <!-- 2. MEDIA UPLOAD -->
+    <div class="section">
+      <div class="sec-label"><span class="n">2</span><span id="mediaSecLabel">Photo or video</span></div>
+      <div class="dz" id="dzMedia">
+        <input type="file" id="inputMedia" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm">
+        <div class="dz-icon">📷</div>
+        <div class="dz-t" id="dzMediaText">Drop image or video here</div>
+        <div class="dz-s" id="dzMediaSub">JPG · PNG · WEBP · MP4 · MOV</div>
+      </div>
+      <div class="thumb-row" id="mediaThumbRow" style="display:none">
+        <img id="mediaThumb" src="" alt="">
+        <div class="thumb-meta"><strong id="mediaName"></strong><span id="mediaDims"></span></div>
+        <button class="btn-rm" id="mediaRemove" title="Remove">✕</button>
+      </div>
+      <div class="bg-row bg-row2" id="bgRow" style="display:none">
+        <div class="bg-top">
+          <div class="bg-label">✂️ Remove background</div>
+          <label class="switch">
+            <input type="checkbox" id="bgToggle" aria-label="Remove background">
+            <span class="track"><span class="knob"></span></span>
+          </label>
+        </div>
+        <div class="bg-bottom">
+          <div class="bg-hint" id="bgHint">One click — or refine it in the studio</div>
+          <button class="bg-refine" id="btnBgStudio" title="Open the cut-out studio: subject box, keep/erase brushes, magic eraser">✨ Refine</button>
+        </div>
+      </div>
+      <div class="cutout-opts" id="cutoutOpts" style="display:none">
+        <div class="co-lbl">Backdrop behind the cut-out</div>
+        <div class="chips" id="cutoutBgChips">
+          <button class="chip selected" data-cbg="theme">Theme colour</button>
+          <button class="chip" data-cbg="gradient">Gradient</button>
+          <button class="chip" data-cbg="spotlight">Spotlight</button>
+          <button class="chip" data-cbg="blur">Blurred photo</button>
+        </div>
+        <label class="co-shadow"><input type="checkbox" id="cutoutShadow" checked> Soft drop shadow</label>
+      </div>
+    </div>
+
+    <!-- 3. LOGO -->
+    <div class="section">
+      <div class="sec-label"><span class="n">3</span>Logo</div>
+      <div class="dz" id="dzLogo">
+        <input type="file" id="inputLogo" accept="image/png,image/jpeg,image/webp">
+        <div class="dz-icon">🏷</div>
+        <div class="dz-t">Drop your logo</div>
+        <div class="dz-s">Transparent PNG recommended</div>
+      </div>
+      <div class="thumb-row" id="logoThumbRow" style="display:none">
+        <img id="logoThumb" src="" alt="" class="checker">
+        <div class="thumb-meta"><strong id="logoName"></strong><span id="logoSub">Logo</span></div>
+        <button class="btn-rm" id="logoRemove" title="Remove">✕</button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Position</label>
+        <div class="seg c2" id="logoPosGrid">
+          <button class="seg-b" data-pos="tl">↖ Top left</button>
+          <button class="seg-b active" data-pos="tr">↗ Top right</button>
+          <button class="seg-b" data-pos="bl">↙ Bottom left</button>
+          <button class="seg-b" data-pos="br">↘ Bottom right</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Size</label>
+        <div class="seg c3" id="logoSizeGrid">
+          <button class="seg-b" data-size="s">Small</button>
+          <button class="seg-b active" data-size="m">Medium</button>
+          <button class="seg-b" data-size="l">Large</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Margin — <span id="logoMarginVal">24</span>px</label>
+        <div class="slider-r">
+          <input type="range" id="logoMargin" min="0" max="60" value="24">
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. OFFER DETAILS -->
+    <div class="section" id="secOffer">
+      <div class="sec-label"><span class="n">4</span>Offer details</div>
+      <div class="field">
+        <label class="lbl-row">Headline <button type="button" class="mv-btn" data-move="headline" title="Move / resize the headline on the design">✥ Move</button></label>
+        <textarea id="inputHeadline" rows="2" maxlength="60" placeholder="Weekend Special">Weekend Special</textarea>
+        <div class="char"><span id="headlineCount">15</span>/60</div>
+      </div>
+      <div class="field">
+        <label class="lbl-row">Subheadline <button type="button" class="mv-btn" data-move="sub" title="Move / resize the subheadline on the design">✥ Move</button></label>
+        <input type="text" id="inputSubheadline" maxlength="50" placeholder="Limited time offer" value="Limited time only">
+      </div>
+      <div class="field">
+        <label class="lbl-row">Price / offer <button type="button" class="mv-btn" data-move="price" title="Move / resize the price on the design">✥ Move</button></label>
+        <input type="text" id="inputPrice" maxlength="20" placeholder="20% OFF or Rs. 499" value="20% OFF">
+      </div>
+      <div class="field">
+        <label class="lbl-row">Call to action <button type="button" class="mv-btn" data-move="cta" title="Move / resize the button on the design">✥ Move</button></label>
+        <select id="inputCTA">
+          <option>Shop Now</option>
+          <option>Order Now</option>
+          <option>Explore Now</option>
+          <option>Get Quote</option>
+          <option>Book Today</option>
+          <option>Reserve Now</option>
+          <option>Call Now</option>
+          <option>Message Us</option>
+          <option>Visit Store</option>
+          <option>Learn More</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 4b. REVIEW DETAILS -->
+    <div class="section" id="secReview" style="display:none">
+      <div class="sec-label"><span class="n">4</span>Review details</div>
+      <div class="field">
+        <label class="lbl-row">Customer name <button type="button" class="mv-btn" data-move="rv_name" title="Move / resize the customer name on the design">✥ Move</button></label>
+        <input type="text" id="inputReviewName" maxlength="40" placeholder="Sarah M.">
+      </div>
+      <div class="field">
+        <label class="lbl-row">Star rating <button type="button" class="mv-btn" data-move="rv_stars" title="Move / resize the stars on the design">✥ Move</button></label>
+        <div class="star-row" id="starRow">
+          <button class="star-btn on" data-star="1">★</button>
+          <button class="star-btn on" data-star="2">★</button>
+          <button class="star-btn on" data-star="3">★</button>
+          <button class="star-btn on" data-star="4">★</button>
+          <button class="star-btn on" data-star="5">★</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl-row">Their words <button type="button" class="mv-btn" data-move="rv_quote" title="Move / resize the review text on the design">✥ Move</button></label>
+        <textarea id="inputReviewQuote" rows="4" maxlength="180" placeholder="Best food in town, we come back every week!">Best food in town, we come back every week!</textarea>
+        <div class="char"><span id="reviewQuoteCount">0</span>/180</div>
+      </div>
+    </div>
+
+    <!-- 5. BADGE -->
+    <div class="section" id="secBadge">
+      <div class="sec-label"><span class="n">5</span>Badge <span class="grow-sp"></span><button type="button" class="mv-btn" data-move="badge" title="Move / resize the badge on the design">✥ Move</button></div>
+      <div class="chips" id="badgeChips">
+        <button class="chip" data-badge="NEW">NEW</button>
+        <button class="chip" data-badge="HOT">HOT</button>
+        <button class="chip" data-badge="SALE">SALE</button>
+        <button class="chip" data-badge="LIMITED OFFER">LIMITED</button>
+        <button class="chip" data-badge="20% OFF">20% OFF</button>
+        <button class="chip" data-badge="50% OFF">50% OFF</button>
+        <button class="chip" data-badge="BEST SELLER">BEST SELLER</button>
+        <button class="chip selected" data-badge="">None</button>
+      </div>
+    </div>
+
+    <!-- 6. THEME -->
+    <div class="section">
+      <div class="sec-label"><span class="n">6</span>Style</div>
+      <div class="chips" id="themeChips"></div>
+      <div class="field" style="margin-top:12px">
+        <label for="headingFont">Heading font</label>
+        <select id="headingFont"></select>
+      </div>
+      <div class="field">
+        <label for="bodyFont">Text font</label>
+        <select id="bodyFont"></select>
+      </div>
+      <div class="field">
+        <label>Layout</label>
+        <div class="chips" id="layoutChips"></div>
+        <div class="hint">Arranges the text in one click — then drag anything to fine-tune.</div>
+      </div>
+    </div>
+
+  </div><!-- /rail-left -->
+
+  <!-- ===== CENTER STAGE ===== -->
+  <div class="stage-wrap">
+    <div class="platform-bar">
+      <select id="platformSelect" aria-label="Platform size"></select>
+    </div>
+
+    <div class="stage-shell" id="stageShell">
+      <canvas id="canvas" width="1080" height="1080"></canvas>
+      <div class="sel-layer" id="selLayer" aria-hidden="true">
+        <div class="guide guide-v" id="guideV"></div>
+        <div class="guide guide-h" id="guideH"></div>
+        <div class="hover-box" id="hoverBox"></div>
+        <div class="sel-box" id="selBox"><span class="sel-tag" id="selTag"></span><span class="sel-handle" id="selHandle" title="Drag to resize"></span></div>
+      </div>
+      <div class="stage-empty" id="stageEmptyHint">
+        <div class="icon">🖼</div>
+        <div class="txt">Upload a photo to get started</div>
+        <div class="sub">or pick a template from the top bar</div>
+      </div>
+    </div>
+
+    <div class="stage-dims" id="stageDims">1080 × 1080 px</div>
+
+    <div class="stage-bar-bottom">
+      <button class="btn-export" id="btnExport">⬇&nbsp; Download</button>
+      <button class="btn-export btn-ink" id="btnGenerateAll">⚡&nbsp; Generate All Platforms</button>
+    </div>
+  </div><!-- /stage-wrap -->
+
+  <!-- ===== RIGHT RAIL ===== -->
+  <div class="rail rail-right">
+
+    <div class="tab-strip">
+      <button class="tab-btn active" data-tab="layers">Layout</button>
+      <button class="tab-btn" data-tab="brand">Brand Kit</button>
+      <button class="tab-btn" data-tab="export">Export</button>
+    </div>
+
+    <!-- LAYERS TAB -->
+    <div class="tab-pane active" id="tab-layers">
+      <div class="pos-card" id="posCard">
+        <div class="pos-head"><span>✥ Position &amp; size</span><span class="pos-sel" id="posTitle"></span><button class="pos-x" id="posDeselect" title="Deselect (Esc)">✕</button></div>
+        <div class="pos-empty" id="posEmpty">👆 <b>Click any text, badge, button or logo</b> on the design and drag it where you want. Use the arrows here for fine moves.</div>
+        <div class="pos-controls" id="posControls" hidden>
+          <div class="pos-top">
+            <div class="pos-pad">
+              <span></span><button data-nudge="0,-1" title="Up">↑</button><span></span>
+              <button data-nudge="-1,0" title="Left">←</button><button data-align="center-both" title="Centre on the design">⊙</button><button data-nudge="1,0" title="Right">→</button>
+              <span></span><button data-nudge="0,1" title="Down">↓</button><span></span>
+            </div>
+            <div class="pos-align">
+              <div class="pos-mini">Line up</div>
+              <div class="pos-grid3">
+                <button data-align="left" title="Align to left edge">⇤ Left</button><button data-align="hcenter" title="Centre horizontally">↔ Centre</button><button data-align="right" title="Align to right edge">Right ⇥</button>
+                <button data-align="top" title="Align to top">⤒ Top</button><button data-align="vcenter" title="Centre vertically">↕ Middle</button><button data-align="bottom" title="Align to bottom">Bottom ⤓</button>
+              </div>
+            </div>
+          </div>
+          <label class="pos-slider"><span>Left ↔ Right <em id="posXVal">0</em></span><input type="range" id="posX" min="-60" max="60" step="0.5" value="0"></label>
+          <label class="pos-slider"><span>Up ↕ Down <em id="posYVal">0</em></span><input type="range" id="posY" min="-80" max="80" step="0.5" value="0"></label>
+          <label class="pos-slider"><span>Size <em id="posSVal">100%</em></span><input type="range" id="posS" min="40" max="250" step="1" value="100"></label>
+          <div class="pos-actions">
+            <button id="posReset">↺ Reset this</button>
+            <button id="posResetAll">Reset all positions</button>
+          </div>
+          <div class="pos-tip">Tip: arrow keys nudge (Shift = bigger steps). Double-click text on the design to edit it.</div>
+        </div>
+      </div>
+      <div class="layer-list">
+      <div class="layer-r" data-sel="product" data-ct="both"><div class="li">🖼</div><div class="ln">Background photo</div><button class="lv-toggle" data-layer="media" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="logo" data-ct="both"><div class="li">🏷</div><div class="ln">Logo</div><button class="lv-toggle" data-layer="logo" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="headline" data-ct="promo"><div class="li">Aa</div><div class="ln">Headline</div><button class="lv-toggle" data-layer="headline" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="sub" data-ct="promo"><div class="li">a</div><div class="ln">Subheadline</div><button class="lv-toggle" data-layer="sub" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="price" data-ct="promo"><div class="li">💲</div><div class="ln">Price / offer</div><button class="lv-toggle" data-layer="price" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="cta" data-ct="promo"><div class="li">🔘</div><div class="ln">CTA button</div><button class="lv-toggle" data-layer="cta" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="badge" data-ct="promo"><div class="li">🏆</div><div class="ln">Badge</div><button class="lv-toggle" data-layer="badge" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="contact" data-ct="promo"><div class="li">📞</div><div class="ln">Contact line</div><button class="lv-toggle" data-layer="contact" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="rv_mark" data-ct="review"><div class="li">“</div><div class="ln">Quote mark</div><button class="lv-toggle" data-layer="rv_mark" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="rv_stars" data-ct="review"><div class="li">★</div><div class="ln">Star rating</div><button class="lv-toggle" data-layer="rv_stars" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="rv_quote" data-ct="review"><div class="li">💬</div><div class="ln">Review text</div><button class="lv-toggle" data-layer="rv_quote" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="rv_name" data-ct="review"><div class="li">👤</div><div class="ln">Customer name</div><button class="lv-toggle" data-layer="rv_name" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="rv_verified" data-ct="review"><div class="li">✓</div><div class="ln">Verified badge</div><button class="lv-toggle" data-layer="rv_verified" title="Toggle visibility">👁</button></div>
+      </div>
+
+      <div style="padding:14px 16px;border-top:1px solid var(--line)">
+        <div class="field">
+          <label>Contact / website line</label>
+          <input type="text" id="inputContact" maxlength="60" placeholder="📞 0400 000 000 · @yourbiz">
+        </div>
+      </div>
+    </div>
+
+    <!-- BRAND KIT TAB -->
+    <div class="tab-pane" id="tab-brand">
+      <div class="bk-box">
+        <div class="field">
+          <label>Your brand kits</label>
+          <div class="kit-row">
+            <select id="kitSelect"></select>
+            <button class="pill" id="btnApplyKit">Apply</button>
+          </div>
+          <div class="hint" id="kitHint"></div>
+        </div>
+        <div class="field">
+          <label>Business name</label>
+          <input type="text" id="bkName" maxlength="80" placeholder="My Cafe">
+        </div>
+        <div class="field">
+          <label>Accent colour</label>
+          <div class="swatches" id="brandSwatches">
+            <div class="swatch swatch-auto active" data-color="" title="Use theme colour">A</div>
+            <div class="swatch" data-color="#ff6b4a" style="background:#ff6b4a" title="Coral"></div>
+            <div class="swatch" data-color="#1d7a5f" style="background:#1d7a5f" title="Green"></div>
+            <div class="swatch" data-color="#3ecf8e" style="background:#3ecf8e" title="Mint"></div>
+            <div class="swatch" data-color="#c0392b" style="background:#c0392b" title="Red"></div>
+            <div class="swatch" data-color="#7d5fff" style="background:#7d5fff" title="Violet"></div>
+            <div class="swatch" data-color="#0d6efd" style="background:#0d6efd" title="Blue"></div>
+            <div class="swatch" data-color="#d4af37" style="background:#d4af37" title="Gold"></div>
+            <div class="swatch" data-color="#ffd23f" style="background:#ffd23f" title="Yellow"></div>
+          </div>
+          <div id="extractedSwatchGroup" style="display:none">
+            <div class="swatch-group-label">✨ Picked up from your logo</div>
+            <div class="swatches" id="extractedSwatches"></div>
+          </div>
+          <div class="hint">“A” keeps the theme's own accent colour.</div>
+        </div>
+        <div class="field">
+          <label>Phone number</label>
+          <input type="text" id="bkPhone" maxlength="40" placeholder="0400 000 000">
+        </div>
+        <div class="field">
+          <label>Website</label>
+          <input type="text" id="bkWebsite" maxlength="120" placeholder="yoursite.com.au">
+        </div>
+        <button class="pill pill-wide" id="btnSaveBrandKit">💾 Save to brand kit</button>
+      </div>
+    </div>
+
+    <!-- EXPORT TAB -->
+    <div class="tab-pane" id="tab-export">
+      <div class="ex-box">
+        <div class="quota-box" id="quotaBox"></div>
+        <div class="field">
+          <label>Quality</label>
+          <label class="q-opt"><span>Social media — 1×</span><input type="radio" name="q" value="1" checked></label>
+          <label class="q-opt"><span>HD — 2× <span class="lock" data-q="2"></span></span><input type="radio" name="q" value="2"></label>
+          <label class="q-opt"><span>Print — 3× <span class="lock" data-q="3"></span></span><input type="radio" name="q" value="3"></label>
+        </div>
+        <div class="field">
+          <label>Format</label>
+          <div class="fmt-row">
+            <button class="fmt-btn active" data-fmt="png">PNG</button>
+            <button class="fmt-btn" data-fmt="jpg">JPG</button>
+            <button class="fmt-btn" data-fmt="video" id="fmtVideo">MP4 video</button>
+          </div>
+        </div>
+        <button class="btn-export btn-wide" id="btnExport2">⬇ Download content</button>
+
+        <div class="field batch-field">
+          <label>⚡ Generate for every platform <span class="lock" id="batchLock"></span></label>
+          <div class="batch-platlist" id="batchPlatList"></div>
+          <div class="batch-actions">
+            <button id="batchSelectAll">Select all</button>
+            <button id="batchSelectNone">Select none</button>
+          </div>
+          <button class="btn-export btn-wide btn-ink" id="btnBatchGo">📦 Generate &amp; download ZIP</button>
+          <div class="batch-progress" id="batchProgress">
+            <div class="bp-label"><span id="bpLabelText">Working…</span><span id="bpLabelPct">0%</span></div>
+            <div class="bp-bar"><div class="bp-fill" id="bpFill"></div></div>
+          </div>
+        </div>
+
+        <div class="ex-note">Each file you download uses 1 image from your allowance.<br>Editing and previewing are always unlimited.</div>
+      </div>
+    </div>
+
+  </div><!-- /rail-right -->
+
+</div><!-- /app -->
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-wrap" id="modalTemplates">
+  <div class="modal-backdrop"></div>
+  <div class="modal">
+    <div class="modal-head">🗂 Template Library <input class="tmpl-search" id="tmplSearch" placeholder="Search e.g. bakery, sale, Diwali…" aria-label="Search templates"><button class="modal-close" aria-label="Close">✕</button></div>
+    <div class="modal-body" id="tmplCategories"></div>
+  </div>
+</div>
+
+<!-- UPGRADE / NOTICE MODAL -->
+<div class="modal-wrap" id="modalNotice">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal modal-sm">
+    <div class="modal-head"><span id="noticeTitle">Upgrade</span><button class="modal-close" data-close aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <p id="noticeText"></p>
+      <div class="notice-actions">
+        <button class="pill" data-close>Not now</button>
+        <a class="btn-export" id="noticeCta" href="/app#billing">See plans</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/vendor/jszip.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/content.js"></script>
+<script src="/js/bgremove.js"></script>
+<script src="/js/bgstudio.js"></script>
+<script src="/js/editor.js"></script>
+<script src="/js/feedback.js" data-pos="slot"></script>
+<script src="/js/telemetry.js"></script>
+</body>
+</html>

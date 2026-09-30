@@ -1,0 +1,37 @@
+# One-click hosting on Render (https://render.com) — "New > Blueprint", pick this GitHub repo.
+# Render runs the app as an always-on server with a persistent disk, which PostForge needs
+# (database, uploaded photos and backups live on that disk).
+services:
+  - type: web
+    name: postforge
+    runtime: node
+    region: singapore          # closest to Nepal and Australia
+    plan: starter              # a paid plan is required for a persistent disk
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    disk:
+      name: postforge-data
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: TRUST_PROXY
+        value: "1"
+      - key: APP_SECRET
+        generateValue: true    # Render creates a long random secret for you
+      - key: APP_URL           # set to your site address, e.g. https://postforge.onrender.com
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: BETA_MODE
+        value: "true"
