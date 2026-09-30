@@ -6,3 +6,4 @@
 *.mp4 binary
 *.ico binary
 *.webm binary
+*.cmd text eol=crlf

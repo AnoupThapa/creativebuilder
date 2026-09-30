@@ -271,3 +271,15 @@ so the database and uploads would be lost — they are not suitable. Render (or 
    domain), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `SUPPORT_EMAIL`. Add SMTP and backup (`BACKUP_S3_*`) settings
    under *Environment* when ready.
 4. Every time new code is pushed to GitHub, Render redeploys automatically (about a minute of downtime).
+
+## 12. Put it online with Fly.io (alternative to Render)
+
+Cheaper for a small private team: the server sleeps when nobody is using it and wakes in a few seconds.
+Fly.io needs a card after its short free trial and bills by use.
+
+* **First time:** double-click `fly-setup.cmd`. It installs the Fly.io tool, opens your browser to sign in,
+  creates the app and a 1 GB permanent disk in Singapore, asks for the admin login, and publishes the site at
+  `https://<app-name>.fly.dev`.
+* **After changes:** double-click `fly-update.cmd`.
+* Settings live in `fly.toml` (region, memory, `BETA_MODE`). Secrets are set with `fly secrets set NAME=value`.
+* Fly also takes a daily snapshot of the disk (kept 5 days) on top of PostForge's own backups.

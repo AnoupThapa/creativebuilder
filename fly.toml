@@ -1,0 +1,38 @@
+# Fly.io settings for PostForge.
+# The app name must be unique across Fly.io — if "postforge-anoup" is taken, change it here
+# and use the same name in the setup commands.
+app = "postforge-anoup"
+primary_region = "sin"            # Singapore: closest to Nepal and Australia ("syd" = Sydney)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  DATA_DIR = "/data"
+  PORT = "8080"
+  TRUST_PROXY = "1"
+  BETA_MODE = "true"              # sign-up needs an invite code (private team / friends only)
+
+# permanent disk for the database, uploaded photos and backups
+[[mounts]]
+  source = "postforge_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"     # sleeps when nobody is using it (keeps the bill tiny)...
+  auto_start_machines = true      # ...and wakes up in a few seconds when someone opens the link
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
