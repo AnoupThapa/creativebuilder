@@ -1,0 +1,9 @@
+# never upload these
+node_modules/
+data/
+.env
+*.log
+*.pid
+*.zip
+.DS_Store
+Thumbs.db
