@@ -77,7 +77,7 @@ module.exports = {
   demoVideoUrl: env.DEMO_VIDEO_URL || '',
 
   admin: {
-    email: env.ADMIN_EMAIL || '',
+    email: (env.ADMIN_EMAIL || '').trim().toLowerCase(),
     password: env.ADMIN_PASSWORD || '',
   },
 

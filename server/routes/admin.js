@@ -143,6 +143,30 @@ router.get('/audit', (req, res) => {
 
 router.get('/outbox', (req, res) => res.json(q.all('SELECT * FROM outbox ORDER BY id DESC LIMIT 50')));
 
+/* ---------------- Email sending status + test ---------------- */
+const mailer = require('../mailer');
+router.get('/mail-status', async (req, res) => {
+  if (req.query.check) await mailer.checkConnection();
+  res.json(mailer.mailStatus());
+});
+router.post('/test-email', async (req, res) => {
+  const to = S.email(req.body.to || req.user.email);
+  const ok = await mailer.sendMail(to, `${require('../config').appName} test email`,
+    `This is a test email from ${require('../config').appName}.\n\nIf you can read this, password reset and verification emails will reach your users.`);
+  S.audit(req, 'admin.test_email', { to, ok });
+  res.json({ ok, ...mailer.mailStatus() });
+});
+
+/* Send a password reset link to the user's own email address */
+router.post('/users/:id/send-reset', (req, res) => {
+  const u = q.get('SELECT * FROM users WHERE id = ?', +req.params.id);
+  if (!u) throw new S.HttpError(404, 'User not found.');
+  if (u.status !== 'active') throw new S.HttpError(400, 'Re-activate this user first.');
+  require('./auth').sendResetEmail(u);
+  S.audit(req, 'admin.reset_sent', { target: u.id });
+  res.json({ ok: true, sending: mailer.mailStatus().configured });
+});
+
 /* ---------------- Landing page before/after examples ---------------- */
 const SITE_DIR = require('node:path').join(require('../config').DATA_DIR, 'site');
 const siteUpload = require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 8 * 1024 * 1024, files: 2 } })

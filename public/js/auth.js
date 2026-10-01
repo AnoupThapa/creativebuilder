@@ -101,6 +101,14 @@
   });
 
   /* ---------- RESET ---------- */
+  if (mode === 'reset') {
+    api('/auth/reset-check?token=' + encodeURIComponent(params.get('token') || '')).then(r => {
+      if (r.email) show('ok', 'Choose a new password for <b>' + esc(r.email) + '</b>.');
+    }).catch(err => {
+      show('error', esc(err.message) + ' <a href="/forgot">Get a new link</a>');
+      $('f-reset').querySelector('button[type=submit], button:not([type])')?.setAttribute('disabled', '');
+    });
+  }
   $('f-reset').addEventListener('submit', async e => {
     e.preventDefault();
     const f = e.currentTarget; busy(f, true); show();

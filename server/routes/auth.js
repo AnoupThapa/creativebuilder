@@ -156,24 +156,66 @@ router.post('/auth/resend-verification', S.requireAuth, async (req, res) => {
 });
 
 /* ---------------- Password reset ---------------- */
+/* Emails a fresh reset link to the account's own address. Older unused reset links stop working. */
+function sendResetEmail(user) {
+  q.run("UPDATE tokens SET used_at = ? WHERE type = 'reset' AND user_id = ? AND used_at IS NULL", Date.now(), user.id);
+  const token = S.createToken('reset', { userId: user.id, ttlMs: 3600 * 1000 });
+  const link = `${config.appUrl}/reset?token=${token}`;
+  sendMail(user.email, `Reset your ${config.appName} password`,
+    `Hi ${user.name},\n\nSomeone (hopefully you) asked to reset the password for your ${config.appName} account (${user.email}).\n\n` +
+    `Choose a new password here (the link works for 1 hour, once):\n${link}\n\n` +
+    `If you didn't ask for this, ignore this email - your password stays the same.`);
+  return link;
+}
+
+/* People who were invited to a team but never finished joining have no password yet.
+   If they use "Forgot password", send them a fresh invite link instead. */
+function resendPendingInvite(email) {
+  const now = Date.now();
+  const pending = q.all("SELECT * FROM tokens WHERE type = 'invite' AND used_at IS NULL AND expires_at > ?", now)
+    .map(t => ({ ...t, data: JSON.parse(t.data || '{}') }))
+    .filter(t => String(t.data.email || '').toLowerCase() === email);
+  if (!pending.length) return null;
+  const latest = pending.sort((a, b) => b.created_at - a.created_at)[0];
+  const ws = q.get('SELECT name FROM workspaces WHERE id = ?', latest.data.workspace_id);
+  if (!ws) return null;
+  for (const t of pending) q.run('UPDATE tokens SET used_at = ? WHERE token_hash = ?', now, t.token_hash);
+  const token = S.createToken('invite', { data: latest.data, ttlMs: 7 * 86400000 });
+  const link = `${config.appUrl}/invite?token=${token}`;
+  sendMail(email, `Your invite to ${ws.name} on ${config.appName}`,
+    `Hi,\n\nYou asked to reset your password, but you haven't finished joining "${ws.name}" yet - so there is no password to reset.\n\n` +
+    `Open this link to finish joining and choose your password (valid 7 days):\n${link}`);
+  return link;
+}
+
 router.post('/auth/forgot', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase().slice(0, 254);
-  const user = q.get("SELECT * FROM users WHERE email = ? AND status = 'active'", email);
   let link;
-  if (user) {
-    const token = S.createToken('reset', { userId: user.id, ttlMs: 3600 * 1000 });
-    link = `${config.appUrl}/reset?token=${token}`;
-    await sendMail(user.email, `Reset your ${config.appName} password`,
-      `Hi ${user.name},\n\nReset your password here (valid for 1 hour):\n${link}\n\nIf you didn't ask for this, you can ignore this email.`);
-    S.audit(req, 'auth.reset_requested', {}, user);
+  if (email.includes('@')) {
+    const user = q.get("SELECT * FROM users WHERE lower(email) = ? AND status = 'active'", email);
+    if (user) {
+      link = sendResetEmail(user); // not awaited: the reply time doesn't reveal whether the account exists
+      S.audit(req, 'auth.reset_requested', {}, user);
+    } else if (!q.get('SELECT id FROM users WHERE lower(email) = ?', email)) {
+      link = resendPendingInvite(email);
+      if (link) S.audit(req, 'team.invite_resent', { email });
+    }
   }
   // Same answer whether or not the account exists (no account enumeration)
-  res.json({ ok: true, message: 'If that email has an account, a reset link is on its way.', ...(isDev && link ? { devResetLink: link } : {}) });
+  res.json({ ok: true, message: 'If that email has an account, a reset link is on its way. Check your inbox and Spam folder.', ...(isDev && link ? { devResetLink: link } : {}) });
+});
+
+const RESET_EXPIRED = 'This reset link has expired or was already used. Click "Forgot password" to get a new one.';
+router.get('/auth/reset-check', (req, res) => {
+  const t = S.peekToken('reset', String(req.query.token || ''));
+  if (!t) throw new S.HttpError(400, RESET_EXPIRED);
+  const u = q.get('SELECT email FROM users WHERE id = ?', t.user_id);
+  res.json({ ok: true, email: u?.email || '' });
 });
 
 router.post('/auth/reset', async (req, res) => {
   const t = S.peekToken('reset', String(req.body.token || ''));
-  if (!t) throw new S.HttpError(400, 'This reset link is invalid or has expired.');
+  if (!t) throw new S.HttpError(400, RESET_EXPIRED);
   const user = q.get('SELECT * FROM users WHERE id = ?', t.user_id);
   const problem = S.passwordProblem(String(req.body.password || ''), user.email);
   if (problem) throw new S.HttpError(400, problem);
@@ -186,16 +228,17 @@ router.post('/auth/reset', async (req, res) => {
 });
 
 /* ---------------- Invites ---------------- */
+const INVITE_EXPIRED = 'This invite link has expired or was already used. Go to "Forgot password" and enter your email to get a fresh link, or ask the person who invited you.';
 router.get('/auth/invite', (req, res) => {
   const t = S.peekToken('invite', String(req.query.token || ''));
-  if (!t) throw new S.HttpError(404, 'This invite is invalid or has expired.');
+  if (!t) throw new S.HttpError(404, INVITE_EXPIRED);
   const ws = q.get('SELECT name FROM workspaces WHERE id = ?', t.data.workspace_id);
   res.json({ email: t.data.email, role: t.data.role, workspace: ws?.name || '' });
 });
 
 router.post('/auth/accept-invite', async (req, res) => {
   const t = S.peekToken('invite', String(req.body.token || ''));
-  if (!t) throw new S.HttpError(400, 'This invite is invalid or has expired.');
+  if (!t) throw new S.HttpError(400, INVITE_EXPIRED);
   const name = S.str(req.body.name, { field: 'Name', required: true, max: 80 });
   const password = String(req.body.password || '');
   const problem = S.passwordProblem(password, t.data.email);
@@ -283,4 +326,4 @@ router.post('/me/2fa/disable', S.requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-module.exports = { router, meResponse };
+module.exports = { router, meResponse, sendResetEmail };

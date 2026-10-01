@@ -318,6 +318,8 @@ addColumn('plans', 'daily_limit', 'INTEGER NOT NULL DEFAULT 0');              //
 addColumn('plans', 'price_cents_annual', 'INTEGER NOT NULL DEFAULT 0');       // yearly price (0 = no annual option)
 addColumn('plans', 'stripe_price_id_annual', "TEXT NOT NULL DEFAULT ''");
 addColumn('workspaces', 'billing_interval', "TEXT NOT NULL DEFAULT 'month'"); // month | year
+addColumn('outbox', 'status', "TEXT NOT NULL DEFAULT 'not_sent'");          // sent | failed | not_sent | sending
+addColumn('outbox', 'error', "TEXT NOT NULL DEFAULT ''");
 const metaGet = k => q.get('SELECT value FROM meta WHERE key = ?', k)?.value;
 const metaSet = (k, v) => q.run('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, String(v));
 

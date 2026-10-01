@@ -58,6 +58,7 @@
         <td class="act"><select class="input" data-act style="width:auto;padding:5px 8px">
           <option value="">Action…</option>
           ${u.status === 'active' ? '<option value="suspend">Suspend</option>' : '<option value="activate">Re-activate</option>'}
+          ${u.status === 'active' ? '<option value="sendreset">Email a password reset link</option>' : ''}
           ${u.email_verified ? '' : '<option value="verify">Mark email verified</option>'}
           ${locked ? '<option value="unlock">Unlock</option>' : ''}
           ${u.totp_enabled ? '<option value="reset2fa">Reset 2FA</option>' : ''}
@@ -69,6 +70,13 @@
   $('userRows').addEventListener('change', async e => {
     if (!e.target.matches('[data-act]')) return;
     const tr = e.target.closest('tr'), act = e.target.value; e.target.value = '';
+    if (act === 'sendreset') {
+      try {
+        const r = await api('/admin/users/' + tr.dataset.id + '/send-reset', { method: 'POST' });
+        toast(r.sending ? 'Reset link emailed to the user ✓' : 'Email sending is off — copy the link from Email outbox and send it yourself');
+      } catch (err) { toast(err.message, { error: true }); }
+      return;
+    }
     if (act === 'grant') { location.hash = 'plans'; setTimeout(() => { $('gWs').value = tr.dataset.ws; $('gWs').focus(); }, 50); return; }
     const body = { suspend: { status: 'suspended' }, activate: { status: 'active' }, verify: { email_verified: true }, unlock: { unlock: true },
       reset2fa: { reset2fa: true }, promote: { is_superadmin: true }, demote: { is_superadmin: false } }[act];
@@ -126,10 +134,36 @@
   }
 
   /* Outbox */
+  const MAIL_BADGE = { sent: '<span class="badge badge-green">delivered to email</span>', failed: '<span class="badge badge-red">failed</span>',
+    sending: '<span class="badge">sending…</span>', not_sent: '<span class="badge">not sent – email not set up</span>' };
+  function renderMailStatus(st) {
+    const box = $('mailStatus');
+    if (!st.configured) {
+      box.innerHTML = `<strong>📭 Email sending is OFF.</strong> <span class="small">Password reset and confirmation emails are only saved below, not delivered.
+        Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and MAIL_FROM in Fly.io → Secrets to turn it on.
+        Until then, copy a reset link from below and send it to the person yourself.</span>`;
+      return;
+    }
+    box.innerHTML = `<div class="row wrap" style="gap:8px"><div class="grow">${st.ok === false
+        ? `<strong>⚠️ Email sending is set up but not working.</strong><br><span class="small">${esc(st.error)}</span><br><span class="small muted">Check SMTP_USER / SMTP_PASS in Fly.io → Secrets.</span>`
+        : `<strong>✅ Email sending is ON</strong> <span class="small muted">from ${esc(st.from)} via ${esc(st.host)}</span>`}</div>
+      <input class="input" id="testTo" type="email" placeholder="Send a test to…" style="width:220px">
+      <button class="btn btn-dark btn-sm" id="btnTestMail">Send test email</button></div>`;
+    $('btnTestMail').onclick = async () => {
+      $('btnTestMail').disabled = true;
+      try {
+        const r = await api('/admin/test-email', { method: 'POST', body: { to: $('testTo').value || undefined } });
+        toast(r.ok ? 'Test email sent ✓ — check the inbox (and Spam)' : 'Sending failed: ' + r.error, { error: !r.ok });
+        loadOutbox();
+      } catch (err) { toast(err.message, { error: true }); }
+      $('btnTestMail').disabled = false;
+    };
+  }
   async function loadOutbox() {
+    api('/admin/mail-status?check=1').then(renderMailStatus).catch(() => {});
     const rows = await api('/admin/outbox');
-    $('outboxList').innerHTML = rows.map(m => `<div class="card"><div class="row"><strong class="grow">${esc(m.subject)}</strong><span class="small muted">${ago(m.created_at)}</span></div>
-      <div class="small muted">to ${esc(m.to_email)}</div><pre class="mail">${esc(m.body)}</pre></div>`).join('') || '<p class="muted">No emails yet.</p>';
+    $('outboxList').innerHTML = rows.map(m => `<div class="card"><div class="row wrap"><strong class="grow">${esc(m.subject)}</strong>${MAIL_BADGE[m.status] || ''}<span class="small muted">${ago(m.created_at)}</span></div>
+      <div class="small muted">to ${esc(m.to_email)}${m.error ? ' · <span style="color:#c0392b">' + esc(m.error) + '</span>' : ''}</div><pre class="mail">${esc(m.body)}</pre></div>`).join('') || '<p class="muted">No emails yet.</p>';
   }
 
   /* Support inbox */

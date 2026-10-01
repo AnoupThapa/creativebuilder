@@ -170,7 +170,8 @@ pre.mail{white-space:pre-wrap;font-size:12px;background:var(--paper);padding:10p
     </section>
 
     <section class="view hidden" id="view-outbox">
-      <p class="muted small" style="margin-bottom:12px">Every email the app sends is recorded here (useful before SMTP is configured).</p>
+      <div class="card" id="mailStatus" style="margin-bottom:12px"><span class="muted small">Checking email sending…</span></div>
+      <p class="muted small" style="margin-bottom:12px">Every email the app sends (sign-up confirmation, password reset, invites) is recorded here with whether it was delivered.</p>
       <div id="outboxList"></div>
     </section>
   </main>
