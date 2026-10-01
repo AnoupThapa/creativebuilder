@@ -82,6 +82,14 @@ async function runBackup(reason = 'scheduled') {
       const dst = path.join(mediaStore, String(m.workspace_id), m.id);
       if (fs.existsSync(src) && !fs.existsSync(dst)) { copyOrLink(src, dst); fresh.push({ src: dst, key: `${m.workspace_id}/${m.id}` }); }
     }
+    // files waiting to be posted to social media
+    const socialDir = path.join(config.DATA_DIR, 'social');
+    if (fs.existsSync(socialDir)) {
+      for (const f of fs.readdirSync(socialDir)) {
+        const dst = path.join(mediaStore, '_social', f);
+        if (!fs.existsSync(dst)) { copyOrLink(path.join(socialDir, f), dst); fresh.push({ src: dst, key: `_social/${f}` }); }
+      }
+    }
     const manifest = {
       created_at: Date.now(), reason, db_gz_bytes: gz.length, db_sha256: sha(gz),
       counts: {
@@ -145,7 +153,7 @@ function restoreInto(backup, dataDir) {
   if (fs.existsSync(mediaStore)) {
     for (const ws of fs.readdirSync(mediaStore)) {
       for (const f of fs.readdirSync(path.join(mediaStore, ws))) {
-        const dst = path.join(dataDir, 'uploads', ws, f);
+        const dst = ws === '_social' ? path.join(dataDir, 'social', f) : path.join(dataDir, 'uploads', ws, f);
         if (!fs.existsSync(dst)) { fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.copyFileSync(path.join(mediaStore, ws, f), dst); restored++; }
       }
     }

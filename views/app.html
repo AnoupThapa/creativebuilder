@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/fonts.css">
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/app.css">
+<link rel="stylesheet" href="/css/social.css">
 </head>
 <body>
 <div class="shell">
@@ -17,6 +18,7 @@
     <div class="ws-name" id="wsName">—</div>
     <nav class="nav" id="nav">
       <a href="#designs" data-view="designs"><span>🖼</span>Designs</a>
+      <a href="#social" data-view="social"><span>📣</span>Social posts</a>
       <a href="#brand" data-view="brand"><span>🎨</span>Brand kits</a>
       <a href="#team" data-view="team"><span>👥</span>Team</a>
       <a href="#billing" data-view="billing"><span>💳</span>Plan &amp; billing</a>
@@ -59,6 +61,23 @@
         <input class="input" id="designSearch" placeholder="Search designs…" style="max-width:240px">
       </div>
       <div class="design-grid" id="designGrid"></div>
+    </section>
+
+    <!-- SOCIAL -->
+    <section class="view hidden" id="view-social">
+      <div id="socDemo"></div>
+      <div class="card">
+        <div class="row wrap"><div class="grow" style="min-width:240px"><h3>Connected accounts</h3>
+          <p class="muted small">Facebook Pages and Instagram Business or Creator accounts you can post to. Connecting opens Facebook’s own login window — PostForge never sees your password.</p></div>
+          <button class="btn btn-primary btn-sm" id="socConnect">＋ Connect Facebook &amp; Instagram</button></div>
+        <div id="socAccounts" style="margin-top:12px"></div>
+      </div>
+      <div class="row wrap" style="margin:18px 0 12px">
+        <div class="tabs" id="socTabs"><button class="active" data-f="scheduled">Scheduled</button><button data-f="done">Posted &amp; history</button></div>
+        <span class="grow"></span>
+        <span class="small muted">To post, open a design and click <b>📣 Post</b>.</span>
+      </div>
+      <div id="socPosts"></div>
     </section>
 
     <!-- BRAND KITS -->
@@ -210,6 +229,8 @@
 </div>
 
 <script src="/js/api.js"></script>
+<script src="/js/social.js"></script>
+<script src="/js/app-social.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/feedback.js"></script>
 <script src="/js/telemetry.js"></script>

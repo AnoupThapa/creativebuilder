@@ -1,0 +1,54 @@
+/* Social media publishing — shared by the dashboard and the editor */
+.soc-ico{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:#fff;font:800 13px/1 Arial,sans-serif;flex:none;vertical-align:middle}
+.soc-fb{background:#1877f2}
+.soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0,#fd5949 45%,#d6249f 60%,#285aeb 90%)}
+.soc-name{margin-left:8px;font-weight:600}
+.soc-acct{display:flex;align-items:center;gap:0;padding:10px 12px;border:1px solid #e6e3dc;border-radius:10px;margin-bottom:8px;background:#fff}
+.soc-acct .grow{flex:1;min-width:0;display:flex;align-items:center}
+.soc-acct.err{border-color:#f3b4ab;background:#fff6f4}
+.soc-acct input[type=checkbox]{width:18px;height:18px;margin-right:10px;accent-color:#ff6b4a;flex:none}
+.soc-pick{cursor:pointer}
+.soc-err{font-size:12px;color:#c0392b;margin-top:4px}
+.soc-demo{background:#fff8e1;border:1px solid #ffe08a;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;color:#5c4a00}
+.soc-post{display:flex;gap:14px;padding:12px;border:1px solid #e6e3dc;border-radius:12px;background:#fff;margin-bottom:10px;align-items:flex-start}
+.soc-post .thumb{width:84px;height:84px;border-radius:8px;object-fit:cover;background:#f2efe9;flex:none}
+.soc-post .body{flex:1;min-width:0}
+.soc-post .cap{font-size:13.5px;color:#333;white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;margin:4px 0 6px}
+.soc-post .meta{font-size:12px;color:#7a7889}
+.soc-post .targets{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.soc-post .tgt{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid #eee;border-radius:50px;padding:3px 9px 3px 3px;background:#fafafa}
+.soc-post .tgt .soc-ico{width:18px;height:18px;font-size:11px;border-radius:50%}
+.soc-post .tgt-err{font-size:11.5px;color:#c0392b;margin-top:4px}
+.soc-post .acts{display:flex;flex-direction:column;gap:6px;flex:none}
+.soc-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:50px;font-size:11px;font-weight:700;background:#efede8;color:#555}
+.soc-badge.ok{background:#e3f6ec;color:#1e8e4e}.soc-badge.bad{background:#fde8e5;color:#c0392b}.soc-badge.busy{background:#fff1ed;color:#e0502f}
+@media(max-width:640px){.soc-post{flex-wrap:wrap}.soc-post .acts{flex-direction:row;width:100%}}
+
+/* editor: post modal */
+.pm-grid{display:grid;grid-template-columns:200px 1fr;gap:18px}
+.pm-prev{width:100%;border-radius:10px;background:#f2efe9;display:block;max-height:260px;object-fit:contain}
+.pm-info{font-size:12px;color:#7a7889;margin-top:6px}
+.pm-sec{margin-bottom:14px}
+.pm-sec > label,.pm-lbl{display:block;font-size:12px;font-weight:700;color:#3a3a4a;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.pm-cap{width:100%;min-height:110px;border:1px solid #dcd9e6;border-radius:10px;padding:10px;font:inherit;font-size:14px;resize:vertical;box-sizing:border-box}
+.pm-count{font-size:11.5px;color:#9a98a8;text-align:right;margin-top:2px}
+.pm-seg{display:flex;gap:6px;flex-wrap:wrap}
+.pm-seg label{display:flex;align-items:center;gap:6px;border:1px solid #dcd9e6;border-radius:50px;padding:6px 12px;font-size:13px;cursor:pointer;background:#fff}
+.pm-seg input{accent-color:#ff6b4a}
+.pm-when input[type=datetime-local]{border:1px solid #dcd9e6;border-radius:8px;padding:7px 9px;font:inherit;margin-top:8px}
+.pm-warn{font-size:12.5px;color:#a15c00;background:#fff6e5;border-radius:8px;padding:8px 10px;margin-top:8px}
+.pm-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:6px;flex-wrap:wrap}
+.pm-foot .note{font-size:12px;color:#9a98a8;margin-right:auto}
+.pm-result{padding:6px 0}
+.pm-result .row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0eee9;font-size:14px}
+.pm-result .row a{margin-left:auto;font-size:13px}
+.modal-wrap#modalPost .modal{width:min(760px,96vw);max-height:92vh}
+@media(max-width:640px){.pm-grid{grid-template-columns:1fr}.pm-prev{max-height:200px}}
+.btn-post{background:#1d1b2e !important}
+.hidden{display:none!important}
+#modalPost .muted,.soc-name .muted{color:#7a7889;font-weight:500}
+/* the editor styles plain <label>s as small caps headings — undo that inside the post dialog */
+#modalPost label.soc-acct{display:flex;flex-direction:row;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;font-weight:500;color:#1d1b2e;margin-bottom:8px}
+#modalPost .pm-seg label{text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:#1d1b2e;margin:0}
+#modalPost input[type=checkbox],#modalPost input[type=radio]{width:auto;height:auto;margin:0;padding:0}
+#modalPost .soc-acct input[type=checkbox]{width:18px;height:18px;margin-right:10px}

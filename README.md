@@ -283,3 +283,25 @@ Fly.io needs a card after its short free trial and bills by use.
 * **After changes:** double-click `fly-update.cmd`.
 * Settings live in `fly.toml` (region, memory, `BETA_MODE`). Secrets are set with `fly secrets set NAME=value`.
 * Fly also takes a daily snapshot of the disk (kept 5 days) on top of PostForge's own backups.
+
+## 13. Social media posting (Facebook Pages + Instagram)
+
+Open a design → **📣 Post** → tick accounts → caption → **Post now** or **Schedule**. Scheduled posts, history,
+retries and connected accounts live under **Social posts** in the dashboard. Each post counts as one download.
+
+* **Connecting** uses Meta's own login pop-up (OAuth). People type their password on facebook.com — PostForge only
+  receives Page tokens for the Pages/Instagram accounts they tick, stored encrypted.
+* **Demo mode** (no `META_APP_ID`): connecting adds sample accounts and posts are simulated, so the team can try the flow.
+* **Real posting:** create a Meta app (use cases *Manage everything on your Page* + *Manage messaging & content on
+  Instagram*), add the redirect URI `https://YOUR-SITE/api/social/meta/callback` under Facebook Login for Business →
+  Settings, set the Privacy Policy URL to `https://YOUR-SITE/privacy`, then set `META_APP_ID` / `META_APP_SECRET`
+  (on Fly.io: double-click `fly-connect-meta.cmd`). Permissions used: pages_show_list, pages_read_engagement,
+  pages_manage_posts, instagram_basic, instagram_content_publish, business_management.
+* While the Meta app is unpublished/standard access, only people with a role on the app (you, your team) can connect
+  and their posts may only be visible to app roles. To let customers connect their own Pages, publish the app and
+  complete Meta **App Review** + **Business Verification** for the permissions above.
+* **Instagram** needs PostForge online (Instagram downloads the post from `APP_URL/pub/...`), Business/Creator
+  accounts linked to a Page, feed images between 4:5 and 1.91:1 (taller designs go to Stories; videos become Reels).
+* Scheduled posts are published by the server every 30 seconds — on Fly.io the machine is kept always on for this.
+* **Going back to v1.0:** the version before this feature is saved as Git tag `v1.0-before-social` and as zips in
+  `_backups/`. The new database tables are additive, so v1.0 runs fine on the same data.

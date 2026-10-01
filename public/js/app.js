@@ -11,7 +11,7 @@
 
   const RANK = { viewer: 0, designer: 1, admin: 2, owner: 3 };
   const can = role => RANK[me.user.role] >= RANK[role];
-  const TITLES = { designs: 'Designs', brand: 'Brand kits', team: 'Team', billing: 'Plan & billing', account: 'Account & security' };
+  const TITLES = { designs: 'Designs', social: 'Social posts', brand: 'Brand kits', team: 'Team', billing: 'Plan & billing', account: 'Account & security' };
 
   /* ================= Shell ================= */
   async function refreshMe() {
@@ -63,7 +63,7 @@
     document.querySelectorAll('#nav a[data-view]').forEach(a => a.classList.toggle('active', a.dataset.view === view));
     $('viewTitle').textContent = TITLES[view];
     $('sidebar').classList.remove('open');
-    ({ designs: loadDesigns, brand: loadKits, team: loadTeam, billing: loadBilling, account: loadAccount })[view]();
+    ({ designs: loadDesigns, social: () => window.PFSocialView.load(me), brand: loadKits, team: loadTeam, billing: loadBilling, account: loadAccount })[view]();
   }
 
   $('menuBtn').addEventListener('click', () => $('sidebar').classList.toggle('open'));

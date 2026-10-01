@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>PostForge — Connect (demo)</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:#f0f2f5}
+.box{max-width:400px;background:#fff;border-radius:14px;padding:26px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.fb{display:flex;align-items:center;gap:10px;font-weight:800;color:#1877f2;font-size:18px;margin-bottom:14px}
+.fb span{width:32px;height:32px;border-radius:50%;background:#1877f2;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
+.note{background:#fff8e1;border:1px solid #ffe08a;border-radius:10px;padding:10px 12px;font-size:13px;margin:12px 0}
+ul{margin:10px 0 16px 18px;font-size:14px;color:var(--slate)}
+.row{display:flex;gap:8px;justify-content:flex-end}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="fb"><span>f</span>Continue with Facebook</div>
+  <p><b>PostForge</b> would like to:</p>
+  <ul>
+    <li>See your Facebook Pages and their linked Instagram accounts</li>
+    <li>Publish posts, photos and videos to them</li>
+  </ul>
+  <div class="note"><b>Demo mode.</b> Meta isn't set up on this server yet, so this connects a sample Page and Instagram account. Nothing is posted to real Facebook or Instagram. With Meta set up, this window shows Facebook's real login page instead.</div>
+  <div class="row">
+    <button class="btn btn-ghost" id="cancel">Cancel</button>
+    <button class="btn btn-primary" id="go">Connect demo accounts</button>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/social-demo.js"></script>
+</body>
+</html>

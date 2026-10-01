@@ -16,6 +16,7 @@ const billing = require('./routes/billing');
 const admin = require('./routes/admin');
 const account = require('./routes/account');
 const publicRoutes = require('./routes/public');
+const socialRoutes = require('./routes/social');
 
 const app = express();
 app.disable('x-powered-by');
@@ -82,6 +83,7 @@ api.use(designs.router);
 api.use(media.router);
 api.use(workspace.router);
 api.use(account.router);
+api.use(socialRoutes.router);
 api.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use('/api', api);
 
@@ -123,11 +125,15 @@ app.get('/robots.txt', (req, res) => res.type('text/plain').send(
 app.get('/sitemap.xml', (req, res) => {
   const u = config.appUrl.replace(/\/$/, ''), d = new Date().toISOString().slice(0, 10);
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    [['/', '1.0'], ['/help', '0.6'], ['/signup', '0.8'], ['/login', '0.3']].map(([p, pr]) => `  <url><loc>${u}${p}</loc><lastmod>${d}</lastmod><priority>${pr}</priority></url>`).join('\n') + '\n</urlset>\n');
+    [['/', '1.0'], ['/help', '0.6'], ['/privacy', '0.3'], ['/signup', '0.8'], ['/login', '0.3']].map(([p, pr]) => `  <url><loc>${u}${p}</loc><lastmod>${d}</lastmod><priority>${pr}</priority></url>`).join('\n') + '\n</urlset>\n');
 });
 app.use('/site', express.static(path.join(config.DATA_DIR, 'site'), { index: false, maxAge: '1d' }));
 for (const p of ['/login', '/signup', '/forgot', '/reset', '/invite']) app.get(p, page('auth.html'));
 app.get('/help', page('help.html'));
+app.get('/privacy', page('privacy.html'));
+app.get('/social/done', page('social-done.html'));
+app.get('/social/connect-demo', S.pageAuth(), page('social-demo.html'));
+app.get('/pub/:file', socialRoutes.servePublic);
 app.get('/app', S.pageAuth(), page('app.html'));
 app.get('/editor', S.pageAuth(), page('editor.html'));
 app.get('/admin', S.pageAuth({ superadmin: true }), page('admin.html'));
@@ -208,6 +214,7 @@ if (require.main === module) {
   process.on('unhandledRejection', e => console.error('[unhandled]', e));
   require('./errors').init();
   require('./backup').schedule();
+  require('./social').startScheduler();
   ensureAdmin().then(() => {
     app.listen(config.port, () => {
       console.log(`${config.appName} running at ${config.appUrl}  (${config.isProd ? 'production' : 'development'})`);

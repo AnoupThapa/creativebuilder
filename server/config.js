@@ -61,6 +61,15 @@ module.exports = {
     email: env.SUPPORT_EMAIL || '',              // where support requests are sent
     whatsapp: (env.SUPPORT_WHATSAPP || '').replace(/[^\d]/g, ''), // e.g. 9779800000000 (country code, no +)
   },
+  meta: {                                       // Facebook + Instagram publishing (Meta app)
+    appId: env.META_APP_ID || '',
+    appSecret: env.META_APP_SECRET || '',
+    graphVersion: env.META_GRAPH_VERSION || 'v25.0',
+    graphUrl: (env.META_GRAPH_URL || 'https://graph.facebook.com').replace(/\/$/, ''),
+    videoUrl: (env.META_VIDEO_URL || env.META_GRAPH_URL || 'https://graph-video.facebook.com').replace(/\/$/, ''),
+    dialogUrl: (env.META_DIALOG_URL || 'https://www.facebook.com').replace(/\/$/, ''),
+    configId: env.META_LOGIN_CONFIG_ID || '',     // optional: "Facebook Login for Business" configuration ID
+  },
   betaMode: env.BETA_MODE === 'true',           // sign-up needs an invite code
   requireAdmin2fa: env.REQUIRE_ADMIN_2FA !== 'false',
   sentryDsn: env.SENTRY_DSN || '',

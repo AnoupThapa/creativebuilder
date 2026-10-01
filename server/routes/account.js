@@ -40,6 +40,8 @@ router.get('/me/export', async (req, res) => {
     designs: designs.map(d => ({ id: d.id, name: d.name, visibility: d.visibility, created_at: d.created_at, updated_at: d.updated_at, owner_id: d.owner_id, data: JSON.parse(d.data || '{}') })),
     brand_kits: q.all('SELECT * FROM brand_kits WHERE workspace_id = ?', ws.id),
     downloads: q.all('SELECT platform, kind, quality, plan_code, design_id, created_at FROM exports WHERE ' + (isOwner ? 'workspace_id = ?' : 'user_id = ?') + ' ORDER BY id', isOwner ? ws.id : u.id),
+    social_posts: q.all('SELECT id, kind, caption, status, scheduled_at, published_at, created_at FROM social_posts WHERE ' + (isOwner ? 'workspace_id = ?' : 'user_id = ?') + ' ORDER BY id', isOwner ? ws.id : u.id),
+    social_accounts: isOwner ? q.all('SELECT platform, name, username, created_at FROM social_accounts WHERE workspace_id = ?', ws.id) : undefined,
     sessions: q.all('SELECT created_at, last_seen, ip, user_agent FROM sessions WHERE user_id = ?', u.id),
     activity_log: q.all('SELECT action, detail, ip, created_at FROM audit_log WHERE user_id = ? ORDER BY id', u.id),
     files: media.map(m => ({ id: m.id, filename: m.filename, type: m.mime, size: m.size, uploaded_at: m.created_at, zip_path: `files/${m.id}-${m.filename}` })),
@@ -81,6 +83,7 @@ router.post('/me/delete', async (req, res) => {
       catch (e) { stripeNote = e.message; }
     }
     const media = q.all('SELECT * FROM media WHERE workspace_id = ?', ws.id);
+    const socialPosts = q.all('SELECT * FROM social_posts WHERE workspace_id = ?', ws.id);
     tx(() => {
       const ids = q.all('SELECT id FROM users WHERE workspace_id = ?', ws.id).map(r => r.id);
       for (const id of ids) {
@@ -93,6 +96,10 @@ router.post('/me/delete', async (req, res) => {
       q.run('DELETE FROM designs WHERE workspace_id = ?', ws.id);
       q.run('DELETE FROM brand_kits WHERE workspace_id = ?', ws.id);
       q.run('DELETE FROM media WHERE workspace_id = ?', ws.id);
+      q.run('DELETE FROM social_post_targets WHERE post_id IN (SELECT id FROM social_posts WHERE workspace_id = ?)', ws.id);
+      q.run('DELETE FROM social_posts WHERE workspace_id = ?', ws.id);
+      q.run('DELETE FROM social_accounts WHERE workspace_id = ?', ws.id);
+      q.run('DELETE FROM oauth_states WHERE workspace_id = ?', ws.id);
       q.run('UPDATE workspaces SET owner_id = NULL WHERE id = ?', ws.id);
       q.run('DELETE FROM users WHERE workspace_id = ?', ws.id);
       q.run('DELETE FROM workspaces WHERE id = ?', ws.id);
@@ -100,6 +107,7 @@ router.post('/me/delete', async (req, res) => {
         JSON.stringify({ workspace: ws.id, members: ids.length, stripe_error: stripeNote }), S.clientIp(req), Date.now());
     });
     deleteMediaFiles(media);
+    for (const p of socialPosts) require('../social').deletePostFiles(p);
     try { fs.rmSync(path.join(config.UPLOAD_DIR, String(ws.id)), { recursive: true, force: true }); } catch { /* ignore */ }
   } else {
     const ownerId = ws.owner_id;
@@ -112,6 +120,9 @@ router.post('/me/delete', async (req, res) => {
       q.run('DELETE FROM sessions WHERE user_id = ?', u.id);
       q.run('DELETE FROM tokens WHERE user_id = ?', u.id);
       q.run('DELETE FROM exports WHERE user_id = ?', u.id);
+      q.run('UPDATE social_posts SET user_id = ? WHERE user_id = ?', ownerId, u.id);
+      q.run('UPDATE social_accounts SET connected_by = ? WHERE connected_by = ?', ownerId, u.id);
+      q.run('DELETE FROM oauth_states WHERE user_id = ?', u.id);
       q.run('DELETE FROM users WHERE id = ?', u.id);
       q.run('INSERT INTO audit_log (workspace_id, action, detail, ip, created_at) VALUES (?,?,?,?,?)', ws.id, 'account.member_deleted',
         JSON.stringify({ user: u.id, private_designs_deleted: privateDesigns.length }), S.clientIp(req), Date.now());

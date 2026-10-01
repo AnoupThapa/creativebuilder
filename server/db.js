@@ -245,6 +245,60 @@ CREATE TABLE IF NOT EXISTS page_views (
   visitors INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (day, path, referrer)
 );
+CREATE TABLE IF NOT EXISTS social_accounts (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  platform     TEXT NOT NULL,              -- facebook | instagram
+  external_id  TEXT NOT NULL,              -- Facebook Page id / Instagram account id
+  name         TEXT NOT NULL DEFAULT '',
+  username     TEXT NOT NULL DEFAULT '',
+  picture      TEXT NOT NULL DEFAULT '',
+  parent_id    TEXT NOT NULL DEFAULT '',   -- for Instagram: the linked Facebook Page id
+  token_enc    TEXT NOT NULL DEFAULT '',   -- encrypted Page access token
+  demo         INTEGER NOT NULL DEFAULT 0,
+  status       TEXT NOT NULL DEFAULT 'active',
+  last_error   TEXT NOT NULL DEFAULT '',
+  connected_by INTEGER,
+  created_at   INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL,
+  UNIQUE (workspace_id, platform, external_id)
+);
+CREATE TABLE IF NOT EXISTS social_posts (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL,
+  user_id      INTEGER,
+  design_id    TEXT,
+  design_name  TEXT NOT NULL DEFAULT '',
+  kind         TEXT NOT NULL,              -- image | video
+  file         TEXT NOT NULL,              -- random file name in DATA_DIR/social
+  mime         TEXT NOT NULL,
+  width        INTEGER NOT NULL DEFAULT 0,
+  height       INTEGER NOT NULL DEFAULT 0,
+  caption      TEXT NOT NULL DEFAULT '',
+  ig_placement TEXT NOT NULL DEFAULT 'feed',
+  scheduled_at INTEGER,
+  status       TEXT NOT NULL DEFAULT 'scheduled', -- scheduled | publishing | published | partial | failed | cancelled
+  created_at   INTEGER NOT NULL,
+  published_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_social_posts_due ON social_posts(status, scheduled_at);
+CREATE TABLE IF NOT EXISTS social_post_targets (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id    INTEGER NOT NULL,
+  account_id INTEGER NOT NULL,
+  platform   TEXT NOT NULL,
+  status     TEXT NOT NULL DEFAULT 'pending',   -- pending | publishing | published | failed
+  remote_id  TEXT NOT NULL DEFAULT '',
+  permalink  TEXT NOT NULL DEFAULT '',
+  error      TEXT NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS oauth_states (
+  state        TEXT PRIMARY KEY,
+  user_id      INTEGER NOT NULL,
+  workspace_id INTEGER NOT NULL,
+  created_at   INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS site_examples (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   industry    TEXT NOT NULL DEFAULT '',

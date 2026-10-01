@@ -74,22 +74,9 @@ router.get('/usage', (req, res) => {
   res.json(usageFor(req.user, plan));
 });
 
-router.post('/exports', (req, res) => {
-  const u = req.user;
-  if (u.role === 'viewer') throw new S.HttpError(403, 'Viewers can look at designs but not download them.');
-  if (config.security.requireVerifiedEmailToExport && !u.email_verified)
-    throw new S.HttpError(403, 'Please confirm your email address before downloading.', { code: 'verify_email' });
-
-  const items = Array.isArray(req.body.items) ? req.body.items : [];
-  if (!items.length || items.length > 20) throw new S.HttpError(400, 'Choose between 1 and 20 sizes.');
-  for (const it of items) {
-    if (!PLATFORM_KEYS.has(it?.platform)) throw new S.HttpError(400, 'Unknown platform size.');
-    if (!['image', 'video'].includes(it.kind)) throw new S.HttpError(400, 'Unknown export type.');
-  }
-  const quality = parseInt(req.body.quality, 10) || 1;
-  const designId = req.body.designId ? String(req.body.designId).slice(0, 40) : null;
-
-  const result = tx(() => {
+/* Checks the plan + allowance and records the downloads. Also used when posting to social media. */
+function authoriseExports(u, items, quality, designId) {
+  return tx(() => {
     const ws = wsOf(u);
     const plan = effectivePlan(ws);
     if (quality < 1 || quality > plan.max_quality)
@@ -114,6 +101,24 @@ router.post('/exports', (req, res) => {
     }
     return { watermark: !!plan.watermark, usage: usageFor(u, plan) };
   });
+}
+
+router.post('/exports', (req, res) => {
+  const u = req.user;
+  if (u.role === 'viewer') throw new S.HttpError(403, 'Viewers can look at designs but not download them.');
+  if (config.security.requireVerifiedEmailToExport && !u.email_verified)
+    throw new S.HttpError(403, 'Please confirm your email address before downloading.', { code: 'verify_email' });
+
+  const items = Array.isArray(req.body.items) ? req.body.items : [];
+  if (!items.length || items.length > 20) throw new S.HttpError(400, 'Choose between 1 and 20 sizes.');
+  for (const it of items) {
+    if (!PLATFORM_KEYS.has(it?.platform)) throw new S.HttpError(400, 'Unknown platform size.');
+    if (!['image', 'video'].includes(it.kind)) throw new S.HttpError(400, 'Unknown export type.');
+  }
+  const quality = parseInt(req.body.quality, 10) || 1;
+  const designId = req.body.designId ? String(req.body.designId).slice(0, 40) : null;
+
+  const result = authoriseExports(u, items, quality, designId);
   S.audit(req, 'export.authorised', { count: items.length, quality, designId });
   res.json({ ok: true, ...result });
 });
@@ -212,4 +217,4 @@ router.delete('/team/:id', S.requireRole('admin'), (req, res) => {
   res.json({ ok: true });
 });
 
-module.exports = { router };
+module.exports = { router, authoriseExports, PLATFORM_KEYS };
