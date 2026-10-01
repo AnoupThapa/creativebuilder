@@ -11,10 +11,29 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     concurrency: deploy-group
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      # one server (the database lives on its permanent disk), settings from fly.toml
-      - run: flyctl deploy --remote-only --ha=false
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # PostForge keeps its database and photos on a permanent disk in Singapore
+      - name: Make sure the permanent disk exists
+        run: |
+          if flyctl volumes list --json | jq -e '.[] | select(.name=="postforge_data" and .region=="sin")' > /dev/null; then
+            echo "Disk already exists."
+          else
+            flyctl volumes create postforge_data --region sin --size 1 --yes
+          fi
+
+      # Old servers created by the Fly.io website (other region / no disk) can't run PostForge correctly
+      - name: Remove old servers without the disk
+        run: |
+          for id in $(flyctl machine list --json | jq -r '.[] | select(.region != "sin" or ((.config.mounts // []) | length) == 0) | .id'); do
+            echo "Removing old server $id"
+            flyctl machine destroy "$id" --force
+          done
+
+      # one server, settings from fly.toml
+      - name: Build and start PostForge
+        run: flyctl deploy --remote-only --ha=false
