@@ -18,6 +18,7 @@ primary_region = "sin"            # Singapore: closest to Nepal and Australia ("
 [[mounts]]
   source = "postforge_data"
   destination = "/data"
+  initial_size = "1gb"            # created automatically on the first publish
 
 [http_service]
   internal_port = 8080
