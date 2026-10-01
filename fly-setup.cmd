@@ -37,7 +37,7 @@ if not %errorlevel%==0 (
 :signedin
 
 rem ---- 3. app name ----------------------------------------------------------
-set "APP=postforge-anoup"
+set "APP=creativebuilder"
 echo.
 echo  Your site address will be https://NAME.fly.dev
 set /p "APPIN=  App name (press Enter for %APP%): "

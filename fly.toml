@@ -1,7 +1,7 @@
 # Fly.io settings for PostForge.
 # The app name must be unique across Fly.io — if "postforge-anoup" is taken, change it here
 # and use the same name in the setup commands.
-app = "postforge-anoup"
+app = "creativebuilder"
 primary_region = "sin"            # Singapore: closest to Nepal and Australia ("syd" = Sydney)
 
 [build]
