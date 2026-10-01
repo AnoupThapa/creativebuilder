@@ -145,7 +145,7 @@
       return;
     }
     box.innerHTML = `<div class="row wrap" style="gap:8px"><div class="grow">${st.ok === false
-        ? `<strong>⚠️ Email sending is set up but not working.</strong><br><span class="small">${esc(st.error)}</span><br><span class="small muted">Check SMTP_USER / SMTP_PASS in Fly.io → Secrets.</span>`
+        ? `<strong>⚠️ Email sending is set up but not working.</strong><br><span class="small">${esc(st.error)}</span><br><span class="small"><b>How to fix:</b> ${esc(st.hint || 'Check the SMTP_* settings in Fly.io → Secrets.')}</span>`
         : `<strong>✅ Email sending is ON</strong> <span class="small muted">from ${esc(st.from)} via ${esc(st.host)}</span>`}</div>
       <input class="input" id="testTo" type="email" placeholder="Send a test to…" style="width:220px">
       <button class="btn btn-dark btn-sm" id="btnTestMail">Send test email</button></div>`;

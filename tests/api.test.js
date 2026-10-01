@@ -565,3 +565,25 @@ test('landing page: SEO tags, sitemap, robots, examples', async () => {
     assert.equal((await fetch(base + u)).status, 200, u);
   }
 });
+
+test('login / sign-up still work when the browser holds an older session (no "security token" error)', async () => {
+  const a = client();
+  let r = await a.post('/api/auth/signup', { name: 'Tab One', email: 'tab.one@example.com', password: 'TabOnePass2026', acceptTerms: true });
+  assert.equal(r.status, 201);
+  // a fresh page has no token yet, but the cookie is still there
+  const cookie = a.cookie;
+  const raw = (u, b) => fetch(base + u, { method: 'POST', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(b) });
+  r = await raw('/api/auth/login', { email: 'tab.one@example.com', password: 'TabOnePass2026' });
+  assert.equal(r.status, 200, 'login works without a token');
+  r = await raw('/api/auth/signup', { name: 'Tab Two', email: 'tab.two@example.com', password: 'TabTwoPass2026', acceptTerms: true });
+  assert.equal(r.status, 201, 'creating another account works without a token');
+  r = await raw('/api/auth/forgot', { email: 'tab.one@example.com' });
+  assert.equal(r.status, 200);
+  // ordinary actions still need the token
+  r = await raw('/api/me/password', { current: 'x', password: 'y' });
+  assert.equal(r.status, 403);
+  assert.equal((await r.json()).code, 'csrf');
+  // and a cross-site form is still blocked
+  r = await fetch(base + '/api/auth/login', { method: 'POST', headers: { cookie, origin: 'https://evil.example', 'content-type': 'application/json' }, body: '{}' });
+  assert.equal(r.status, 403);
+});

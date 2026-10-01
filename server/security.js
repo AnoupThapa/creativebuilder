@@ -197,6 +197,10 @@ function loadSession(req, res, next) {
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
 // harmless, write-only telemetry (still same-origin checked) — sent with navigator.sendBeacon
 const CSRF_EXEMPT = new Set(['/client-error', '/pv']);
+// Log-in / sign-up style forms are used *before* the page has a token. If the browser still holds an
+// older session (e.g. someone else logged in on this computer), these must still work. They are
+// protected by the same-origin check above, and they replace the old session anyway.
+const AUTH_ENTRY = new Set(['/auth/login', '/auth/signup', '/auth/forgot', '/auth/reset', '/auth/accept-invite']);
 function csrfProtect(req, res, next) {
   if (SAFE.has(req.method)) return next();
   if (req.path === '/billing/webhook') return next(); // verified by Stripe signature instead
@@ -206,11 +210,11 @@ function csrfProtect(req, res, next) {
     try { host = new URL(origin).host; } catch { host = null; }
     if (host !== req.get('host')) return next(new HttpError(403, 'Cross-site request blocked.'));
   }
-  if (req.session && !CSRF_EXEMPT.has(req.path)) {
+  if (req.session && !CSRF_EXEMPT.has(req.path) && !AUTH_ENTRY.has(req.path)) {
     const sent = req.get('x-csrf-token') || '';
     const ok = sent.length === req.session.csrf.length &&
       crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(req.session.csrf));
-    if (!ok) return next(new HttpError(403, 'Security token missing or expired — refresh the page.'));
+    if (!ok) return next(new HttpError(403, 'Your session changed (for example you logged in or out in another tab). Please refresh the page and try again.', { code: 'csrf' }));
   }
   next();
 }

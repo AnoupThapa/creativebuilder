@@ -60,9 +60,24 @@ async function sendMail(to, subject, text) {
   }
 }
 
+// Plain-English advice for the most common provider errors (shown in Platform admin → Email outbox)
+function mailHint(err) {
+  const e = String(err || '');
+  if (!e) return '';
+  if (/unauthori[sz]ed ip|\b525\b/i.test(e))
+    return 'Your email provider is blocking the server\'s internet address. In Brevo: click your name (top right) → Security → Authorised IPs → turn OFF "Block unknown IP addresses" (or authorise the address shown in the alert email Brevo sent you).';
+  if (/\b535\b|invalid login|username and password not accepted|authentication failed/i.test(e))
+    return 'The email login was refused. Check SMTP_USER and SMTP_PASS in Fly.io → Secrets (for Brevo use the SMTP key, for Gmail an App Password).';
+  if (/sender|from address|\b553\b|not verified|\b550\b/i.test(e))
+    return 'The sender address was refused. MAIL_FROM must be exactly the sender address you verified with your email provider.';
+  if (/timeout|timed out|econnrefused|enotfound|etimedout|greeting/i.test(e))
+    return 'Could not reach the email server. Check SMTP_HOST (e.g. smtp-relay.brevo.com) and SMTP_PORT (587).';
+  return 'Check the SMTP_* settings in Fly.io → Secrets.';
+}
+
 function mailStatus() {
-  return { configured: status.configured, ok: status.ok, error: status.error, from: transport ? fromAddress() : '',
+  return { configured: status.configured, ok: status.ok, error: status.error, hint: mailHint(status.error), from: transport ? fromAddress() : '',
     host: config.smtp.host, checkedAt: status.checkedAt };
 }
 
-module.exports = { sendMail, mailStatus, checkConnection };
+module.exports = { sendMail, mailStatus, checkConnection, mailHint };

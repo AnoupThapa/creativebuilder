@@ -3,7 +3,7 @@
   'use strict';
   let csrf = null;
 
-  async function api(path, { method = 'GET', body, form } = {}) {
+  async function api(path, { method = 'GET', body, form, _retried = false } = {}) {
     const headers = {};
     if (csrf && method !== 'GET') headers['X-CSRF-Token'] = csrf;
     let payload;
@@ -15,6 +15,11 @@
     if (res.status === 401 && !path.startsWith('/auth/')) {
       location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
       throw Object.assign(new Error('Please log in.'), { status: 401 });
+    }
+    // The security token went stale (logged in/out in another tab): fetch a fresh one and retry once
+    if (res.status === 403 && data && data.code === 'csrf' && !_retried) {
+      try { const me = await fetch('/api/me', { credentials: 'same-origin' }).then(r => r.json()); if (me && me.csrf) csrf = me.csrf; } catch { /* ignore */ }
+      return api(path, { method, body, form, _retried: true });
     }
     if (!res.ok) {
       const err = new Error((data && data.error) || `Request failed (${res.status})`);

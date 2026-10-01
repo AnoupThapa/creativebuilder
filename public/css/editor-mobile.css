@@ -1,0 +1,54 @@
+/* PostForge editor — phone layout.
+   The preview stays at the top; one panel at a time below it, picked from the bar at the bottom. */
+.m-ebar { display: none; }
+.show-s { display: none; }
+@media (max-width: 900px) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), select, textarea { font-size: 16px !important; }
+  body { -webkit-tap-highlight-color: transparent; }
+
+  /* preview */
+  .stage-wrap { height: clamp(260px, 46vh, 520px) !important; padding: 44px 8px 56px !important; }
+  .stage-bar-bottom { left: 0 !important; right: 0 !important; bottom: 4px !important; display: flex; gap: 6px; justify-content: flex-start;
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 4px 10px 12px; }
+  .stage-bar-bottom > :first-child { margin-left: auto; }
+  .stage-bar-bottom > :last-child { margin-right: auto; }
+  .show-s { display: inline !important; }
+  .stage-bar-bottom::-webkit-scrollbar { display: none; }
+  .stage-bar-bottom .btn-export { flex: 0 0 auto; padding: 9px 13px !important; font-size: 12.5px !important; white-space: nowrap; }
+
+  /* one panel at a time */
+  .tab-strip { display: none !important; }
+  body[data-mtab="photo"] .rail-left .section:not([data-m="photo"]),
+  body[data-mtab="text"] .rail-left .section:not([data-m="text"]),
+  body[data-mtab="style"] .rail-left .section:not([data-m="style"]) { display: none !important; }
+  body[data-mtab="photo"] .rail-right, body[data-mtab="text"] .rail-right { display: none !important; }
+  body[data-mtab="brand"] .rail-left, body[data-mtab="export"] .rail-left { display: none !important; }
+  .rail-left, .rail-right { border: none !important; }
+  .rail-right { padding-bottom: 0; }
+  .app { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .section { padding: 16px 16px; }
+  .m-panel-title { display: block; padding: 14px 16px 2px; font-family: var(--F); font-weight: 800; font-size: 17px; color: var(--ink); background: var(--white); }
+
+  /* bigger touch targets */
+  .ct-btn, .fmt-btn, .chip, .q-opt { min-height: 42px; }
+  .pos-pad { grid-template-columns: repeat(3, 38px); grid-template-rows: repeat(3, 38px); }
+  .pos-grid3 button, .pos-actions button { padding: 10px 4px; font-size: 11.5px; }
+  .sel-handle { width: 24px; height: 24px; right: -12px; bottom: -12px; }
+
+  /* modals become bottom sheets */
+  .modal-wrap { align-items: flex-end !important; padding: 0 !important; }
+  .modal-wrap .modal { width: 100% !important; max-width: 100% !important; border-radius: 22px 22px 0 0 !important; max-height: 92vh !important;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important; animation: pfSheetUp .22s ease-out; }
+  .pf-fb-btn { display: none !important; }
+
+  /* the bar */
+  .m-ebar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 400;
+    background: rgba(255, 255, 255, .97); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px -18px rgba(26, 26, 46, .35); }
+  .m-ebar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border-radius: 12px;
+    font-size: 10.5px; font-weight: 700; color: var(--muted, #6e6d80); font-family: var(--FB); }
+  .m-ebar .ic { font-size: 20px; line-height: 1; filter: grayscale(1); opacity: .7; }
+  .m-ebar button.on { color: var(--ink); background: #fff1ed; }
+  .m-ebar button.on .ic { filter: none; opacity: 1; }
+}
+@keyframes pfSheetUp { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }

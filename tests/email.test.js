@@ -196,3 +196,10 @@ test('the login address works regardless of capital letters', async () => {
   const r = await client().post('/api/auth/login', { email: 'ROOT@example.com', password: 'RootPassword123' });
   assert.notEqual(r.status, 401);
 });
+
+test('plain-English fix for common email errors', () => {
+  const { mailHint } = require('../server/mailer.js');
+  assert.match(mailHint('Invalid login: 525 5.7.1 Unauthorized IP address'), /Authorised IPs/);
+  assert.match(mailHint('Invalid login: 535 Authentication failed'), /SMTP_PASS/);
+  assert.match(mailHint('553 Sender address rejected'), /MAIL_FROM/);
+});
