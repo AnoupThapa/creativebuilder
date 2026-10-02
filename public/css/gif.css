@@ -76,3 +76,7 @@
   .g-results{min-height:0}
   .g-empty{padding:28px 18px}
 }
+.g-note{margin-top:8px;background:#f3f7ff;border:1px solid #dfe7fb;border-radius:8px;padding:7px 9px}
+.g-weight{font-size:12px;font-weight:600;border-radius:8px;padding:5px 8px}
+.g-weight.ok{background:var(--green-soft);color:var(--green)}
+.g-weight.warn{background:#fff8e1;color:#7a5d0c}

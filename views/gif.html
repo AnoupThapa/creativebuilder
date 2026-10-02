@@ -42,9 +42,9 @@
     <div class="g-step hidden" id="clipStep">
       <div class="g-lbl"><span class="n"></span>Which part</div>
       <div class="g-row"><label>Start at <b id="startV">0.0 s</b></label><input type="range" id="start" min="0" max="0" step="0.1" value="0"></div>
-      <div class="g-row"><label>Length <b id="durV">6.0 s</b></label><input type="range" id="dur" min="0.5" max="20" step="0.5" value="6"></div>
+      <div class="g-row"><label>Length <b id="durV">4.0 s</b></label><input type="range" id="dur" min="0.5" max="20" step="0.5" value="4"></div>
       <div class="g-row"><label>Speed</label>
-        <div class="g-seg" id="speed"><button data-v="0.5">0.5×</button><button data-v="1" class="on">1×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button></div></div>
+        <div class="g-seg" id="speed"><button data-v="1">1× real speed</button><button data-v="1.5" class="on">1.5×</button><button data-v="2">2×</button><button data-v="3">3× fast</button></div></div>
     </div>
     <div class="g-step hidden" id="slideStep">
       <div class="g-lbl"><span class="n"></span>Slideshow</div>
@@ -69,9 +69,10 @@
       <div class="g-row" id="bgRow"><label>Empty space</label>
         <div class="g-seg" id="bg"><button data-v="blur" class="on">Blurred</button><button data-v="white">White</button><button data-v="black">Black</button><button data-v="custom">Colour <input type="color" id="bgColor" value="#ff6b4a"></button></div></div>
       <div class="g-row"><label>Smoothness</label>
-        <div class="g-seg" id="fps"><button data-v="8">8 fps</button><button data-v="12" class="on">12 fps</button><button data-v="15">15 fps</button><button data-v="20">20 fps</button></div></div>
+        <div class="g-seg" id="fps"><button data-v="8">8 fps</button><button data-v="10">10 fps</button><button data-v="12" class="on">12 fps</button><button data-v="15">15 fps</button></div></div>
       <div class="g-row"><label>Quality</label>
-        <div class="g-seg" id="quality"><button data-v="small">Small file</button><button data-v="balanced" class="on">Balanced</button><button data-v="best">Best colours</button></div></div>
+        <div class="g-seg" id="quality"><button data-v="small">Smallest · ~0.5 MB</button><button data-v="balanced" class="on">Balanced · under 1 MB</button><button data-v="best">Sharper · ~1 MB</button></div></div>
+      <p class="small muted g-note">⚡ Every GIF is kept small (about 1 MB or less) so it loads fast and doesn’t slow your website. Shorter clips stay sharper.</p>
       <label class="g-check"><input type="checkbox" id="loop" checked> <span>Loop forever</span></label>
       <label class="g-check"><input type="checkbox" id="mp4" checked> <span>Also make an MP4 <span class="small muted">— 10–20× smaller, plays like a GIF on Shopify &amp; most sites</span></span></label>
     </div>
@@ -85,7 +86,7 @@
       <div class="g-empty-ic">🛍️</div>
       <h3>Animated product images in every size</h3>
       <p class="muted">Turn a product video or a few photos into GIFs for your online store, emails, ads and socials — all sizes at once, nothing cropped unless you want it.</p>
-      <ul class="g-tips"><li>Keep GIFs short (3–6 s) for fast pages</li><li>Use the MP4 version where your site allows video — it loads much faster</li><li>“Small file” is best for emails</li></ul>
+      <ul class="g-tips"><li>Every GIF is kept around 1 MB or less, so pages stay fast</li><li>Short clips (3–5 s) look sharpest</li><li>Use the MP4 version where your site allows video — it loads much faster</li><li>“Small file” is best for emails</li></ul>
     </div>
     <div class="g-busy hidden" id="busy"><div class="spin"></div><b>Making your GIFs…</b><span class="small muted" id="busyNote">This takes a few seconds per size.</span></div>
     <div class="hidden" id="out">

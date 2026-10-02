@@ -6,7 +6,7 @@
   let SIZES = {}, LIMITS = {};
   let files = [], kind = null, videoDur = 0;
   const chosen = new Set(['product_800', 'square_1080']);
-  const seg = { speed: '1', fit: 'fit', bg: 'blur', fps: '12', quality: 'balanced' };
+  const seg = { speed: '1.5', fit: 'fit', bg: 'blur', fps: '12', quality: 'balanced' };
   let last = null;
 
   const left = u => !u ? '' : u.remaining > 99999 ? 'Unlimited downloads' : `⬇ ${u.remaining} download${u.remaining === 1 ? '' : 's'} left`;
@@ -109,7 +109,7 @@
           videoDur = v.duration || 0;
           $('srcMeta').textContent = `${v.videoWidth}×${v.videoHeight} · ${videoDur.toFixed(1)} s · ${kb(f.size)}`;
           $('start').max = Math.max(0, videoDur - 0.5).toFixed(1); $('start').value = 0; $('startV').textContent = fmt(0);
-          $('dur').value = Math.min(6, videoDur || 6, LIMITS.maxSeconds); clampDur();
+          $('dur').value = Math.min(4, videoDur || 4, LIMITS.maxSeconds); clampDur();
         });
         box.appendChild(v);
       }
@@ -153,7 +153,8 @@
     const url = (f, dl) => `/api/gif/out/${r.id}/${encodeURIComponent(f)}${dl ? '?download=1' : ''}`;
     $('grid').innerHTML = r.results.map(x => `<div class="g-card">
       <div class="pv"><img src="${url(x.gif)}" alt="${esc(x.label)} GIF" loading="lazy"></div>
-      <div class="bd"><div class="t">${esc(x.label)} <span>${x.w}×${x.h}</span></div>
+      <div class="bd"><div class="t">${esc(x.label)} <span>GIF ${x.gifW || x.w}×${x.gifH || x.h}${x.mp4 ? ` · MP4 ${x.w}×${x.h}` : ''}</span></div>
+        <div class="g-weight ${x.gifBytes <= 1100 * 1024 ? 'ok' : 'warn'}">${x.gifBytes <= 1100 * 1024 ? '⚡ ' + kb(x.gifBytes) + ' — fast-loading, great for websites' : '⚠ ' + kb(x.gifBytes) + ' — try a shorter clip or “Smallest” for a lighter GIF'}</div>
         <div class="acts"><a class="btn btn-primary btn-sm" href="${url(x.gif, 1)}">⬇ GIF · ${kb(x.gifBytes)}</a>
         ${x.mp4 ? `<a class="btn btn-ghost btn-sm" href="${url(x.mp4, 1)}">⬇ MP4 · ${kb(x.mp4Bytes)}</a>` : ''}</div></div></div>`).join('');
     $('busy').classList.add('hidden'); $('out').classList.remove('hidden');

@@ -17,10 +17,14 @@ const SIZES = {
   wide_1280:     { label: 'Wide 16:9',     note: 'Hero section, YouTube',         w: 1280, h: 720 },
   email_600:     { label: 'Email header',  note: 'Newsletters (600 px wide)',     w: 600,  h: 300 },
 };
+/* GIFs are kept small so they load fast on websites: each quality has a longest-side limit and a
+   file-size target. If a GIF comes out bigger, it is remade a little smaller until it fits.
+   (The optional MP4 keeps the full size — it is tiny anyway.) */
+const KB = 1024;
 const QUALITY = {
-  small:    { colors: 64,  dither: 'bayer:bayer_scale=3' },
-  balanced: { colors: 128, dither: 'sierra2_4a' },
-  best:     { colors: 256, dither: 'sierra2_4a' },
+  small:    { colors: 64,  dither: 'bayer:bayer_scale=4', maxSide: 480, target: 500 * KB },
+  balanced: { colors: 96,  dither: 'bayer:bayer_scale=4', maxSide: 640, target: 900 * KB },
+  best:     { colors: 160, dither: 'bayer:bayer_scale=3', maxSide: 800, target: 1000 * KB },
 };
 const LIMITS = { maxSeconds: 20, maxPhotos: 30, maxSizes: 8, maxSide: 1920, minSide: 64 };
 
@@ -55,9 +59,9 @@ function cleanOptions(o = {}) {
     fit: o.fit === 'fill' ? 'fill' : 'fit',
     background: bg,
     fps: Math.round(num(o.fps, 5, 25, 12)),
-    speed: num(o.speed, 0.25, 4, 1),
+    speed: num(o.speed, 0.25, 4, 1.5),
     start: num(o.start, 0, 3600, 0),
-    duration: num(o.duration, 0.5, LIMITS.maxSeconds, 6),
+    duration: num(o.duration, 0.5, LIMITS.maxSeconds, 4),
     slide: num(o.slide, 0.3, 6, 1.5),
     quality: QUALITY[o.quality] ? o.quality : 'balanced',
     loop: o.loop !== false,
@@ -70,8 +74,11 @@ function shapeFilter(inp, out, W, H, fit, bg, i) {
   const S = 'flags=lanczos';
   if (fit === 'fill') return `[${inp}]scale=${W}:${H}:force_original_aspect_ratio=increase:${S},crop=${W}:${H},setsar=1[${out}]`;
   if (bg === 'blur') {
+    // blur a tiny copy (fast, little memory); the radius must fit the tiny copy's smallest side
+    const bw = Math.max(8, even(W / 8)), bh = Math.max(8, even(H / 8));
+    const rad = Math.max(1, Math.min(6, Math.floor(Math.min(bw, bh) / 4) - 1));
     return `[${inp}]split=2[a${i}][b${i}];` +
-      `[a${i}]scale=${Math.ceil(W / 8)}:${Math.ceil(H / 8)}:force_original_aspect_ratio=increase,crop=${Math.ceil(W / 8)}:${Math.ceil(H / 8)},boxblur=6:2,scale=${W}:${H},eq=brightness=-0.04[bg${i}];` +
+      `[a${i}]scale=${bw}:${bh}:force_original_aspect_ratio=increase,crop=${bw}:${bh},boxblur=${rad}:2,scale=${W}:${H},eq=brightness=-0.04[bg${i}];` +
       `[b${i}]scale=${W}:${H}:force_original_aspect_ratio=decrease:${S}[fg${i}];` +
       `[bg${i}][fg${i}]overlay=(W-w)/2:(H-h)/2,setsar=1[${out}]`;
   }
@@ -108,18 +115,21 @@ function sourceGraph({ inputs, kind, opts, size, watermark }) {
 /* Three small ffmpeg runs per size instead of one big one. A one-pass GIF has to keep every frame in
    memory until its colour palette is known (up to ~900 MB for a 1080 px clip); in two passes the palette
    is worked out first and the GIF is then written frame by frame (~150 MB). */
-function buildPasses({ inputs, kind, opts, size, watermark, outGif, outMp4, palette }) {
+function buildPasses({ inputs, kind, opts, size, gifSize, colors, fps, watermark, outGif, outMp4, palette }) {
   const Q = QUALITY[opts.quality];
-  const src = () => sourceGraph({ inputs, kind, opts, size, watermark });
+  colors = colors || Q.colors;
+  const gOpts = { ...opts, fps: fps || opts.fps };
+  const gs = gifSize || size;
+  const src = (sz = gs, o = gOpts) => sourceGraph({ inputs, kind, opts: o, size: sz, watermark });
   const passes = [];
   let g = src();
-  passes.push([...g.args, '-filter_complex', `${g.graph};[final]palettegen=max_colors=${Q.colors}:stats_mode=diff[pal]`,
+  passes.push([...g.args, '-filter_complex', `${g.graph};[final]palettegen=max_colors=${colors}:stats_mode=diff[pal]`,
     '-map', '[pal]', '-frames:v', '1', palette]);
   g = src();
   passes.push([...g.args, '-i', palette, '-filter_complex', `${g.graph};[final][${g.next}:v]paletteuse=dither=${Q.dither}:diff_mode=rectangle[gif]`,
     '-map', '[gif]', '-loop', opts.loop ? '0' : '-1', '-f', 'gif', outGif]);
-  if (opts.mp4) {
-    g = src();
+  if (opts.mp4 && outMp4) {
+    g = src(size, opts);
     passes.push([...g.args, '-filter_complex', `${g.graph};[final]format=yuv420p[mp4]`, '-map', '[mp4]',
       '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-threads', '2', '-x264-params', 'rc-lookahead=10:ref=2', '-movflags', '+faststart', '-an', outMp4]);
   }
@@ -144,14 +154,27 @@ async function make({ userId, files, opts, watermarkPath }) {
     const inputs = files.map((f, i) => { const p = path.join(dir, `in${i}.${f.type.ext}`); fs.writeFileSync(p, f.buffer); return p; });
     const results = [];
     for (const size of opts.sizes) {
+      const Q = QUALITY[opts.quality];
       const base = `${size.key}-${size.w}x${size.h}`;
       const outGif = path.join(dir, base + '.gif'), outMp4 = path.join(dir, base + '.mp4');
       const palette = path.join(dir, base + '.palette.png');
-      for (const args of buildPasses({ inputs, kind, opts, size, watermark: watermarkPath, outGif, outMp4, palette })) {
-        await video.runFfmpeg(args, 120000);
+      // first try: fit inside the quality's longest-side limit, keeping the shape
+      let k = Math.min(1, Q.maxSide / Math.max(size.w, size.h));
+      let fps = opts.fps, colors = Q.colors, bytes = 0;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const gifSize = { w: even(size.w * k), h: even(size.h * k) };
+        const passes = buildPasses({ inputs, kind, opts, size, gifSize, colors, fps, watermark: watermarkPath, outGif, outMp4: attempt === 0 ? outMp4 : null, palette });
+        for (const args of passes) await video.runFfmpeg(args, 120000);
+        bytes = fs.statSync(outGif).size;
+        var made = gifSize;
+        if (bytes <= Q.target || Math.min(gifSize.w, gifSize.h) <= 160) break;
+        // too big: shrink by about what's needed, and from the 2nd retry also lower the frame rate / colours
+        k *= Math.max(0.55, Math.min(0.9, Math.sqrt(Q.target / bytes) * 0.95));
+        if (attempt >= 1) { fps = Math.max(8, fps - 2); colors = Math.max(48, Math.round(colors * 0.8)); }
       }
       fs.rm(palette, { force: true }, () => {});
-      const r = { key: size.key, label: size.label, w: size.w, h: size.h, gif: base + '.gif', gifBytes: fs.statSync(outGif).size };
+      const r = { key: size.key, label: size.label, w: size.w, h: size.h, gif: base + '.gif', gifBytes: bytes,
+        gifW: made.w, gifH: made.h, target: Q.target };
       if (opts.mp4 && fs.existsSync(outMp4)) { r.mp4 = base + '.mp4'; r.mp4Bytes = fs.statSync(outMp4).size; }
       results.push(r);
     }
