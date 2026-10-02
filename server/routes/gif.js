@@ -4,6 +4,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('node:path');
 const config = require('../config');
+const { q } = require('../db');
 const S = require('../security');
 const gif = require('../gif');
 const { authoriseExports } = require('./workspace');
@@ -38,13 +39,22 @@ router.post('/gif/make', (req, res, next) => upload(req, res, err => {
   const opts = gif.cleanOptions(raw);
   if (!opts.sizes.length) throw new S.HttpError(400, 'Pick at least one size.');
 
+  const t0 = Date.now();
   const auth = authoriseExports(u, opts.sizes.map(s => ({ platform: `gif:${s.w}x${s.h}`, kind: 'gif' })), 1, null);
   S.audit(req, 'export.gif', { sizes: opts.sizes.length, photos: kinds.has('image') ? files.length : 0 });
   try {
     const out = await gif.make({ userId: u.id, files, opts, watermarkPath: auth.watermark ? WATERMARK : null });
     res.json({ ok: true, id: out.id, results: out.results, usage: auth.usage, watermark: auth.watermark });
   } catch (e) {
-    throw new S.HttpError(422, /too long/.test(e.message) ? e.message : 'Could not make the GIF from this file. Try another video or fewer sizes.');
+    console.error('[gif]', e.reason || '', e.message);
+    // nothing was delivered, so give the downloads back
+    q.run("DELETE FROM exports WHERE user_id = ? AND kind = 'gif' AND created_at >= ?", u.id, t0);
+    const msg = {
+      timeout: 'This took too long. Try a shorter clip (3–6 seconds), fewer sizes, or 8–12 fps.',
+      memory: 'The server ran out of memory making this GIF. Try fewer sizes at once or a shorter clip.',
+      unreadable: "We couldn't read this file. Try another video (MP4 or MOV works best) or re-save it from your phone.",
+    }[e.reason] || 'Could not make the GIF from this file. Try a shorter clip, fewer sizes, or another video.';
+    throw new S.HttpError(422, msg, { reason: e.reason || 'failed' });
   }
 });
 

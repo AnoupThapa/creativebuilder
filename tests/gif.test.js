@@ -85,6 +85,15 @@ test('GIF maker: checks, makes every size, counts downloads, private files', { s
   r = await c.post('/api/gif/make', form([PNG, PNG, PNG], { sizes: ['thumb_400'], slide: 0.5, fit: 'fit', background: '#ffcc00' }));
   assert.equal(r.status, 200, JSON.stringify(r.data));
 
+  // a broken video: clear message, and the downloads are given back
+  const n0 = q.get("SELECT COUNT(*) n FROM exports e JOIN users u ON u.id = e.user_id WHERE u.email = 'gia@example.com'").n;
+  const broken = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypmp42'), Buffer.alloc(2000, 7)]);
+  const bad = await c.post('/api/gif/make', form([broken], { sizes: ['thumb_400', 'email_600'] }));
+  assert.equal(bad.status, 422);
+  assert.match(bad.data.error, /couldn't read this file|Could not make/);
+  const n1 = q.get("SELECT COUNT(*) n FROM exports e JOIN users u ON u.id = e.user_id WHERE u.email = 'gia@example.com'").n;
+  assert.equal(n1, n0, 'failed GIFs do not use up downloads');
+
   // someone else cannot open the files
   const other = client();
   await other.post('/api/auth/signup', { name: 'Ozzy', email: 'ozzy@example.com', password: 'OtherUser2026', acceptTerms: true });

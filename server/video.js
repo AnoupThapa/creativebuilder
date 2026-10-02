@@ -26,11 +26,14 @@ let FFMPEG = null;
 const TMP = path.join(config.DATA_DIR, 'tmp');
 fs.mkdirSync(TMP, { recursive: true });
 
-/* at most 2 conversions at once; the rest wait their turn */
+/* conversions wait their turn (see MAX_JOBS) */
+/* How many ffmpeg jobs may run at once. Each can use 150+ MB, so on a small server (512 MB)
+   one at a time is safest; set FFMPEG_JOBS=2 on a bigger machine. */
+const MAX_JOBS = Math.max(1, Math.min(4, parseInt(process.env.FFMPEG_JOBS || '1', 10) || 1));
 let running = 0;
 const waiting = [];
 function slot() {
-  if (running < 2) { running++; return Promise.resolve(); }
+  if (running < MAX_JOBS) { running++; return Promise.resolve(); }
   return new Promise(r => waiting.push(r));
 }
 function release() { running--; const n = waiting.shift(); if (n) { running++; n(); } }
@@ -73,11 +76,18 @@ async function runFfmpeg(args, timeoutMs = 150000) {
       const p = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: ['ignore', 'ignore', 'pipe'] });
       let err = '';
       p.stderr.on('data', d => { err += d; if (err.length > 4000) err = err.slice(-4000); });
-      const timer = setTimeout(() => { p.kill('SIGKILL'); reject(new Error('This took too long — try a shorter clip or fewer sizes.')); }, timeoutMs);
+      const timer = setTimeout(() => { p.kill('SIGKILL'); reject(Object.assign(new Error('This took too long — try a shorter clip or fewer sizes.'), { reason: 'timeout' })); }, timeoutMs);
       p.on('error', e => { clearTimeout(timer); reject(e); });
-      p.on('close', code => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error('ffmpeg failed: ' + err.trim().split('\n').pop())); });
+      p.on('close', (code, signal) => {
+        clearTimeout(timer);
+        if (code === 0) return resolve();
+        const e = new Error('ffmpeg failed: ' + (err.trim().split('\n').pop() || signal || code));
+        // killed by the system with no message = it ran out of memory
+        e.reason = signal === 'SIGKILL' || code === 137 ? 'memory' : /Invalid data|could not find codec|moov atom|Error opening input|does not contain any stream/i.test(err) ? 'unreadable' : 'failed';
+        reject(e);
+      });
     });
   } finally { release(); }
 }
 
-module.exports = { toMp4, runFfmpeg, TMP, available: () => !!FFMPEG };
+module.exports = { toMp4, runFfmpeg, TMP, busy: () => ({ running, waiting: waiting.length }), available: () => !!FFMPEG };

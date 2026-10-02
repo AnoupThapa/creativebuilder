@@ -79,8 +79,9 @@ function shapeFilter(inp, out, W, H, fit, bg, i) {
   return `[${inp}]scale=${W}:${H}:force_original_aspect_ratio=decrease:${S},pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${color},setsar=1[${out}]`;
 }
 
-/* Build the ffmpeg command for one size */
-function buildArgs({ inputs, kind, opts, size, watermark, outGif, outMp4 }) {
+/* The part shared by every pass: read the input(s) and turn them into W×H frames labelled [final].
+   Returns { args, graph, next } — next = index for the next extra input. */
+function sourceGraph({ inputs, kind, opts, size, watermark }) {
   const { w: W, h: H } = size;
   const args = [];
   const parts = [];
@@ -93,23 +94,36 @@ function buildArgs({ inputs, kind, opts, size, watermark, outGif, outMp4 }) {
     inputs.forEach((_, i) => parts.push(shapeFilter(`${i}:v`, `s${i}`, W, H, opts.fit, opts.background, i) + `;[s${i}]fps=${opts.fps},format=rgb24[v${i}]`));
     parts.push(`${inputs.map((_, i) => `[v${i}]`).join('')}concat=n=${inputs.length}:v=1:a=0[base]`);
   }
-  let last = 'base';
+  let next = kind === 'video' ? 1 : inputs.length;
   if (watermark) {
-    const wi = kind === 'video' ? 1 : inputs.length;
     args.push('-i', watermark);
-    parts.push(`[${wi}:v]scale=${Math.round(Math.min(W * 0.42, H * 0.9))}:-1[wm];[${last}][wm]overlay=W-w-${Math.round(W * 0.03)}:H-h-${Math.round(H * 0.03)}[wmk]`);
-    last = 'wmk';
+    parts.push(`[${next}:v]scale=${Math.round(Math.min(W * 0.42, H * 0.9))}:-1[wm];[base][wm]overlay=W-w-${Math.round(W * 0.03)}:H-h-${Math.round(H * 0.03)}[final]`);
+    next++;
+  } else {
+    parts.push('[base]null[final]');
   }
+  return { args, graph: parts.join(';'), next };
+}
+
+/* Three small ffmpeg runs per size instead of one big one. A one-pass GIF has to keep every frame in
+   memory until its colour palette is known (up to ~900 MB for a 1080 px clip); in two passes the palette
+   is worked out first and the GIF is then written frame by frame (~150 MB). */
+function buildPasses({ inputs, kind, opts, size, watermark, outGif, outMp4, palette }) {
   const Q = QUALITY[opts.quality];
-  const outs = opts.mp4 ? 3 : 2;
-  parts.push(`[${last}]split=${outs}[p1][p2]${opts.mp4 ? '[p3]' : ''}`);
-  parts.push(`[p1]palettegen=max_colors=${Q.colors}:stats_mode=diff[pal]`);
-  parts.push(`[p2][pal]paletteuse=dither=${Q.dither}:diff_mode=rectangle[gif]`);
-  args.push('-filter_complex', parts.join(';'), '-map', '[gif]', '-loop', opts.loop ? '0' : '-1', '-f', 'gif', outGif);
+  const src = () => sourceGraph({ inputs, kind, opts, size, watermark });
+  const passes = [];
+  let g = src();
+  passes.push([...g.args, '-filter_complex', `${g.graph};[final]palettegen=max_colors=${Q.colors}:stats_mode=diff[pal]`,
+    '-map', '[pal]', '-frames:v', '1', palette]);
+  g = src();
+  passes.push([...g.args, '-i', palette, '-filter_complex', `${g.graph};[final][${g.next}:v]paletteuse=dither=${Q.dither}:diff_mode=rectangle[gif]`,
+    '-map', '[gif]', '-loop', opts.loop ? '0' : '-1', '-f', 'gif', outGif]);
   if (opts.mp4) {
-    args.push('-map', '[p3]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', outMp4);
+    g = src();
+    passes.push([...g.args, '-filter_complex', `${g.graph};[final]format=yuv420p[mp4]`, '-map', '[mp4]',
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-threads', '2', '-x264-params', 'rc-lookahead=10:ref=2', '-movflags', '+faststart', '-an', outMp4]);
   }
-  return args;
+  return passes;
 }
 
 /* Finished files are kept for an hour so the user can preview and download them */
@@ -132,7 +146,11 @@ async function make({ userId, files, opts, watermarkPath }) {
     for (const size of opts.sizes) {
       const base = `${size.key}-${size.w}x${size.h}`;
       const outGif = path.join(dir, base + '.gif'), outMp4 = path.join(dir, base + '.mp4');
-      await video.runFfmpeg(buildArgs({ inputs, kind, opts, size, watermark: watermarkPath, outGif, outMp4 }), 120000);
+      const palette = path.join(dir, base + '.palette.png');
+      for (const args of buildPasses({ inputs, kind, opts, size, watermark: watermarkPath, outGif, outMp4, palette })) {
+        await video.runFfmpeg(args, 120000);
+      }
+      fs.rm(palette, { force: true }, () => {});
       const r = { key: size.key, label: size.label, w: size.w, h: size.h, gif: base + '.gif', gifBytes: fs.statSync(outGif).size };
       if (opts.mp4 && fs.existsSync(outMp4)) { r.mp4 = base + '.mp4'; r.mp4Bytes = fs.statSync(outMp4).size; }
       results.push(r);
@@ -153,4 +171,4 @@ function outputPath(userId, id, file) {
   return path.join(j.dir, String(file));
 }
 
-module.exports = { SIZES, LIMITS, sniff, cleanOptions, buildArgs, make, outputPath, available: video.available };
+module.exports = { SIZES, LIMITS, sniff, cleanOptions, buildPasses, make, outputPath, available: video.available };
