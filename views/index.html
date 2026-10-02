@@ -105,6 +105,8 @@ section .sub{text-align:center;color:var(--muted);font-size:16px;margin:10px aut
 .int-toggle{display:flex;justify-content:center;margin:-18px 0 26px}
 .beta-band{background:var(--ink);color:#d9d8e6;border-radius:20px;padding:28px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
 .beta-band h3{color:#fff;font-size:22px}
+.btn-on-dark{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+.btn-on-dark:hover:not(:disabled){background:rgba(255,255,255,.1);border-color:#fff;color:#fff}
 footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 @media(max-width:900px){
@@ -221,7 +223,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <div class="beta-band">
       <div class="grow" style="flex:1;min-width:240px"><h3>We're in private beta</h3><p>We're working closely with 20 small businesses before launch. Beta users get Pro free for 60 days in return for honest feedback.</p></div>
       <a class="btn btn-primary" href="/help?topic=beta#contact">Apply for an invite</a>
-      <a class="btn btn-ghost" style="color:#fff;border-color:#555" href="/signup">I have a code</a>
+      <a class="btn btn-ghost btn-on-dark" href="/signup">I have a code</a>
     </div>
   </section>
 

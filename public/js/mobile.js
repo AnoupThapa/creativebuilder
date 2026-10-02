@@ -17,7 +17,13 @@
       const nearEnd = window.innerHeight + window.scrollY > document.body.scrollHeight - 140;
       bar.classList.toggle('show', past && !nearEnd);
       const cta = $('[data-cta]');
-      if (cta) bar.querySelector('a').href = cta.getAttribute('href');
+      if (cta) {
+        const href = cta.getAttribute('href'), isBeta = href.includes('topic=beta');
+        const a = bar.querySelector('a');
+        a.href = href;
+        a.textContent = isBeta ? 'Apply' : 'Start free';
+        bar.querySelector('span').innerHTML = isBeta ? '<b>Private beta</b>Apply for an invite' : '<b>Make your first post free</b>No card needed';
+      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
