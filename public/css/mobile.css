@@ -93,6 +93,14 @@
 @media (max-width: 980px) {
   body.m-app .sidebar { box-shadow: none; width: 84vw; max-width: 310px; border-radius: 0 22px 22px 0; }
   body.m-app .sidebar.open { box-shadow: 0 0 60px rgba(0, 0, 0, .3); }
+  /* fit the menu to the part of the screen you can actually see (phone toolbars hide the bottom of 100vh) */
+  body.m-app .sidebar { height: 100vh; height: 100dvh; padding-bottom: calc(18px + env(safe-area-inset-bottom)); overscroll-behavior: contain; gap: 10px; }
+  body.m-app .sidebar > * { flex-shrink: 0; }
+  body.m-app .sidebar .usage-card { margin-top: 6px; }
+  body.m-app .sidebar .me { margin-top: auto; }
+  body.m-app .sidebar .nav a { padding: 11px 10px; font-size: 15px; }
+  body.m-app .nav a.m-logout { color: var(--red); }
+  body.m-app.m-menu-open { overflow: hidden; }
   .m-scrim { position: fixed; inset: 0; background: rgba(20, 20, 35, .45); z-index: 290; opacity: 0; pointer-events: none; transition: opacity .2s; }
   .m-scrim.show { opacity: 1; pointer-events: auto; }
   body.m-app .content { padding: 0 14px calc(96px + env(safe-area-inset-bottom)); }
@@ -121,6 +129,8 @@
 }
 /* bottom navigation */
 .m-nav { display: none; }
+.nav a.m-logout { display: none; }
+@media (max-width: 980px) { .nav a.m-logout { display: flex; } }
 @media (max-width: 980px) {
   .m-nav { display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; position: fixed; left: 0; right: 0; bottom: 0; z-index: 280;
     background: rgba(255, 255, 255, .96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);

@@ -37,7 +37,21 @@
     const sidebar = $('#sidebar');
     const scrim = el('div', 'm-scrim');
     document.body.appendChild(scrim);
-    const syncScrim = () => scrim.classList.toggle('show', !!sidebar && sidebar.classList.contains('open'));
+    const syncScrim = () => {
+      const open = !!sidebar && sidebar.classList.contains('open');
+      scrim.classList.toggle('show', open);
+      document.body.classList.toggle('m-menu-open', open);
+      if (open) sidebar.scrollTop = 0;
+    };
+    // a "Log out" item high up in the menu, so it is always reachable on phones
+    const navList = $('#nav'), logoutBtn = $('#btnLogout');
+    if (navList && logoutBtn) {
+      const out = el('a', 'm-logout', '<span>🚪</span>Log out');
+      out.href = '#'; out.setAttribute('role', 'button');
+      out.addEventListener('click', e => { e.preventDefault(); logoutBtn.click(); });
+      const help = navList.querySelector('a[href="/help"]');
+      navList.insertBefore(out, help || null);
+    }
     scrim.addEventListener('click', () => { sidebar.classList.remove('open'); syncScrim(); });
     if (sidebar) new MutationObserver(syncScrim).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
 
