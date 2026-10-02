@@ -18,7 +18,7 @@ router.get('/ai/options', (req, res) => {
   const { q } = require('../db');
   const plan = require('../plans').effectivePlan(q.get('SELECT * FROM workspaces WHERE id = ?', req.user.workspace_id));
   res.json({ industries: ai.INDUSTRIES, templates: all.filter(t => t.kind === 'image'), videoTemplates: all.filter(t => t.kind === 'video'),
-    video: { allowed: !!plan.video_export, credits: config.ai.videoCredits, seconds: [4, 6, 8], demo: require('../ai/videogen').active() === 'demo' },
+    video: { allowed: !!plan.ai_video, credits: config.ai.videoCredits, seconds: [4, 6, 8], demo: require('../ai/videogen').active() === 'demo' },
     aspects: ai.ASPECTS, credits: ai.creditStatus(req.user),
     enabled: ai.enabled(), demo: require('../ai/providers').active() === 'demo',
     topup: { credits: config.ai.topupCredits, price_cents: config.ai.topupPriceCents } });

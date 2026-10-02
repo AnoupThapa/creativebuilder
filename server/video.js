@@ -90,4 +90,21 @@ async function runFfmpeg(args, timeoutMs = 150000) {
   } finally { release(); }
 }
 
-module.exports = { toMp4, runFfmpeg, TMP, busy: () => ({ running, waiting: waiting.length }), available: () => !!FFMPEG };
+/* Length of a video file in seconds (null if unknown). Reads the header only — fast, no conversion. */
+function probeDuration(file) {
+  if (!FFMPEG) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const p = spawn(FFMPEG, ['-hide_banner', '-i', file], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let err = '';
+    p.stderr.on('data', d => { err += d; if (err.length > 20000) err = err.slice(-20000); });
+    const t = setTimeout(() => p.kill('SIGKILL'), 15000);
+    p.on('close', () => {
+      clearTimeout(t);
+      const m = err.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
+      resolve(m ? (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3]) : null);
+    });
+    p.on('error', () => { clearTimeout(t); resolve(null); });
+  });
+}
+
+module.exports = { toMp4, runFfmpeg, probeDuration, TMP, busy: () => ({ running, waiting: waiting.length }), available: () => !!FFMPEG };

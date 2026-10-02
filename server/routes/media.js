@@ -39,28 +39,41 @@ const filePath = m => path.join(config.UPLOAD_DIR, String(m.workspace_id), m.id)
 router.post('/media', S.requireRole('designer'), (req, res, next) => {
   const ws = q.get('SELECT * FROM workspaces WHERE id = ?', req.user.workspace_id);
   const plan = effectivePlan(ws);
+  const videoMb = plan.video_export ? (plan.max_video_mb || plan.max_upload_mb) : 0;
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: plan.max_upload_mb * 1024 * 1024, files: 1, fields: 5 },
+    limits: { fileSize: Math.max(plan.max_upload_mb, videoMb) * 1024 * 1024, files: 1, fields: 5 },
   }).single('file');
 
-  upload(req, res, err => {
+  upload(req, res, async err => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE')
-        return next(new S.HttpError(413, `File is too big — your ${plan.name} plan allows up to ${plan.max_upload_mb} MB per file.`));
+        return next(new S.HttpError(413, `File is too big — your ${plan.name} plan allows up to ${Math.max(plan.max_upload_mb, videoMb)} MB per file.`));
       return next(new S.HttpError(400, 'Upload failed: ' + err.message));
     }
+    let id = null;
     try {
       if (!req.file) throw new S.HttpError(400, 'No file received.');
       const type = sniff(req.file.buffer);
       if (!type) throw new S.HttpError(415, 'Unsupported file. Use JPG, PNG, WEBP, MP4, MOV or WEBM.');
       if (type.kind === 'video' && !plan.video_export)
-        throw new S.HttpError(402, `Video posts are part of the Pro plan. Your plan: ${plan.name}.`);
+        throw new S.HttpError(402, `Your own videos are included from the Starter plan. Your plan: ${plan.name}.`, { code: 'upgrade' });
+      const maxMb = type.kind === 'video' ? videoMb : plan.max_upload_mb;
+      if (req.file.size > maxMb * 1024 * 1024)
+        throw new S.HttpError(413, `File is too big — your ${plan.name} plan allows ${type.kind === 'video' ? 'videos' : 'photos'} up to ${maxMb} MB.`);
       if (storageUsed(ws.id) + req.file.size > plan.storage_mb * 1024 * 1024)
         throw new S.HttpError(413, 'Your storage is full. Delete old media or upgrade your plan.');
 
-      const id = crypto.randomUUID();
-      fs.writeFileSync(path.join(wsDir(ws.id), id), req.file.buffer, { mode: 0o600 });
+      id = crypto.randomUUID();
+      const file = path.join(wsDir(ws.id), id);
+      fs.writeFileSync(file, req.file.buffer, { mode: 0o600 });
+      if (type.kind === 'video' && plan.max_video_seconds > 0) {
+        const secs = await require('../video').probeDuration(file);
+        if (secs != null && secs > plan.max_video_seconds + 0.9) {
+          fs.rmSync(file, { force: true }); id = null;
+          throw new S.HttpError(413, `This video is ${Math.round(secs)} seconds long — your ${plan.name} plan allows videos up to ${plan.max_video_seconds} seconds. Trim it on your phone, or upgrade to Pro for longer videos.`, { code: 'video_too_long' });
+        }
+      }
       const filename = String(req.file.originalname || 'upload').replace(/[^\w.\- ]+/g, '_').slice(0, 120);
       q.run('INSERT INTO media (id, workspace_id, owner_id, filename, mime, kind, size, created_at) VALUES (?,?,?,?,?,?,?,?)',
         id, ws.id, req.user.id, filename, type.mime, type.kind, req.file.size, Date.now());

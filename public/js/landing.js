@@ -10,11 +10,11 @@
     const f = [
       [true, quotaLabel(p) + (p.code === 'free' ? '' : ' per user')],
       [true, 'All 14 platform sizes'],
-      [!!p.video_export && p.ai_credits_monthly > 0, 'AI product videos for Reels & ads'],
       [true, p.ai_credits_monthly ? `${p.ai_credits_monthly} AI product photos a month` : `${p.ai_credits_lifetime || 0} free AI product photos`],
+      [p.ai_video, 'AI product videos for Reels & ads'],
       [p.batch_export, 'One-click multi-platform ZIP'],
       [true, `Up to ${p.max_quality}× export quality${p.max_quality >= 3 ? ' (print)' : p.max_quality === 2 ? ' (HD)' : ''}`],
-      [p.video_export, 'MP4 video posts with sound'],
+      [p.video_export, p.max_video_seconds ? `Your own video posts (up to ${p.max_video_seconds} s)` : 'MP4 video posts with sound'],
       [p.premium_templates, 'Full template library'],
       [true, `${p.max_brand_kits} brand kit${p.max_brand_kits > 1 ? 's' : ''}`],
       [!p.watermark, p.watermark ? 'Watermarked downloads' : 'No watermark'],

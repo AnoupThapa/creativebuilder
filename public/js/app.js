@@ -274,10 +274,10 @@
     return [
       [true, quotaLabel(p) + (p.code === 'free' ? '' : ' per user')],
       [true, p.ai_credits_monthly ? `${p.ai_credits_monthly} AI product photos a month` : `${p.ai_credits_lifetime || 0} free AI product photos`],
-      [!!p.video_export && p.ai_credits_monthly > 0, 'AI product videos (10 credits each)'],
+      [p.ai_video, 'AI product videos (10 credits each)'],
       [p.batch_export, 'Multi-platform ZIP export'],
       [true, `Up to ${p.max_quality}× quality`],
-      [p.video_export, 'Video posts'],
+      [p.video_export, p.max_video_seconds ? `Your own videos (up to ${p.max_video_seconds} s)` : 'Video posts'],
       [p.premium_templates, 'All templates'],
       [true, `${p.max_brand_kits} brand kit${p.max_brand_kits > 1 ? 's' : ''}`],
       [true, p.max_designs < 0 ? 'Unlimited saved designs' : `${p.max_designs} saved designs`],

@@ -323,6 +323,9 @@ addColumn('outbox', 'error', "TEXT NOT NULL DEFAULT ''");
 /* AI studio */
 addColumn('plans', 'ai_credits_monthly', 'INTEGER NOT NULL DEFAULT 0');    // AI credits per seat per month
 addColumn('plans', 'ai_credits_lifetime', 'INTEGER NOT NULL DEFAULT 0');   // one-off AI credits per user (free tier)
+addColumn('plans', 'ai_video', 'INTEGER NOT NULL DEFAULT 0');           // AI product videos (Pro, Business)
+addColumn('plans', 'max_video_seconds', 'INTEGER NOT NULL DEFAULT 0');  // longest own video allowed (0 = no limit)
+addColumn('plans', 'max_video_mb', 'INTEGER NOT NULL DEFAULT 0');       // biggest own video file (0 = same as max_upload_mb)
 addColumn('workspaces', 'ai_topup_credits', 'INTEGER NOT NULL DEFAULT 0'); // bought credit packs (never expire)
 db.exec(`
 CREATE TABLE IF NOT EXISTS ai_templates (
@@ -378,18 +381,18 @@ const SEED_PLANS = [
     price_cents: 0, price_cents_annual: 0, currency: 'usd', quota_limit: 3, quota_period: 'lifetime', daily_limit: 0, max_quality: 1, video_export: 0, batch_export: 0,
     premium_templates: 0, watermark: 1, max_designs: 5, max_brand_kits: 1, max_upload_mb: 10, storage_mb: 100, public: 1, sort: 0,
     ai_credits_monthly: 0, ai_credits_lifetime: 3 },
-  { code: 'starter', name: 'Starter', description: 'Post every day: 5 images a day, up to 100 a month, plus 40 AI images.',
-    price_cents: 1200, price_cents_annual: 12000, currency: 'usd', quota_limit: 100, quota_period: 'month', daily_limit: 5, max_quality: 2, video_export: 0, batch_export: 1,
+  { code: 'starter', name: 'Starter', description: 'Post every day: 5 a day, up to 100 a month, your own videos up to 30 s, plus 40 AI images.',
+    price_cents: 1200, price_cents_annual: 12000, currency: 'usd', quota_limit: 100, quota_period: 'month', daily_limit: 5, max_quality: 2, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: 200, max_brand_kits: 1, max_upload_mb: 15, storage_mb: 1024, public: 1, sort: 1,
-    ai_credits_monthly: 40, ai_credits_lifetime: 0 },
+    ai_credits_monthly: 40, ai_credits_lifetime: 0, max_video_seconds: 30, max_video_mb: 50 },
   { code: 'pro', name: 'Pro', description: 'For busy businesses: 15 images a day, up to 300 a month, 150 AI images, video and print quality.',
     price_cents: 2900, price_cents_annual: 29000, currency: 'usd', quota_limit: 300, quota_period: 'month', daily_limit: 15, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 5, max_upload_mb: 100, storage_mb: 5120, public: 1, sort: 2,
-    ai_credits_monthly: 150, ai_credits_lifetime: 0 },
+    ai_credits_monthly: 150, ai_credits_lifetime: 0, ai_video: 1 },
   { code: 'business', name: 'Business', description: 'For agencies and multi-store brands: 50 images a day, up to 1,000 a month, 500 AI images and priority AI.',
     price_cents: 7900, price_cents_annual: 79000, currency: 'usd', quota_limit: 1000, quota_period: 'month', daily_limit: 50, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 20, max_upload_mb: 200, storage_mb: 20480, public: 1, sort: 3,
-    ai_credits_monthly: 500, ai_credits_lifetime: 0 },
+    ai_credits_monthly: 500, ai_credits_lifetime: 0, ai_video: 1 },
 ];
 for (const p of SEED_PLANS) {
   const exists = q.get('SELECT code FROM plans WHERE code = ?', p.code);
@@ -413,6 +416,13 @@ if (!metaGet('pricing_v3_ai')) {
       p.description, p.price_cents, p.price_cents_annual, p.ai_credits_monthly, p.ai_credits_lifetime, p.code);
   }
   metaSet('pricing_v3_ai', Date.now());
+}
+/* One-time: Starter can use its own videos (up to 30 s / 50 MB); AI videos stay on Pro & Business */
+if (!metaGet('starter_video_v1')) {
+  q.run("UPDATE plans SET video_export = 1, max_video_seconds = 30, max_video_mb = 50 WHERE code = 'starter'");
+  q.run("UPDATE plans SET description = ? WHERE code = 'starter' AND description = ?", 'Post every day: 5 a day, up to 100 a month, your own videos up to 30 s, plus 40 AI images.', 'Post every day: 5 images a day, up to 100 a month, plus 40 AI images.');
+  q.run("UPDATE plans SET ai_video = 1 WHERE code IN ('pro', 'business')");
+  metaSet('starter_video_v1', Date.now());
 }
 // Stripe price IDs from env override whatever is stored
 for (const [code, price] of Object.entries(config.stripe.prices)) {

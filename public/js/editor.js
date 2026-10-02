@@ -984,16 +984,37 @@ async function uploadToServer(file, label){
   }
 }
 
+/* length of a chosen video file, read in the browser before uploading */
+function videoSeconds(file){
+  return new Promise(resolve => {
+    const v = document.createElement('video'); const url = URL.createObjectURL(file);
+    const done = d => { URL.revokeObjectURL(url); resolve(d); };
+    v.preload = 'metadata'; v.muted = true;
+    v.onloadedmetadata = () => done(Number.isFinite(v.duration) ? v.duration : null);
+    v.onerror = () => done(null);
+    setTimeout(() => done(null), 8000);
+    v.src = url;
+  });
+}
+
 async function handleMediaFile(file){
   if (READONLY) return;
   const isVideo = file.type.startsWith('video/');
   if (isVideo && !PLAN.video_export){
-    showNotice('Video is a Pro feature', `Your ${PLAN.name} plan supports photo posts. Upgrade to Pro to turn customer videos and reels into branded posts for every platform.`);
+    showNotice('Videos start on the Starter plan', `Your ${PLAN.name} plan supports photo posts. Upgrade to Starter (videos up to 30 seconds) or Pro to turn your own videos and reels into branded posts for every platform.`);
     return;
   }
-  if (file.size > PLAN.max_upload_mb * 1024 * 1024){
-    showNotice('File too large', `Your ${PLAN.name} plan allows files up to ${PLAN.max_upload_mb} MB. Try a smaller file${PLAN.code !== 'pro' ? ' or upgrade' : ''}.`);
+  const maxMb = isVideo ? (PLAN.max_video_mb || PLAN.max_upload_mb) : PLAN.max_upload_mb;
+  if (file.size > maxMb * 1024 * 1024){
+    showNotice('File too large', `Your ${PLAN.name} plan allows ${isVideo ? 'videos' : 'photos'} up to ${maxMb} MB. Try a smaller file${PLAN.code !== 'business' ? ' or upgrade' : ''}.`);
     return;
+  }
+  if (isVideo && PLAN.max_video_seconds > 0){
+    const secs = await videoSeconds(file);
+    if (secs && secs > PLAN.max_video_seconds + 0.9){
+      showNotice('Video too long', `This video is ${Math.round(secs)} seconds long. Your ${PLAN.name} plan allows videos up to ${PLAN.max_video_seconds} seconds — trim it on your phone first, or upgrade to Pro for longer videos.`);
+      return;
+    }
   }
   const m = await uploadToServer(file, isVideo ? 'video' : 'photo');
   if (!m) return;
@@ -1675,7 +1696,7 @@ let exportFormat = 'png';
 document.querySelectorAll('.fmt-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.fmt === 'video' && !PLAN.video_export){
-      showNotice('Video export is a Pro feature', `Upgrade to Pro to export branded videos with sound for Reels, TikTok, Shorts and Stories.`);
+      showNotice('Video export starts on the Starter plan', `Upgrade to Starter (videos up to 30 seconds) or Pro to export branded videos with sound for Reels, TikTok, Shorts and Stories.`);
       return;
     }
     document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
@@ -2210,7 +2231,7 @@ function syncLayerRows(){
    SAAS LAYER — account, plan access, design save/load
    =============================================================== */
 const DESIGN_ID = new URLSearchParams(location.search).get('id');
-let ME = null, PLAN = { name:'Free trial', code:'free', max_quality:1, video_export:false, batch_export:false, premium_templates:false, watermark:true, max_upload_mb:10 };
+let ME = null, PLAN = { name:'Free trial', code:'free', max_quality:1, video_export:false, batch_export:false, premium_templates:false, watermark:true, max_upload_mb:10, max_video_mb:0, max_video_seconds:0 };
 let USAGE = null;
 let READONLY = true, CAN_EXPORT = false;
 
@@ -2260,12 +2281,12 @@ function applyPlanUI(){
   });
   document.querySelectorAll('.lock[data-q]').forEach(l => { l.textContent = parseInt(l.dataset.q, 10) > PLAN.max_quality ? '🔒 upgrade' : ''; });
   $('fmtVideo').classList.toggle('locked', !PLAN.video_export);
-  $('fmtVideo').title = PLAN.video_export ? 'Export as MP4 video with sound' : 'Pro plan feature';
+  $('fmtVideo').title = PLAN.video_export ? 'Export as MP4 video with sound' : 'Included from the Starter plan';
   $('batchLock').textContent = PLAN.batch_export ? '' : '🔒 paid plans';
   $('inputMedia').accept = PLAN.video_export
     ? 'image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm'
     : 'image/png,image/jpeg,image/webp';
-  $('dzMediaSub').textContent = PLAN.video_export ? 'JPG · PNG · WEBP · MP4 · MOV' : `JPG · PNG · WEBP · up to ${PLAN.max_upload_mb} MB`;
+  $('dzMediaSub').textContent = PLAN.video_export ? (PLAN.max_video_seconds ? `JPG · PNG · WEBP · MP4 · MOV (videos up to ${PLAN.max_video_seconds} s)` : 'JPG · PNG · WEBP · MP4 · MOV') : `JPG · PNG · WEBP · up to ${PLAN.max_upload_mb} MB`;
 }
 
 /* ---- serialise / restore the design ---- */

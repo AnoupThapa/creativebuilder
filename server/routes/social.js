@@ -120,7 +120,7 @@ function createPost(req, res) {
 
   // counts against the plan's download allowance, exactly like a download
   const plan = effectivePlan(wsOf(u));
-  if (type.kind === 'video' && !plan.video_export) throw new S.HttpError(402, 'Video posts are a Pro feature.', { code: 'upgrade' });
+  if (type.kind === 'video' && !plan.video_export) throw new S.HttpError(402, 'Video posts are included from the Starter plan.', { code: 'upgrade' });
   if (config.security.requireVerifiedEmailToExport && !u.email_verified)
     throw new S.HttpError(403, 'Please confirm your email address before posting.', { code: 'verify_email' });
   const designId = b.designId ? String(b.designId).slice(0, 40) : null;

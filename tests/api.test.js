@@ -149,8 +149,9 @@ test('Starter plan: 5 images per day (max 100/month) per user, batch allowed', a
   assert.equal(r.status, 200);
   assert.equal(r.data.watermark, false);
   assert.equal(r.data.usage.remaining, 1);
-  r = await owner.post('/api/exports', { items: [{ platform: 'ig_post', kind: 'video' }], quality: 1 });
-  assert.equal(r.status, 402, 'video is Pro only');
+  const st = (await owner.me()).data.plan;
+  assert.equal(st.video_export, true, 'Starter can use its own videos');
+  assert.equal(st.max_video_seconds, 30); assert.equal(st.max_video_mb, 50); assert.equal(st.ai_video, false);
   r = await owner.post('/api/exports', { items: [{ platform: 'ig_post', kind: 'image' }], quality: 3 });
   assert.equal(r.status, 402, '3x is Pro only');
 });

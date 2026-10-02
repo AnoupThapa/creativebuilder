@@ -335,6 +335,43 @@ test('AI video: Pro only, from an AI image or a photo, cropped to the post shape
   }
 });
 
+test('own videos without AI: Starter up to 30 s / 50 MB, Free photos only, AI video stays Pro', { timeout: 90000, skip: !require('../server/video').available() && 'ffmpeg not available here' }, async () => {
+  const { spawnSync } = require('node:child_process');
+  const mk = secs => { const f = path.join(tmp, `clip-${secs}.mp4`);
+    spawnSync(require('ffmpeg-static'), ['-y', '-f', 'lavfi', '-i', `testsrc=size=160x120:rate=5:duration=${secs}`, '-c:v', 'libx264', '-preset', 'ultrafast', f]);
+    return fs.readFileSync(f); };
+  const short = mk(5), long = mk(32);
+  const up = (c, buf) => { const fd = new FormData(); fd.append('file', new Blob([buf], { type: 'video/mp4' }), 'clip.mp4'); return c.post('/api/media', fd); };
+
+  const free = await signup('Fia', 'fia@example.com');
+  let r = await up(free, short);
+  assert.equal(r.status, 402, 'free plan: photos only');
+
+  const s = await signup('Sam', 'sam@example.com');
+  q.run("UPDATE workspaces SET plan_code = 'starter', sub_status = 'active', billing_mode = 'comp', current_period_end = ? WHERE id = (SELECT workspace_id FROM users WHERE email = 'sam@example.com')", Date.now() + 864e5);
+  r = await up(s, short);
+  assert.equal(r.status, 201, JSON.stringify(r.data));
+  assert.equal(r.data.kind, 'video');
+  r = await up(s, long);
+  assert.equal(r.status, 413);
+  assert.equal(r.data.code, 'video_too_long');
+  assert.match(r.data.error, /30 seconds/);
+  assert.equal(q.get("SELECT COUNT(*) n FROM media m JOIN users u ON u.workspace_id = m.workspace_id WHERE u.email = 'sam@example.com'").n, 1, 'too-long file not kept');
+  r = await s.post('/api/exports', { items: [{ platform: 'ig_story', kind: 'video' }], quality: 1 });
+  assert.equal(r.status, 200, 'Starter can download video posts');
+  // AI videos are still Pro / Business
+  r = await s.get('/api/ai/options');
+  assert.equal(r.data.video.allowed, false);
+  r = await s.post('/api/ai/videos', { template: 'vid_push_in' });
+  assert.equal(r.status, 402);
+
+  // Pro: longer videos fine
+  const p = await signup('Pat', 'pat@example.com');
+  q.run("UPDATE workspaces SET plan_code = 'pro', sub_status = 'active', billing_mode = 'comp', current_period_end = ? WHERE id = (SELECT workspace_id FROM users WHERE email = 'pat@example.com')", Date.now() + 864e5);
+  r = await up(p, long);
+  assert.equal(r.status, 201);
+});
+
 test('paid plan: monthly credits per seat', async () => {
   const c = await signup('Pia', 'pia@example.com');
   const ws = q.get("SELECT workspace_id FROM users WHERE email = 'pia@example.com'").workspace_id;

@@ -227,7 +227,7 @@ function createVideoJob(user, { templateKey, input, photo, from, aspect, seconds
   if (user.role === 'viewer') throw new HttpErr(403, 'Viewers can look at designs but not create AI videos.');
   const ws = q.get('SELECT * FROM workspaces WHERE id = ?', user.workspace_id);
   const plan = effectivePlan(ws);
-  if (!plan.video_export) throw new HttpErr(402, 'AI videos are included in the Pro and Business plans. Upgrade to make product videos.', { code: 'ai_video_plan' });
+  if (!plan.ai_video) throw new HttpErr(402, 'AI videos are included in the Pro and Business plans. Upgrade to make product videos.', { code: 'ai_video_plan' });
   const tpl = q.get("SELECT * FROM ai_templates WHERE key = ? AND active = 1 AND kind = 'video'", String(templateKey || ''));
   if (!tpl) throw new HttpErr(400, 'Pick a motion first.');
   // start picture: one of your AI images, or a photo you upload

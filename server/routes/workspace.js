@@ -82,7 +82,7 @@ function authoriseExports(u, items, quality, designId) {
     if (quality < 1 || quality > plan.max_quality)
       throw new S.HttpError(402, `${quality}× quality isn't included in ${plan.name}. Max: ${plan.max_quality}×.`, { code: 'upgrade' });
     if (items.some(i => i.kind === 'video') && !plan.video_export)
-      throw new S.HttpError(402, `Video export is a Pro feature.`, { code: 'upgrade' });
+      throw new S.HttpError(402, `Video export is included from the Starter plan.`, { code: 'upgrade' });
     if (items.length > 1 && !plan.batch_export)
       throw new S.HttpError(402, `Multi-platform batch export isn't included in ${plan.name}.`, { code: 'upgrade' });
 
@@ -127,7 +127,7 @@ router.post('/exports', (req, res) => {
 router.post('/video/convert', express.raw({ type: () => true, limit: '200mb' }), async (req, res) => {
   if (req.user.role === 'viewer') throw new S.HttpError(403, 'Viewers cannot export video.');
   const plan = effectivePlan(wsOf(req.user));
-  if (!plan.video_export) throw new S.HttpError(402, 'Video export is a Pro feature.', { code: 'upgrade' });
+  if (!plan.video_export) throw new S.HttpError(402, 'Video export is included from the Starter plan.', { code: 'upgrade' });
   if (!video.available()) throw new S.HttpError(501, 'MP4 conversion is not available on this server.');
   if (!Buffer.isBuffer(req.body) || req.body.length < 100) throw new S.HttpError(400, 'No video received.');
   const head = req.body.subarray(0, 12);
