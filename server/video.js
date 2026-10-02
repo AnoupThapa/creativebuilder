@@ -64,4 +64,20 @@ async function toMp4(inputBuffer) {
   }
 }
 
-module.exports = { toMp4, available: () => !!FFMPEG };
+/* Run ffmpeg with the shared 2-at-a-time limit (used by the GIF maker too) */
+async function runFfmpeg(args, timeoutMs = 150000) {
+  if (!FFMPEG) throw new Error('Video tools are not available on this server.');
+  await slot();
+  try {
+    await new Promise((resolve, reject) => {
+      const p = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: ['ignore', 'ignore', 'pipe'] });
+      let err = '';
+      p.stderr.on('data', d => { err += d; if (err.length > 4000) err = err.slice(-4000); });
+      const timer = setTimeout(() => { p.kill('SIGKILL'); reject(new Error('This took too long — try a shorter clip or fewer sizes.')); }, timeoutMs);
+      p.on('error', e => { clearTimeout(timer); reject(e); });
+      p.on('close', code => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error('ffmpeg failed: ' + err.trim().split('\n').pop())); });
+    });
+  } finally { release(); }
+}
+
+module.exports = { toMp4, runFfmpeg, TMP, available: () => !!FFMPEG };

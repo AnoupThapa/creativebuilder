@@ -17,6 +17,7 @@ const admin = require('./routes/admin');
 const account = require('./routes/account');
 const publicRoutes = require('./routes/public');
 const socialRoutes = require('./routes/social');
+const gifRoutes = require('./routes/gif');
 
 const app = express();
 app.disable('x-powered-by');
@@ -71,6 +72,7 @@ api.use(S.csrfProtect);
 api.use(['/auth/login', '/auth/signup', '/auth/forgot', '/auth/reset', '/auth/accept-invite', '/me/2fa', '/me/password', '/me/delete'], authLimiter);
 api.post('/media', uploadLimiter);
 api.post('/video/convert', uploadLimiter);
+api.post('/gif/make', uploadLimiter);
 api.post('/support', limiter(15, 6, 'Too many messages — please wait a few minutes or email us.'));
 api.post(['/client-error', '/pv'], limiter(1, 60, 'Slow down.'));
 
@@ -84,6 +86,7 @@ api.use(media.router);
 api.use(workspace.router);
 api.use(account.router);
 api.use(socialRoutes.router);
+api.use(gifRoutes.router);
 api.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use('/api', api);
 
@@ -136,6 +139,7 @@ app.get('/social/connect-demo', S.pageAuth(), page('social-demo.html'));
 app.get('/pub/:file', socialRoutes.servePublic);
 app.get('/app', S.pageAuth(), page('app.html'));
 app.get('/editor', S.pageAuth(), page('editor.html'));
+app.get('/gif', S.pageAuth(), page('gif.html'));
 app.get('/admin', S.pageAuth({ superadmin: true }), page('admin.html'));
 /* Health check for uptime monitors (UptimeRobot, Better Stack…): checks the database and disk */
 app.get('/health', (req, res) => {
