@@ -273,6 +273,7 @@
   function planFeatures(p) {
     return [
       [true, quotaLabel(p) + (p.code === 'free' ? '' : ' per user')],
+      [true, p.ai_credits_monthly ? `${p.ai_credits_monthly} AI product photos a month` : `${p.ai_credits_lifetime || 0} free AI product photos`],
       [p.batch_export, 'Multi-platform ZIP export'],
       [true, `Up to ${p.max_quality}× quality`],
       [p.video_export, 'Video posts'],

@@ -893,6 +893,8 @@ function applyPlatform(key){
   canvas.width = p.w; canvas.height = p.h;
   fitStageShell();
   stageDims.textContent = `${p.w} × ${p.h} px`;
+  const sel = document.getElementById('platformSelect');
+  if (sel && sel.value !== key && sel.querySelector(`option[value="${key}"]`)) sel.value = key;
   if (typeof updateFitUI === 'function') updateFitUI();
   render();
 }

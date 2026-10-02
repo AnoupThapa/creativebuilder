@@ -320,6 +320,52 @@ addColumn('plans', 'stripe_price_id_annual', "TEXT NOT NULL DEFAULT ''");
 addColumn('workspaces', 'billing_interval', "TEXT NOT NULL DEFAULT 'month'"); // month | year
 addColumn('outbox', 'status', "TEXT NOT NULL DEFAULT 'not_sent'");          // sent | failed | not_sent | sending
 addColumn('outbox', 'error', "TEXT NOT NULL DEFAULT ''");
+/* AI studio */
+addColumn('plans', 'ai_credits_monthly', 'INTEGER NOT NULL DEFAULT 0');    // AI credits per seat per month
+addColumn('plans', 'ai_credits_lifetime', 'INTEGER NOT NULL DEFAULT 0');   // one-off AI credits per user (free tier)
+addColumn('workspaces', 'ai_topup_credits', 'INTEGER NOT NULL DEFAULT 0'); // bought credit packs (never expire)
+db.exec(`
+CREATE TABLE IF NOT EXISTS ai_templates (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  key         TEXT NOT NULL UNIQUE,
+  industry    TEXT NOT NULL,
+  kind        TEXT NOT NULL DEFAULT 'image',      -- image | video
+  name        TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  emoji       TEXT NOT NULL DEFAULT '✨',
+  prompt      TEXT NOT NULL,
+  needs_photo INTEGER NOT NULL DEFAULT 0,         -- 1 = only with the real product photo (e.g. food)
+  text_space  TEXT NOT NULL DEFAULT 'top',        -- where to leave clean space for the editor's text
+  setting     TEXT NOT NULL DEFAULT '',           -- default scene when the user gives none
+  active      INTEGER NOT NULL DEFAULT 1,
+  sort        INTEGER NOT NULL DEFAULT 0,
+  updated_at  INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS ai_jobs (
+  id            TEXT PRIMARY KEY,
+  user_id       INTEGER NOT NULL REFERENCES users(id),
+  workspace_id  INTEGER NOT NULL,
+  template_key  TEXT NOT NULL,
+  kind          TEXT NOT NULL DEFAULT 'image',
+  status        TEXT NOT NULL,                   -- queued | running | done | failed
+  provider      TEXT NOT NULL DEFAULT '',
+  model         TEXT NOT NULL DEFAULT '',
+  inputs        TEXT NOT NULL DEFAULT '{}',      -- what the user typed (no secrets)
+  prompt        TEXT NOT NULL DEFAULT '',
+  aspect        TEXT NOT NULL DEFAULT '4:5',
+  count         INTEGER NOT NULL DEFAULT 1,
+  outputs       TEXT NOT NULL DEFAULT '[]',      -- file names
+  credits       INTEGER NOT NULL DEFAULT 0,
+  credits_topup INTEGER NOT NULL DEFAULT 0,      -- how many of the credits came from bought packs
+  local_month   TEXT NOT NULL,
+  cost_usd      REAL NOT NULL DEFAULT 0,         -- estimated provider cost
+  error         TEXT NOT NULL DEFAULT '',
+  created_at    INTEGER NOT NULL,
+  finished_at   INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_ai_jobs_ws ON ai_jobs(workspace_id, local_month);
+CREATE INDEX IF NOT EXISTS idx_ai_jobs_user ON ai_jobs(user_id, created_at);
+`);
 const metaGet = k => q.get('SELECT value FROM meta WHERE key = ?', k)?.value;
 const metaSet = (k, v) => q.run('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, String(v));
 
@@ -327,13 +373,20 @@ const metaSet = (k, v) => q.run('INSERT INTO meta (key, value) VALUES (?, ?) ON 
 const SEED_PLANS = [
   { code: 'free', name: 'Free trial', description: 'Try every basic tool. 3 watermarked downloads to test the app.',
     price_cents: 0, price_cents_annual: 0, currency: 'usd', quota_limit: 3, quota_period: 'lifetime', daily_limit: 0, max_quality: 1, video_export: 0, batch_export: 0,
-    premium_templates: 0, watermark: 1, max_designs: 5, max_brand_kits: 1, max_upload_mb: 10, storage_mb: 100, public: 1, sort: 0 },
-  { code: 'starter', name: 'Starter', description: 'Post every day: 5 images a day, up to 100 a month.',
-    price_cents: 1000, price_cents_annual: 10000, currency: 'usd', quota_limit: 100, quota_period: 'month', daily_limit: 5, max_quality: 2, video_export: 0, batch_export: 1,
-    premium_templates: 1, watermark: 0, max_designs: 200, max_brand_kits: 1, max_upload_mb: 15, storage_mb: 1024, public: 1, sort: 1 },
-  { code: 'pro', name: 'Pro', description: 'For busy businesses: 15 images a day, up to 300 a month, plus video and print quality.',
-    price_cents: 2000, price_cents_annual: 20000, currency: 'usd', quota_limit: 300, quota_period: 'month', daily_limit: 15, max_quality: 3, video_export: 1, batch_export: 1,
-    premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 5, max_upload_mb: 100, storage_mb: 5120, public: 1, sort: 2 },
+    premium_templates: 0, watermark: 1, max_designs: 5, max_brand_kits: 1, max_upload_mb: 10, storage_mb: 100, public: 1, sort: 0,
+    ai_credits_monthly: 0, ai_credits_lifetime: 3 },
+  { code: 'starter', name: 'Starter', description: 'Post every day: 5 images a day, up to 100 a month, plus 40 AI images.',
+    price_cents: 1200, price_cents_annual: 12000, currency: 'usd', quota_limit: 100, quota_period: 'month', daily_limit: 5, max_quality: 2, video_export: 0, batch_export: 1,
+    premium_templates: 1, watermark: 0, max_designs: 200, max_brand_kits: 1, max_upload_mb: 15, storage_mb: 1024, public: 1, sort: 1,
+    ai_credits_monthly: 40, ai_credits_lifetime: 0 },
+  { code: 'pro', name: 'Pro', description: 'For busy businesses: 15 images a day, up to 300 a month, 150 AI images, video and print quality.',
+    price_cents: 2900, price_cents_annual: 29000, currency: 'usd', quota_limit: 300, quota_period: 'month', daily_limit: 15, max_quality: 3, video_export: 1, batch_export: 1,
+    premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 5, max_upload_mb: 100, storage_mb: 5120, public: 1, sort: 2,
+    ai_credits_monthly: 150, ai_credits_lifetime: 0 },
+  { code: 'business', name: 'Business', description: 'For agencies and multi-store brands: 50 images a day, up to 1,000 a month, 500 AI images and priority AI.',
+    price_cents: 7900, price_cents_annual: 79000, currency: 'usd', quota_limit: 1000, quota_period: 'month', daily_limit: 50, max_quality: 3, video_export: 1, batch_export: 1,
+    premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 20, max_upload_mb: 200, storage_mb: 20480, public: 1, sort: 3,
+    ai_credits_monthly: 500, ai_credits_lifetime: 0 },
 ];
 for (const p of SEED_PLANS) {
   const exists = q.get('SELECT code FROM plans WHERE code = ?', p.code);
@@ -349,6 +402,14 @@ if (!metaGet('pricing_v2')) {
            daily_limit = ? WHERE code = ?`, p.description, p.price_cents, p.price_cents_annual, p.currency, p.quota_limit, p.quota_period, p.daily_limit, p.code);
   }
   metaSet('pricing_v2', Date.now());
+}
+/* One-time pricing v3: AI credits included in every plan, new Business plan */
+if (!metaGet('pricing_v3_ai')) {
+  for (const p of SEED_PLANS) {
+    q.run(`UPDATE plans SET description = ?, price_cents = ?, price_cents_annual = ?, ai_credits_monthly = ?, ai_credits_lifetime = ? WHERE code = ?`,
+      p.description, p.price_cents, p.price_cents_annual, p.ai_credits_monthly, p.ai_credits_lifetime, p.code);
+  }
+  metaSet('pricing_v3_ai', Date.now());
 }
 // Stripe price IDs from env override whatever is stored
 for (const [code, price] of Object.entries(config.stripe.prices)) {

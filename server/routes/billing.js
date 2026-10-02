@@ -71,6 +71,28 @@ router.post('/billing/checkout', S.requireRole('owner'), async (req, res) => {
   res.json({ ok: true, mode: 'stripe', url: session.url });
 });
 
+/* AI credit packs (one-off payment, never expire) */
+router.post('/billing/ai-topup', S.requireRole('admin'), async (req, res) => {
+  const ws = q.get('SELECT * FROM workspaces WHERE id = ?', req.user.workspace_id);
+  const credits = config.ai.topupCredits, cents = config.ai.topupPriceCents;
+  if (!stripe) {
+    require('../ai').addTopup(ws.id, credits);
+    S.audit(req, 'billing.demo_ai_topup', { credits });
+    return res.json({ ok: true, mode: 'demo', credits });
+  }
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: cents, product_data: { name: `${credits} AI credits (PostForge)` } } }],
+    client_reference_id: String(ws.id),
+    ...(ws.stripe_customer_id ? { customer: ws.stripe_customer_id } : { customer_email: req.user.email }),
+    metadata: { workspace_id: String(ws.id), ai_credits: String(credits) },
+    success_url: `${config.appUrl}/ai?topup=success`,
+    cancel_url: `${config.appUrl}/ai?topup=cancelled`,
+  });
+  S.audit(req, 'billing.ai_topup_started', { credits });
+  res.json({ ok: true, mode: 'stripe', url: session.url });
+});
+
 router.post('/billing/portal', S.requireRole('owner'), async (req, res) => {
   const ws = q.get('SELECT * FROM workspaces WHERE id = ?', req.user.workspace_id);
   if (!stripe || !ws.stripe_customer_id) throw new S.HttpError(400, 'No Stripe billing account yet.');
@@ -120,6 +142,14 @@ async function webhook(req, res) {
       case 'checkout.session.completed': {
         const s = event.data.object;
         const wsId = parseInt(s.client_reference_id, 10);
+        if (wsId && s.mode === 'payment' && s.metadata?.ai_credits && s.payment_status === 'paid') {
+          // one-off AI credit pack; the session id guards against counting the same payment twice
+          if (!q.get("SELECT id FROM audit_log WHERE action = 'billing.ai_topup_paid' AND detail LIKE ?", `%${s.id}%`)) {
+            require('../ai').addTopup(wsId, parseInt(s.metadata.ai_credits, 10) || 0);
+            q.run('INSERT INTO audit_log (action, detail, created_at) VALUES (?,?,?)', 'billing.ai_topup_paid', JSON.stringify({ session: s.id, workspace: wsId }), Date.now());
+          }
+          break;
+        }
         if (wsId && s.subscription) {
           q.run('UPDATE workspaces SET stripe_customer_id = ?, stripe_subscription_id = ? WHERE id = ?', s.customer, s.subscription, wsId);
           applySubscription(await stripe.subscriptions.retrieve(s.subscription));

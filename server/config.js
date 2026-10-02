@@ -87,11 +87,29 @@ module.exports = {
     prices: {
       starter: env.STRIPE_PRICE_STARTER || '',
       pro: env.STRIPE_PRICE_PRO || '',
+      business: env.STRIPE_PRICE_BUSINESS || '',
     },
     pricesAnnual: {
       starter: env.STRIPE_PRICE_STARTER_ANNUAL || '',
       pro: env.STRIPE_PRICE_PRO_ANNUAL || '',
+      business: env.STRIPE_PRICE_BUSINESS_ANNUAL || '',
     },
+  },
+
+  /* AI studio. Without any key the studio runs in DEMO mode (free placeholder pictures). */
+  ai: {
+    geminiKey: env.GEMINI_API_KEY || '',
+    openaiKey: env.OPENAI_API_KEY || '',
+    provider: (env.AI_IMAGE_PROVIDER || '').toLowerCase(),          // gemini | openai (default: whichever key is set)
+    geminiImageModel: env.GEMINI_IMAGE_MODEL || 'gemini-3.1-flash-image',
+    openaiImageModel: env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
+    openaiQuality: env.OPENAI_IMAGE_QUALITY || 'medium',
+    dailyBudgetUsd: parseFloat(env.AI_DAILY_BUDGET_USD || '20'),      // stop all AI for the day after this much estimated spend
+    jobs: Math.max(1, parseInt(env.AI_JOBS || '2', 10) || 2),         // AI jobs at the same time
+    topupCredits: parseInt(env.AI_TOPUP_CREDITS || '100', 10),
+    topupPriceCents: parseInt(env.AI_TOPUP_PRICE_CENTS || '1000', 10),
+    geminiBase: env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com',
+    openaiBase: env.OPENAI_API_BASE || 'https://api.openai.com',
   },
 
   smtp: {

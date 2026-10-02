@@ -171,7 +171,7 @@ test('Pro plan: 15 a day, up to 300 a month, yearly billing', async () => {
   const plans = await owner.get('/api/billing/plans');
   const pro = plans.data.plans.find(p => p.code === 'pro');
   assert.equal(pro.currency, 'usd');
-  assert.equal(pro.price_cents_annual, 20000, 'yearly = 10 x monthly');
+  assert.equal(pro.price_cents_annual, 29000, 'yearly = 10 x monthly');
   r = await owner.post('/api/billing/checkout', { plan: 'pro', seats: 2, interval: 'month' });
   assert.equal((await owner.me()).data.workspace.billing_interval, 'month');
 });

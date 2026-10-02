@@ -3,7 +3,7 @@
   const { api, loadMe, toast, esc, money, date, ago, bytes, confirmBox } = window.PF;
   const $ = id => document.getElementById(id);
   const TITLES = { overview: 'Overview', users: 'Users & workspaces', plans: 'Plans & pricing', audit: 'Audit log', outbox: 'Email outbox',
-    support: 'Support inbox', beta: 'Beta & feedback', analytics: 'Site analytics', examples: 'Home page examples', reliability: 'Backups & errors' };
+    support: 'Support inbox', beta: 'Beta & feedback', analytics: 'Site analytics', examples: 'Home page examples', reliability: 'Backups & errors', ai: 'AI studio' };
   let plans = [];
   let me;
 
@@ -14,7 +14,7 @@
     $('viewTitle').textContent = TITLES[v];
     $('sidebar').classList.remove('open');
     ({ overview: loadStats, users: loadUsers, plans: loadPlans, audit: loadAudit, outbox: loadOutbox,
-      support: loadSupport, beta: loadBeta, analytics: loadAnalytics, examples: loadExamples, reliability: loadReliability })[v]();
+      support: loadSupport, beta: loadBeta, analytics: loadAnalytics, examples: loadExamples, reliability: loadReliability, ai: loadAI })[v]();
   }
   $('menuBtn').addEventListener('click', () => $('sidebar').classList.toggle('open'));
 
@@ -295,6 +295,77 @@
     catch (ex) { toast(ex.message, { error: true }); } finally { e.target.disabled = false; }
   });
   $('btnClearErr').addEventListener('click', async () => { if (await confirmBox('Clear all recorded errors?', 'The list starts fresh.', 'Clear')) { await api('/admin/errors', { method: 'DELETE' }); loadReliability(); } });
+
+  /* AI studio */
+  const PROVIDER_NAME = { gemini: 'Google Gemini', openai: 'OpenAI', demo: 'Demo mode (no AI key yet)' };
+  let aiTpls = [];
+  async function loadAI() {
+    const s = await api('/admin/ai');
+    aiTpls = s.templates;
+    const live = s.provider !== 'demo';
+    $('aiStatus').innerHTML = live
+      ? `<strong>${s.enabled ? '✅ AI images are ON' : '⏸ AI images are PAUSED'}</strong> <span class="small muted">using ${esc(PROVIDER_NAME[s.provider])} · model ${esc(s.models[s.provider])}</span>`
+      : `<strong>🧪 Demo mode.</strong> <span class="small">No AI key is set, so customers get sample pictures (free to you). To switch on real AI images add
+         <b>GEMINI_API_KEY</b> (recommended) or <b>OPENAI_API_KEY</b> in Fly.io → Secrets. The app restarts by itself and this page will say which service is in use.</span>`;
+    const t = s.today, m = s.month;
+    const tiles = [
+      ['Images today', t.images, `${t.jobs} requests · ${t.failed} failed`],
+      ['Cost today', '$' + t.cost.toFixed(2), `cap $${Number(s.dailyBudget).toFixed(0)} a day`],
+      ['Images this month', m.images, `${m.failed} failed (credits refunded)`],
+      ['Cost this month', '$' + m.cost.toFixed(2), 'estimated from the AI price list'],
+      ['Working now', s.queue.running, `${s.queue.waiting} waiting`],
+    ];
+    $('aiStats').innerHTML = tiles.map(([k, v, sub]) => `<div class="stat"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="s">${esc(sub)}</div></div>`).join('');
+    $('aiEnabled').checked = s.enabled;
+    $('aiBudget').value = s.dailyBudget;
+    $('aiErrs').innerHTML = s.recentErrors.map(e => `<tr><td class="small">${ago(e.created_at)}</td><td class="mono small">${esc(e.template_key)}</td>
+      <td class="small">${esc(e.provider || '')}</td><td class="small">${esc(e.error || '')}</td></tr>`).join('') || '<tr><td colspan="4" class="center muted">No failures. 🎉</td></tr>';
+    $('aiTpls').innerHTML = aiTpls.map(t => `<details class="card" data-id="${t.id}" style="margin:8px 0;padding:10px 14px">
+      <summary class="row wrap" style="cursor:pointer;gap:8px"><span>${esc(t.emoji || '✨')}</span><strong class="grow">${esc(t.name)}</strong>
+        <span class="badge">${esc(t.industry)}</span>${t.needs_photo ? '<span class="badge badge-blue">needs photo</span>' : ''}${t.active ? '<span class="badge badge-green">shown</span>' : '<span class="badge badge-red">hidden</span>'}</summary>
+      <div style="margin-top:10px;display:grid;gap:8px">
+        <label class="small muted">Name<input class="input" data-k="name" value="${esc(t.name)}"></label>
+        <label class="small muted">Short description<input class="input" data-k="description" value="${esc(t.description || '')}"></label>
+        <label class="small muted">Default scene (used when the customer leaves it empty)<input class="input" data-k="setting" value="${esc(t.setting || '')}"></label>
+        <label class="small muted">Prompt<textarea class="input" data-k="prompt" rows="6" style="font-family:inherit">${esc(t.prompt)}</textarea></label>
+        <div class="row wrap" style="gap:14px">
+          <label class="small">Space for text <select class="input" data-k="text_space" style="width:auto">${['top', 'left', 'bottom', 'none'].map(o => `<option ${o === t.text_space ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
+          <label class="small row" style="gap:6px"><input type="checkbox" data-k="needs_photo" ${t.needs_photo ? 'checked' : ''}> Customer must upload a photo</label>
+          <label class="small row" style="gap:6px"><input type="checkbox" data-k="active" ${t.active ? 'checked' : ''}> Show to customers</label>
+          <button class="btn btn-dark btn-sm" data-save>Save style</button>
+        </div>
+      </div></details>`).join('');
+  }
+  $('aiTpls').addEventListener('click', async e => {
+    if (!e.target.matches('[data-save]')) return;
+    const box = e.target.closest('[data-id]');
+    const body = {};
+    box.querySelectorAll('[data-k]').forEach(i => { body[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value; });
+    try { await api('/admin/ai/templates/' + box.dataset.id, { method: 'PUT', body }); toast('Style saved ✓'); loadAI(); }
+    catch (err) { toast(err.message, { error: true }); }
+  });
+  $('aiSave').addEventListener('click', async () => {
+    try { await api('/admin/ai/settings', { method: 'PATCH', body: { enabled: $('aiEnabled').checked, dailyBudget: $('aiBudget').value } }); toast('AI settings saved ✓'); loadAI(); }
+    catch (err) { toast(err.message, { error: true }); }
+  });
+  $('aiTest').addEventListener('click', async e => {
+    e.target.disabled = true;
+    $('aiTestOut').textContent = 'Asking the AI for a test picture… (up to a minute)';
+    try {
+      const r = await api('/admin/ai/test', { method: 'POST', body: {} });
+      $('aiTestOut').innerHTML = r.ok
+        ? `✅ Working — ${esc(PROVIDER_NAME[r.provider] || r.provider)} (${esc(r.model)}) made a test picture:<br><img src="${r.preview}" alt="AI test image" style="width:180px;border-radius:12px;margin-top:8px">`
+        : `❌ Not working: ${esc(r.error)}${r.detail ? `<details><summary class="muted">technical details</summary><pre class="mail">${esc(r.detail)}</pre></details>` : ''}`;
+    } catch (err) { $('aiTestOut').textContent = '❌ ' + err.message; }
+    e.target.disabled = false;
+  });
+  $('aiGrant').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const r = await api(`/admin/workspaces/${encodeURIComponent($('aiGrantWs').value.replace('#', ''))}/ai-credits`, { method: 'POST', body: { credits: $('aiGrantN').value } });
+      toast(`Done ✓ — extra AI credits now ${r.balance}`); e.target.reset();
+    } catch (err) { toast(err.message, { error: true }); }
+  });
 
   loadMe().then(m => { me = m; window.addEventListener('hashchange', route); route(); }).catch(e => toast(e.message, { error: true }));
 })();

@@ -45,6 +45,7 @@ pre.mail{white-space:pre-wrap;font-size:12px;background:var(--paper);padding:10p
       <a href="#reliability" data-view="reliability"><span>🛡</span>Backups &amp; errors</a>
       <a href="#audit" data-view="audit"><span>🧾</span>Audit log</a>
       <a href="#outbox" data-view="outbox"><span>📧</span>Email outbox</a>
+      <a href="#ai" data-view="ai"><span>✨</span>AI studio</a>
       <a href="/app"><span>←</span>Back to app</a>
     </nav>
   </aside>
@@ -173,6 +174,38 @@ pre.mail{white-space:pre-wrap;font-size:12px;background:var(--paper);padding:10p
       <div class="card" id="mailStatus" style="margin-bottom:12px"><span class="muted small">Checking email sending…</span></div>
       <p class="muted small" style="margin-bottom:12px">Every email the app sends (sign-up confirmation, password reset, invites) is recorded here with whether it was delivered. Reset and confirmation links that reached the user are hidden here — only the user can use them.</p>
       <div id="outboxList"></div>
+    </section>
+
+    <section class="view hidden" id="view-ai">
+      <div class="card" id="aiStatus" style="margin-bottom:12px"><span class="muted small">Loading…</span></div>
+      <div class="stats" id="aiStats"></div>
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="row wrap" style="gap:12px;align-items:flex-end">
+          <label class="row" style="gap:8px"><input type="checkbox" id="aiEnabled"> <span><b>AI studio switched on</b><br><span class="small muted">Untick to pause all new AI images instantly (kill switch).</span></span></label>
+          <div><label class="small muted" for="aiBudget">Daily spending cap (USD)</label><br><input class="input" id="aiBudget" type="number" min="0" step="1" style="width:130px"></div>
+          <button class="btn btn-dark btn-sm" id="aiSave">Save</button>
+          <button class="btn btn-ghost btn-sm" id="aiTest">Test AI connection (makes 1 image)</button>
+        </div>
+        <div id="aiTestOut" class="small" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <h3>Give AI credits to a workspace</h3>
+        <form class="row wrap" id="aiGrant" style="gap:8px">
+          <input class="input" id="aiGrantWs" placeholder="Workspace # (see Users)" required style="width:190px">
+          <input class="input" id="aiGrantN" type="number" placeholder="Credits (e.g. 20 or -5)" required style="width:190px">
+          <button class="btn btn-dark btn-sm">Give credits</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Design styles (prompts)</h3>
+        <p class="small muted">These are the ready-made AI styles customers pick from. Words in {curly brackets} are filled in from what the customer types. Rules about “no text” and keeping the product exact are always added automatically.</p>
+        <div id="aiTpls"></div>
+      </div>
+      <div class="card">
+        <h3>Recent failures</h3>
+        <div class="table-wrap"><table><thead><tr><th>When</th><th>Style</th><th>Service</th><th>Reason</th></tr></thead><tbody id="aiErrs"></tbody></table></div>
+      </div>
     </section>
   </main>
 </div>

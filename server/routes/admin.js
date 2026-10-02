@@ -227,6 +227,59 @@ router.patch('/feedback/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+/* ---------------- AI studio ---------------- */
+router.get('/ai', (req, res) => {
+  const ai = require('../ai');
+  res.json({ ...ai.stats(), templates: ai.templates(true) });
+});
+router.patch('/ai/settings', (req, res) => {
+  const ai = require('../ai');
+  if (req.body.enabled !== undefined) ai.setEnabled(!!req.body.enabled);
+  if (req.body.dailyBudget !== undefined) {
+    const v = parseFloat(req.body.dailyBudget);
+    if (!Number.isFinite(v) || v < 0 || v > 10000) throw new S.HttpError(400, 'Daily budget must be between 0 and 10,000 USD.');
+    ai.setDailyBudget(v);
+  }
+  S.audit(req, 'admin.ai_settings', req.body);
+  res.json({ ok: true, ...ai.stats() });
+});
+router.put('/ai/templates/:id', (req, res) => {
+  const t = q.get('SELECT * FROM ai_templates WHERE id = ?', +req.params.id);
+  if (!t) throw new S.HttpError(404, 'Style not found.');
+  const name = S.str(req.body.name ?? t.name, { field: 'Name', required: true, max: 60 });
+  const description = S.str(req.body.description ?? t.description, { field: 'Description', max: 160 }) || '';
+  const prompt = String(req.body.prompt ?? t.prompt).slice(0, 4000);
+  if (prompt.trim().length < 30) throw new S.HttpError(400, 'The prompt is too short.');
+  const setting = S.str(req.body.setting ?? t.setting, { field: 'Default scene', max: 160 }) || '';
+  const space = ['top', 'left', 'bottom', 'none'].includes(req.body.text_space) ? req.body.text_space : t.text_space;
+  q.run(`UPDATE ai_templates SET name = ?, description = ?, prompt = ?, setting = ?, text_space = ?, needs_photo = ?, active = ?, updated_at = ? WHERE id = ?`,
+    name, description, prompt, setting, space, req.body.needs_photo !== undefined ? (req.body.needs_photo ? 1 : 0) : t.needs_photo,
+    req.body.active !== undefined ? (req.body.active ? 1 : 0) : t.active, Date.now(), t.id);
+  S.audit(req, 'admin.ai_template_updated', { key: t.key });
+  res.json({ ok: true });
+});
+/* Check the AI key works (makes one real image — costs a few cents) */
+router.post('/ai/test', async (req, res) => {
+  const providers = require('../ai/providers');
+  const dir = require('node:fs').mkdtempSync(require('node:path').join(require('../config').DATA_DIR, 'tmp', 'aitest-'));
+  try {
+    const r = await providers.generate({ prompt: 'A photorealistic red apple on a white table, soft daylight. No text.', aspect: '1:1', n: 1, tmpDir: dir });
+    const b = r.images[0];
+    res.json({ ok: true, provider: r.provider, model: r.model, bytes: b.length, preview: `data:image/${b[0] === 0xff ? 'jpeg' : 'png'};base64,${b.toString('base64')}` });
+  } catch (e) {
+    res.json({ ok: false, provider: providers.active(), error: e.message, detail: e.detail || '' });
+  } finally { require('node:fs').rm(dir, { recursive: true, force: true }, () => {}); }
+});
+router.post('/workspaces/:id/ai-credits', (req, res) => {
+  const ws = q.get('SELECT id FROM workspaces WHERE id = ?', +req.params.id);
+  if (!ws) throw new S.HttpError(404, 'Workspace not found.');
+  const n = parseInt(req.body.credits, 10);
+  if (!Number.isFinite(n) || n === 0 || Math.abs(n) > 100000) throw new S.HttpError(400, 'Enter a number of credits (negative to remove).');
+  q.run('UPDATE workspaces SET ai_topup_credits = MAX(0, ai_topup_credits + ?) WHERE id = ?', n, ws.id);
+  S.audit(req, 'admin.ai_credits', { workspace: ws.id, credits: n });
+  res.json({ ok: true, balance: q.get('SELECT ai_topup_credits b FROM workspaces WHERE id = ?', ws.id).b });
+});
+
 /* ---------------- Closed beta invite codes ---------------- */
 router.get('/beta-codes', (req, res) => res.json(q.all('SELECT * FROM beta_codes ORDER BY created_at DESC')));
 router.post('/beta-codes', (req, res) => {

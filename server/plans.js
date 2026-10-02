@@ -73,6 +73,7 @@ function publicPlan(p) {
     video_export: !!p.video_export, batch_export: !!p.batch_export, premium_templates: !!p.premium_templates,
     watermark: !!p.watermark, max_designs: p.max_designs, max_brand_kits: p.max_brand_kits,
     max_upload_mb: p.max_upload_mb, storage_mb: p.storage_mb,
+    ai_credits_monthly: p.ai_credits_monthly || 0, ai_credits_lifetime: p.ai_credits_lifetime || 0,
   };
 }
 
