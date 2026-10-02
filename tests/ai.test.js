@@ -73,7 +73,17 @@ test.after(() => { server.close(); shop.close(); fs.rmSync(tmp, { recursive: tru
 test('prompts never ask for text and keep the real product', () => {
   const tpl = ai.templates().find(t => t.key === 'shop_studio');
   const p = buildPrompt(tpl, { product: 'Mug <script>{x}', details: '', colours: 'teal' }, { hasPhoto: true, aspect: '1:1' });
-  assert.match(p, /NO added text/);
+  assert.match(p, /NO LETTERING/);
+  assert.match(p, /only exception: print that is physically on the real product/);
+  // no style may invite the model to draw words; without a photo the product must be unbranded
+  for (const t of ai.templates()) {
+    for (const hasPhoto of [true, false]) {
+      const x = buildPrompt(t, { product: 'Rose serum' }, { hasPhoto, aspect: '4:5' });
+      assert.ok(!/headline|menu text|offer|label crisp|readable|text will|sale-campaign/i.test(x), t.key + ' invites lettering');
+      assert.match(x, /never write them anywhere/);
+      if (!hasPhoto) assert.match(x, /must be blank/);
+    }
+  }
   assert.match(p, /exact/i);
   assert.ok(!p.includes('<script>') && !p.includes('{x}'), 'user words are cleaned');
   assert.ok(!/\{(product|details|setting|colours|mood)\}/.test(p), 'every placeholder is filled');
@@ -158,6 +168,61 @@ test('free plan: 3 AI images for life, failures refunded, results open in the ed
   r = await c.get('/api/ai/credits');
   assert.equal(r.data.left, 100);
   assert.equal(r.data.topup, 100);
+});
+
+test('quality check: images with lettering or a changed product are redone, then refunded', { timeout: 60000 }, async () => {
+  // verdict parsing
+  assert.deepEqual(providers.parseVerdict('{"text_added":true,"product_ok":true}', false).problems, ['lettering']);
+  assert.equal(providers.parseVerdict('```json {"text_added":false,"label_changed":false,"same_product":true,"product_ok":true} ```', true).ok, true);
+  assert.deepEqual(providers.parseVerdict('{"text_added":false,"label_changed":true,"same_product":true,"product_ok":true}', true).problems, ['label changed']);
+  assert.equal(providers.parseVerdict('no idea', true), null);
+
+  const c = await signup('Quinn', 'quinn@example.com');
+  const ws = q.get("SELECT workspace_id FROM users WHERE email = 'quinn@example.com'").workspace_id;
+  q.run("UPDATE workspaces SET plan_code = 'pro', sub_status = 'active', billing_mode = 'comp', current_period_end = ? WHERE id = ?", Date.now() + 864e5, ws);
+  const real = { active: providers.active, generate: providers.generate, checkImage: providers.checkImage };
+  let made = 0, verdicts = [];
+  providers.active = () => 'gemini';
+  providers.generate = async ({ n = 1 }) => { const images = []; for (let i = 0; i < n; i++) { made++; images.push(Buffer.concat([PNG, Buffer.alloc(2000, made)])); } return { images, provider: 'gemini', model: 'test', costUsd: 0.067 * n }; };
+  providers.checkImage = async () => verdicts.shift() ?? { ok: true, problems: [] };
+  const BAD = { ok: false, problems: ['lettering'] }, GOOD = { ok: true, problems: [] };
+  try {
+    // first try has writing, the redo is clean → delivered
+    verdicts = [BAD, GOOD]; made = 0;
+    let r = await c.post('/api/ai/jobs', { template: 'shop_studio', product: 'Lamp' });
+    let d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'done');
+    assert.equal(d.job.outputs.length, 1);
+    assert.equal(made, 2, 'made again once');
+    let row = q.get('SELECT * FROM ai_jobs WHERE id = ?', r.data.job.id);
+    assert.equal(row.redone, 1); assert.equal(row.rejected, 0); assert.equal(row.credits, 1);
+    assert.equal(d.credits.used, 1);
+
+    // two options: one keeps failing → only the clean one is delivered, 1 credit back
+    verdicts = [GOOD, BAD, BAD];
+    r = await c.post('/api/ai/jobs', { template: 'shop_studio', product: 'Lamp', count: 2 });
+    d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'done');
+    assert.equal(d.job.outputs.length, 1);
+    row = q.get('SELECT * FROM ai_jobs WHERE id = ?', r.data.job.id);
+    assert.equal(row.credits, 1); assert.equal(row.rejected, 1);
+    assert.equal(d.credits.used, 2);
+
+    // never clean → failed with a clear message, all credits back
+    verdicts = [BAD, BAD];
+    r = await c.post('/api/ai/jobs', { template: 'shop_studio', product: 'Lamp' });
+    d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'failed');
+    assert.match(d.job.error, /credits were returned/);
+    assert.equal(d.credits.used, 2);
+
+    // checker unavailable → image kept
+    verdicts = [null];
+    providers.checkImage = async () => null;
+    r = await c.post('/api/ai/jobs', { template: 'shop_studio', product: 'Lamp' });
+    d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'done');
+  } finally { Object.assign(providers, real); }
 });
 
 test('paid plan: monthly credits per seat', async () => {

@@ -35,9 +35,9 @@ Colour mood: {colours}. Feeling: {mood}.`,
 Low camera angle, dramatic warm backlight that makes the steam glow, dark blurred background, rich glossy textures. The food fills the lower-middle of the frame.
 Colour mood: {colours}. Feeling: {mood}.`,
     { needs_photo: 1, text_space: 'top', setting: 'dark kitchen background' }),
-  T('food_menu_board', 'food', 'Menu / special background', '📋', 'Clean styled background with lots of space for menu text',
+  T('food_menu_board', 'food', 'Menu / special background', '📋', 'Your dish on one side, a calm empty area for your menu words',
     `A photorealistic, styled food advertising background for {product}. {details}
-The dish is placed on the right third of the frame on a {setting}; the left two-thirds is calm, uncluttered, softly lit surface with gentle texture — empty space reserved for menu text that will be added later.
+The dish is placed on the right third of the frame on a {setting}; the left two-thirds is calm, uncluttered, softly lit plain surface with gentle texture and nothing on it (negative space).
 Elegant, minimal, premium restaurant look.
 Colour mood: {colours}. Feeling: {mood}.`,
     { needs_photo: 1, text_space: 'left', setting: 'matte dark slate surface' }),
@@ -45,19 +45,19 @@ Colour mood: {colours}. Feeling: {mood}.`,
   /* ---------- Café & bakery ---------- */
   T('cafe_morning', 'cafe', 'Morning café', '🥐', 'Coffee or pastry in warm morning window light',
     `A photorealistic café advertising photo of {product} on a {setting} next to a window. {details}
-Warm golden morning sunlight streaming in, soft shadows, a cosy blurred café interior behind, a hint of latte art or crumbs for authenticity. The product is the sharp single focal point in the lower-middle.
+Warm golden morning sunlight streaming in, soft shadows, a cosy blurred café interior behind, a little natural latte foam or a few crumbs for authenticity. The product is the sharp single focal point in the lower-middle.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'marble café table' }),
   T('bakery_counter', 'cafe', 'Bakery display', '🍰', 'Fresh bakes on a counter — inviting and homely',
     `A photorealistic bakery advertising photo of {product} displayed on a {setting}. {details}
-Freshly baked look, soft flour dusting, warm bakery lighting, out-of-focus shelves of bread and cakes in the background. Product sharp and centred, about half of the frame.
+Freshly baked look, soft flour dusting, warm bakery lighting, softly out-of-focus loaves and cakes in the background (no shelf tags, no chalkboards). Product sharp and centred, about half of the frame.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'rustic wooden bakery counter with parchment paper' }),
 
   /* ---------- Online shop & retail ---------- */
   T('shop_studio', 'shop', 'Studio packshot', '📦', 'Clean product photo on a soft colour backdrop',
     `A premium photorealistic e-commerce studio photo of {product}. {details}
-The product stands centred on a seamless {setting}, filling about 50% of the frame, with a soft natural contact shadow and subtle reflection. Large soft-box lighting, crisp edges, true-to-life colours, perfect focus on the product and its label.
+The product stands centred on a seamless {setting}, filling about 50% of the frame, with a soft natural contact shadow and subtle reflection. Large soft-box lighting, crisp edges, true-to-life colours, perfect focus on the whole product.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'pastel paper backdrop in a colour that complements the product', text_space: 'top' }),
   T('shop_lifestyle', 'shop', 'Lifestyle in use', '🏡', 'Your product in a real, stylish everyday setting',
@@ -79,7 +79,7 @@ Colour mood: {colours}. Feeling: {mood}.`,
   /* ---------- Beauty & salon ---------- */
   T('beauty_pastel', 'beauty', 'Soft pastel beauty', '🌸', 'Skincare & cosmetics with petals, water and soft light',
     `A photorealistic luxury beauty advertising photo of {product} on a {setting}. {details}
-Delicate props such as flower petals, water droplets or smooth stones, soft diffused light, gentle reflections, clean premium cosmetic-brand aesthetic, label crisp and readable.
+Delicate props such as flower petals, water droplets or smooth stones, soft diffused light, gentle reflections, clean premium cosmetic-brand aesthetic, product sharp and beautifully lit.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'glossy pastel acrylic surface', text_space: 'top' }),
   T('beauty_texture', 'beauty', 'Texture splash', '💧', 'Product with a cream / liquid texture swirl',
@@ -91,7 +91,7 @@ Colour mood: {colours}. Feeling: {mood}.`,
   /* ---------- Health, cleaning & B2B supplies ---------- */
   T('supplies_clinical', 'supplies', 'Clean & professional', '🩺', 'Bright, hygienic workplace setting — clinics, cleaners, kitchens',
     `A photorealistic advertising photo of {product} in a bright, spotless {setting}. {details}
-Clean white and soft-blue tones, even natural daylight, everything tidy and hygienic; the product is the sharp single focal point on the counter in the lower-middle of the frame. Trustworthy, professional, calm. No medical claims or symbols implying certification.
+Clean white and soft-blue tones, even natural daylight, everything tidy and hygienic; the product is the sharp single focal point on the counter in the lower-middle of the frame. Trustworthy, professional, calm. No signs, posters, certificates, symbols or screens in the background.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'professional workplace such as a clinic, commercial kitchen or office', text_space: 'top' }),
   T('supplies_in_use', 'supplies', 'Hands at work', '🧤', 'Worker hands using the product — shows real value',
@@ -102,18 +102,18 @@ Colour mood: {colours}. Feeling: {mood}.`,
 
   /* ---------- Festivals & seasons ---------- */
   T('festive_lights', 'festive', 'Festival of lights', '🪔', 'Dashain, Tihar, Diwali — diyas, marigolds and warm lights',
-    `A photorealistic festive advertising photo of {product} surrounded by glowing clay diyas, marigold flowers and warm bokeh lights, on a {setting}. {details}
+    `A photorealistic festive advertising photo of {product} surrounded by glowing clay diyas, marigold flowers and warm bokeh lights (no greeting words, no symbols with letters), on a {setting}. {details}
 Rich warm golden and orange tones, joyful celebratory mood, product sharp and centred as the hero.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'festive table with a rangoli-inspired pattern', text_space: 'top' }),
   T('festive_christmas', 'festive', 'Christmas & New Year', '🎄', 'Cosy Christmas or New Year scene around your product',
-    `A photorealistic festive advertising photo of {product} on a {setting} with soft fairy lights, pine branches, small wrapped gifts and gentle bokeh. {details}
+    `A photorealistic festive advertising photo of {product} on a {setting} with soft fairy lights, pine branches, small plain wrapped gifts (no tags or cards) and gentle bokeh. {details}
 Cosy, warm and celebratory, product sharp and centred as the hero.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'cosy wooden table', text_space: 'top' }),
-  T('festive_sale', 'festive', 'Big sale backdrop', '🏷️', 'Energetic sale-day scene — bold colours, confetti, space for your offer',
-    `A photorealistic, energetic sale-campaign photo of {product} on a {setting}, with dynamic bright colour shapes and a little falling confetti. {details}
-Punchy contrast, exciting but uncluttered, product sharp and centred in the lower half; a large calm area left free for an offer headline.
+  T('festive_sale', 'festive', 'Big sale backdrop', '🏷️', 'Energetic sale-day scene — bold colours and confetti; add your offer in the editor',
+    `A photorealistic, energetic celebration-style shopping campaign photo of {product} on a {setting}, with dynamic bright abstract colour shapes and a little falling plain confetti. {details}
+Punchy contrast, exciting but uncluttered, product sharp and centred in the lower half; the upper area is plain calm colour with nothing in it.
 Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'bold colour block backdrop', text_space: 'top' }),
 ];

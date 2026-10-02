@@ -28,14 +28,23 @@ function seedTemplates() {
   });
 }
 seedTemplates();
+/* v2 wording (stricter "no lettering"): refresh styles an admin has not edited since seeding */
+if (metaGet('ai_templates_v') !== '2') {
+  const firstSeed = q.get('SELECT MIN(updated_at) t FROM ai_templates').t;
+  for (const t of TEMPLATES) {
+    q.run('UPDATE ai_templates SET prompt = ?, description = ?, setting = ? WHERE key = ? AND updated_at = ?', t.prompt, t.description, t.setting || '', t.key, firstSeed);
+  }
+  metaSet('ai_templates_v', '2');
+}
 const templates = (all = false) => q.all(`SELECT * FROM ai_templates ${all ? '' : 'WHERE active = 1'} ORDER BY sort, id`);
 
 /* ---------- switches ---------- */
 const enabled = () => metaGet('ai_enabled') !== '0';
+const qualityCheck = () => { const v = metaGet('ai_quality_check'); return v == null ? config.ai.qualityCheck : v === '1'; };
 const dailyBudget = () => { const v = parseFloat(metaGet('ai_daily_budget') || ''); return Number.isFinite(v) && v >= 0 ? v : config.ai.dailyBudgetUsd; };
 function spentToday() {
   const start = new Date(); start.setUTCHours(0, 0, 0, 0);
-  return q.get("SELECT COALESCE(SUM(cost_usd),0) s FROM ai_jobs WHERE created_at >= ? AND status != 'failed'", start.getTime()).s;
+  return q.get("SELECT COALESCE(SUM(CASE WHEN status != 'failed' OR redone > 0 THEN cost_usd ELSE 0 END),0) s FROM ai_jobs WHERE created_at >= ?", start.getTime()).s;
 }
 
 /* ---------- credits ---------- */
@@ -139,7 +148,33 @@ async function run(id) {
     let photo = null;
     if (fs.existsSync(path.join(dir, 'input'))) photo = { buffer: fs.readFileSync(path.join(dir, 'input')), mime: fs.readFileSync(path.join(dir, 'input.mime'), 'utf8') };
     const r = await providers.generate({ prompt: job.prompt, photo, aspect: job.aspect, n: job.count, tmpDir: dir, provider: job.provider });
-    const files = r.images.map((buf, i) => {
+    let cost = r.costUsd, redone = 0, rejected = 0;
+    // quality check: no lettering, product sharp & unchanged — redo a failing image once, then drop it (refunded)
+    const images = [];
+    const checking = qualityCheck() && job.provider !== 'demo';
+    for (let img of r.images) {
+      if (checking) {
+        cost += providers.CHECK_COST[job.provider] || 0;
+        let v = await providers.checkImage({ image: img, photo, provider: job.provider });
+        if (v && !v.ok) {
+          console.warn('[ai-check]', id, 'rejected:', v.problems.join(', '), v.notes);
+          redone++;
+          try {
+            const again = await providers.generate({ prompt: job.prompt, photo, aspect: job.aspect, n: 1, tmpDir: dir, provider: job.provider });
+            cost += again.costUsd + (providers.CHECK_COST[job.provider] || 0);
+            img = again.images[0];
+            v = await providers.checkImage({ image: img, photo, provider: job.provider });
+          } catch (e) { v = { ok: false, problems: ['retry failed'] }; }
+          if (v && !v.ok) { rejected++; console.warn('[ai-check]', id, 'still rejected:', v.problems.join(', ')); continue; }
+        }
+      }
+      images.push(img);
+    }
+    if (!images.length) {
+      q.run('UPDATE ai_jobs SET cost_usd = ?, redone = ?, rejected = ? WHERE id = ?', cost, redone, rejected, id);
+      throw new providers.AiError('We couldn’t get a clean picture this time (the AI kept adding writing or changing your product), so your credits were returned. Try another style or a clearer, front-facing photo.', 'quality', 'quality check rejected all images');
+    }
+    const files = images.map((buf, i) => {
       const ext = buf[0] === 0xff ? 'jpg' : buf.toString('ascii', 8, 12) === 'WEBP' ? 'webp' : 'png';
       const f = `out-${i}.${ext}`;
       fs.writeFileSync(path.join(dir, f), buf, { mode: 0o600 });
@@ -147,8 +182,12 @@ async function run(id) {
     });
     // fewer images than paid for? give the difference back
     const missing = job.count - files.length;
-    q.run("UPDATE ai_jobs SET status = 'done', outputs = ?, model = ?, cost_usd = ?, credits = credits - ?, finished_at = ? WHERE id = ?",
-      JSON.stringify(files), r.model, r.costUsd, Math.max(0, missing), Date.now(), id);
+    tx(() => {
+      const fromTopup = Math.min(Math.max(0, missing), job.credits_topup);
+      if (fromTopup > 0) addTopup(job.workspace_id, fromTopup);
+      q.run("UPDATE ai_jobs SET status = 'done', outputs = ?, model = ?, cost_usd = ?, credits = credits - ?, credits_topup = credits_topup - ?, redone = ?, rejected = ?, finished_at = ? WHERE id = ?",
+        JSON.stringify(files), r.model, cost, Math.max(0, missing), fromTopup, redone, rejected, Date.now(), id);
+    });
   } catch (e) {
     console.error('[ai]', id, e.reason || '', e.message, e.detail || '');
     fail(job, e.reason ? e : new providers.AiError('The AI could not make this image. Please try again.', 'failed', e.message));
@@ -218,9 +257,10 @@ function stats() {
   const start = new Date(); start.setUTCHours(0, 0, 0, 0);
   const month = new Date(); month.setUTCDate(1); month.setUTCHours(0, 0, 0, 0);
   const agg = since => q.get(`SELECT COUNT(*) jobs, COALESCE(SUM(CASE WHEN status='done' THEN credits END),0) images,
-    COALESCE(SUM(CASE WHEN status!='failed' THEN cost_usd END),0) cost, COALESCE(SUM(status='failed'),0) failed FROM ai_jobs WHERE created_at >= ?`, since);
+    COALESCE(SUM(CASE WHEN status!='failed' OR redone > 0 THEN cost_usd END),0) cost, COALESCE(SUM(status='failed'),0) failed,
+    COALESCE(SUM(redone),0) redone, COALESCE(SUM(rejected),0) rejected FROM ai_jobs WHERE created_at >= ?`, since);
   return {
-    enabled: enabled(), dailyBudget: dailyBudget(), provider: providers.active(),
+    enabled: enabled(), qualityCheck: qualityCheck(), dailyBudget: dailyBudget(), provider: providers.active(),
     keys: { gemini: !!config.ai.geminiKey, openai: !!config.ai.openaiKey },
     models: { gemini: config.ai.geminiImageModel, openai: config.ai.openaiImageModel },
     today: agg(start.getTime()), month: agg(month.getTime()),
@@ -231,6 +271,6 @@ function stats() {
 
 module.exports = {
   INDUSTRIES, ASPECTS, templates, creditStatus, addTopup, createJob, publicJob, outputFile, toDesign, stats,
-  enabled, setEnabled: v => metaSet('ai_enabled', v ? '1' : '0'), setDailyBudget: v => metaSet('ai_daily_budget', String(v)),
+  enabled, qualityCheck, setQualityCheck: v => metaSet('ai_quality_check', v ? '1' : '0'), setEnabled: v => metaSet('ai_enabled', v ? '1' : '0'), setDailyBudget: v => metaSet('ai_daily_budget', String(v)),
   HttpErr, _queueIdle: () => running === 0 && queue.length === 0,
 };

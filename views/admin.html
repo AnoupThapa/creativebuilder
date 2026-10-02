@@ -183,6 +183,7 @@ pre.mail{white-space:pre-wrap;font-size:12px;background:var(--paper);padding:10p
         <h3>Controls</h3>
         <div class="row wrap" style="gap:12px;align-items:flex-end">
           <label class="row" style="gap:8px"><input type="checkbox" id="aiEnabled"> <span><b>AI studio switched on</b><br><span class="small muted">Untick to pause all new AI images instantly (kill switch).</span></span></label>
+          <label class="row" style="gap:8px"><input type="checkbox" id="aiQuality"> <span><b>Quality check</b><br><span class="small muted">Every AI picture is inspected; any writing, changed label or blurry product → made again or refunded.</span></span></label>
           <div><label class="small muted" for="aiBudget">Daily spending cap (USD)</label><br><input class="input" id="aiBudget" type="number" min="0" step="1" style="width:130px"></div>
           <button class="btn btn-dark btn-sm" id="aiSave">Save</button>
           <button class="btn btn-ghost btn-sm" id="aiTest">Test AI connection (makes 1 image)</button>

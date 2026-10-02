@@ -235,6 +235,7 @@ router.get('/ai', (req, res) => {
 router.patch('/ai/settings', (req, res) => {
   const ai = require('../ai');
   if (req.body.enabled !== undefined) ai.setEnabled(!!req.body.enabled);
+  if (req.body.qualityCheck !== undefined) ai.setQualityCheck(!!req.body.qualityCheck);
   if (req.body.dailyBudget !== undefined) {
     const v = parseFloat(req.body.dailyBudget);
     if (!Number.isFinite(v) || v < 0 || v > 10000) throw new S.HttpError(400, 'Daily budget must be between 0 and 10,000 USD.');

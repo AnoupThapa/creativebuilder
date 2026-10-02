@@ -108,6 +108,9 @@ module.exports = {
     jobs: Math.max(1, parseInt(env.AI_JOBS || '2', 10) || 2),         // AI jobs at the same time
     topupCredits: parseInt(env.AI_TOPUP_CREDITS || '100', 10),
     topupPriceCents: parseInt(env.AI_TOPUP_PRICE_CENTS || '1000', 10),
+    qualityCheck: env.AI_QUALITY_CHECK !== 'false',                 // inspect every AI image for lettering / damaged product
+    geminiCheckModel: env.GEMINI_CHECK_MODEL || 'gemini-flash-latest',
+    openaiCheckModel: env.OPENAI_CHECK_MODEL || 'gpt-5-mini',
     geminiBase: env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com',
     openaiBase: env.OPENAI_API_BASE || 'https://api.openai.com',
   },

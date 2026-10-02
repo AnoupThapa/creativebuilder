@@ -313,10 +313,12 @@
       ['Cost today', '$' + t.cost.toFixed(2), `cap $${Number(s.dailyBudget).toFixed(0)} a day`],
       ['Images this month', m.images, `${m.failed} failed (credits refunded)`],
       ['Cost this month', '$' + m.cost.toFixed(2), 'estimated from the AI price list'],
+      ['Quality check', s.qualityCheck ? 'On' : 'Off', `${m.redone} redone · ${m.rejected} refunded this month`],
       ['Working now', s.queue.running, `${s.queue.waiting} waiting`],
     ];
     $('aiStats').innerHTML = tiles.map(([k, v, sub]) => `<div class="stat"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="s">${esc(sub)}</div></div>`).join('');
     $('aiEnabled').checked = s.enabled;
+    $('aiQuality').checked = s.qualityCheck;
     $('aiBudget').value = s.dailyBudget;
     $('aiErrs').innerHTML = s.recentErrors.map(e => `<tr><td class="small">${ago(e.created_at)}</td><td class="mono small">${esc(e.template_key)}</td>
       <td class="small">${esc(e.provider || '')}</td><td class="small">${esc(e.error || '')}</td></tr>`).join('') || '<tr><td colspan="4" class="center muted">No failures. 🎉</td></tr>';
@@ -345,7 +347,7 @@
     catch (err) { toast(err.message, { error: true }); }
   });
   $('aiSave').addEventListener('click', async () => {
-    try { await api('/admin/ai/settings', { method: 'PATCH', body: { enabled: $('aiEnabled').checked, dailyBudget: $('aiBudget').value } }); toast('AI settings saved ✓'); loadAI(); }
+    try { await api('/admin/ai/settings', { method: 'PATCH', body: { enabled: $('aiEnabled').checked, qualityCheck: $('aiQuality').checked, dailyBudget: $('aiBudget').value } }); toast('AI settings saved ✓'); loadAI(); }
     catch (err) { toast(err.message, { error: true }); }
   });
   $('aiTest').addEventListener('click', async e => {
