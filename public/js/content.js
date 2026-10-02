@@ -33,6 +33,23 @@
     { name:'Archivo Black', kind:'Heavy' }, { name:'Playfair Display', kind:'Serif' }, { name:'DM Serif Display', kind:'Serif' },
     { name:'Merriweather', kind:'Serif' }, { name:'Lobster', kind:'Retro script' }, { name:'Pacifico', kind:'Casual script' },
     { name:'Dancing Script', kind:'Script' }, { name:'Caveat', kind:'Handwritten' },
+    // local languages
+    { name:'Mukta', kind:'Clean', lang:'Nepali / Hindi' }, { name:'Hind', kind:'Simple', lang:'Nepali / Hindi' },
+    { name:'Baloo 2', kind:'Rounded', lang:'Nepali / Hindi' }, { name:'Yatra One', kind:'Headline', lang:'Nepali / Hindi' },
+    { name:'Rozha One', kind:'Bold serif', lang:'Nepali / Hindi' }, { name:'Tiro Devanagari Hindi', kind:'Classic', lang:'Nepali / Hindi' },
+    { name:'Kalam', kind:'Handwritten', lang:'Nepali / Hindi' }, { name:'Noto Sans Devanagari', kind:'Plain', lang:'Nepali / Hindi' },
+    { name:'Noto Serif Devanagari', kind:'Serif', lang:'Nepali / Hindi' },
+    { name:'Hind Siliguri', kind:'Clean', lang:'Bengali' }, { name:'Noto Sans Bengali', kind:'Plain', lang:'Bengali' },
+    { name:'Hind Vadodara', kind:'Clean', lang:'Gujarati' }, { name:'Noto Sans Gujarati', kind:'Plain', lang:'Gujarati' },
+    { name:'Baloo Paaji 2', kind:'Rounded', lang:'Punjabi' }, { name:'Noto Sans Gurmukhi', kind:'Plain', lang:'Punjabi' },
+    { name:'Catamaran', kind:'Clean', lang:'Tamil' }, { name:'Noto Sans Tamil', kind:'Plain', lang:'Tamil' },
+    { name:'Noto Sans Telugu', kind:'Plain', lang:'Telugu' }, { name:'Noto Sans Kannada', kind:'Plain', lang:'Kannada' },
+    { name:'Noto Sans Malayalam', kind:'Plain', lang:'Malayalam' }, { name:'Noto Sans Sinhala', kind:'Plain', lang:'Sinhala' },
+    { name:'Kanit', kind:'Modern', lang:'Thai' }, { name:'Prompt', kind:'Friendly', lang:'Thai' }, { name:'Noto Sans Thai', kind:'Plain', lang:'Thai' },
+    { name:'Cairo', kind:'Modern', lang:'Arabic / Urdu' }, { name:'Tajawal', kind:'Clean', lang:'Arabic / Urdu' },
+    { name:'Noto Naskh Arabic', kind:'Classic', lang:'Arabic / Urdu' }, { name:'Noto Sans Arabic', kind:'Plain', lang:'Arabic / Urdu' },
+    { name:'Noto Sans Hebrew', kind:'Plain', lang:'Hebrew' }, { name:'Noto Sans Myanmar', kind:'Plain', lang:'Burmese' },
+    { name:'Noto Sans Khmer', kind:'Plain', lang:'Khmer' }, { name:'Noto Serif Tibetan', kind:'Serif', lang:'Tibetan' },
   ];
 
   const LAYOUTS = [

@@ -176,6 +176,7 @@
           <option>Visit Store</option>
           <option>Learn More</option>
         </select>
+        <input id="inputCtaCustom" maxlength="30" placeholder="…or type your own, in any language (e.g. अहिले अर्डर गर्नुहोस्)" style="margin-top:6px">
       </div>
     </div>
 
@@ -216,12 +217,14 @@
         <button class="chip" data-badge="BEST SELLER">BEST SELLER</button>
         <button class="chip selected" data-badge="">None</button>
       </div>
+      <input id="inputBadgeCustom" maxlength="30" placeholder="…or type your own badge (e.g. नयाँ, नयाँ वर्ष अफर)" style="margin-top:8px;width:100%">
     </div>
 
     <!-- 6. THEME -->
     <div class="section">
       <div class="sec-label"><span class="n">6</span>Style</div>
       <div class="chips" id="themeChips"></div>
+      <div class="lang-hint" id="langHint"></div>
       <div class="field" style="margin-top:12px">
         <label for="headingFont">Heading font</label>
         <select id="headingFont"></select>
@@ -447,6 +450,7 @@
 
 <script src="/vendor/jszip.min.js"></script>
 <script src="/js/api.js"></script>
+<script src="/js/font-scripts.js"></script>
 <script src="/js/content.js"></script>
 <script src="/js/bgremove.js"></script>
 <script src="/js/bgstudio.js"></script>

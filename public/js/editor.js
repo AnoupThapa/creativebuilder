@@ -216,7 +216,86 @@ function drawMediaFull(ctx, media, w, h, theme){
   ctx.restore();
 }
 
+/* ---------------------------------------------------------------
+   LANGUAGES — any language can be typed. Each script has a good-looking fallback font, so a
+   Latin-only font still shows Nepali, Hindi, Arabic… correctly instead of boxes or a random system font.
+   --------------------------------------------------------------- */
+const SCRIPTS = [
+  { key:'devanagari', label:'Nepali / Hindi / Marathi', re:/[ऀ-ॿ꣠-ꣿ]/, font:'Mukta' },
+  { key:'bengali',    label:'Bengali',   re:/[ঀ-৿]/, font:'Hind Siliguri' },
+  { key:'gurmukhi',   label:'Punjabi',   re:/[਀-੿]/, font:'Baloo Paaji 2' },
+  { key:'gujarati',   label:'Gujarati',  re:/[઀-૿]/, font:'Hind Vadodara' },
+  { key:'tamil',      label:'Tamil',     re:/[஀-௿]/, font:'Catamaran' },
+  { key:'telugu',     label:'Telugu',    re:/[ఀ-౿]/, font:'Noto Sans Telugu' },
+  { key:'kannada',    label:'Kannada',   re:/[ಀ-೿]/, font:'Noto Sans Kannada' },
+  { key:'malayalam',  label:'Malayalam', re:/[ഀ-ൿ]/, font:'Noto Sans Malayalam' },
+  { key:'sinhala',    label:'Sinhala',   re:/[඀-෿]/, font:'Noto Sans Sinhala' },
+  { key:'thai',       label:'Thai',      re:/[฀-๿]/, font:'Kanit' },
+  { key:'tibetan',    label:'Tibetan',   re:/[ༀ-࿿]/, font:'Noto Serif Tibetan' },
+  { key:'myanmar',    label:'Burmese',   re:/[က-႟]/, font:'Noto Sans Myanmar' },
+  { key:'khmer',      label:'Khmer',     re:/[ក-៿]/, font:'Noto Sans Khmer' },
+  { key:'arabic',     label:'Arabic / Urdu / Persian', re:/[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/, font:'Cairo', rtl:true },
+  { key:'hebrew',     label:'Hebrew',    re:/[֐-׿]/, font:'Noto Sans Hebrew', rtl:true },
+  { key:'cyrillic',   label:'Cyrillic (Russian, Ukrainian…)', re:/[Ѐ-ӿ]/, font:'Inter' },
+  { key:'greek',      label:'Greek',     re:/[Ͱ-Ͽ]/, font:'Inter' },
+  { key:'cjk',        label:'Chinese / Japanese / Korean', re:/[぀-ヿ㐀-鿿가-힯]/, font:'' },
+];
+const FALLBACK_STACK = [...new Set(SCRIPTS.map(s => s.font).filter(Boolean))].map(f => `"${f}"`).join(', ')
+  + ', "Noto Sans CJK SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans", "Malgun Gothic", sans-serif';
+/* CSS font list for the canvas: the chosen font first, then a good font for every other script */
+function FF(family){ return `"${family}", ${FALLBACK_STACK}`; }
+const FONT_SCRIPTS = window.PF_FONT_SCRIPTS || {};
+function textScripts(text){ return SCRIPTS.filter(s => s.re.test(text)); }
+function designText(){
+  return [state.headline, state.subheadline, state.price, state.cta, state.badge, state.contact, state.reviewQuote, state.reviewName].filter(Boolean).join(' ');
+}
+
+/* Download the font files a design's text needs (each script is a separate small file), then redraw */
+const scriptFontsLoaded = new Set();
+let scriptFontsBusy = false;
+function ensureScriptFonts(){
+  if (!document.fonts || scriptFontsBusy) return;
+  const text = designText();
+  const found = textScripts(text);
+  if (!found.length) return;
+  const t = activeTheme();
+  const jobs = [];
+  for (const sc of found){
+    const sample = (text.match(new RegExp(sc.re.source, 'g')) || []).slice(0, 40).join('');
+    for (const fam of [t.font, t.bodyFont, sc.font, 'Space Grotesk'].filter(Boolean)){
+      for (const wgt of [400, 500, 700, 800]){
+        const key = `${fam}|${wgt}|${sc.key}`;
+        if (scriptFontsLoaded.has(key)) continue;
+        scriptFontsLoaded.add(key);
+        jobs.push(document.fonts.load(`${wgt} 48px "${fam}"`, sample).catch(() => {}));
+      }
+    }
+  }
+  if (!jobs.length) return;
+  scriptFontsBusy = true;
+  Promise.all(jobs).then(() => { scriptFontsBusy = false; render(); });
+}
+
+/* Break text into lines. Uses word boundaries for languages written without spaces (Thai, Chinese…) */
+function textUnits(text){
+  const str = String(text);
+  if (/\s/.test(str.trim()) || !/[฀-๿က-႟ក-៿぀-ヿ㐀-鿿]/.test(str)) return null;
+  if (typeof Intl !== 'undefined' && Intl.Segmenter){
+    return [...new Intl.Segmenter(undefined, { granularity: 'word' }).segment(str)].map(x => x.segment);
+  }
+  return [...str];
+}
+
 function wrapText(ctx, text, maxWidth){
+  const units = textUnits(text);
+  if (units){
+    const out = []; let cur = '';
+    for (const u of units){
+      if (cur && ctx.measureText(cur + u).width > maxWidth){ out.push(cur); cur = u.trimStart(); } else cur += u;
+    }
+    if (cur) out.push(cur);
+    return out.length ? out : [''];
+  }
   const words = String(text).split(/\s+/).filter(Boolean);
   const lines = [];
   let line = '';
@@ -234,7 +313,7 @@ function fitText(ctx, text, { maxW, maxH, minSize=14, maxSize=120, family='Space
   let size = maxSize;
   let lines = [text];
   while (size >= minSize){
-    ctx.font = `${weight} ${size}px "${family}", sans-serif`;
+    ctx.font = `${weight} ${size}px ${FF(family)}`;
     lines = wrapText(ctx, text, maxW);
     const totalH = lines.length * size * lineH;
     const widest = Math.max(...lines.map(l => ctx.measureText(l).width));
@@ -246,6 +325,7 @@ function fitText(ctx, text, { maxW, maxH, minSize=14, maxSize=120, family='Space
 
 function drawWrapped(ctx, lines, x, y, lh, align='left'){
   ctx.textAlign = align;
+  ctx.direction = lines.some(l => /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(l)) ? 'rtl' : 'ltr';
   ctx.textBaseline = 'alphabetic';
   lines.forEach((line, i) => ctx.fillText(line, x, y + i * lh));
 }
@@ -400,7 +480,7 @@ function renderPromo(ctx, w, h){
   if (state.badge && state.layerVis.badge){
     ctx.save();
     const bFontSize = Math.round(Math.max(18, w * 0.028));
-    ctx.font = `800 ${bFontSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `800 ${bFontSize}px ${FF('Space Grotesk')}`;
     const bPadX = w * 0.022, bPadY = w * 0.015;
     const bTextW = ctx.measureText(state.badge).width;
     const bW = bTextW + bPadX * 2, bH = bFontSize + bPadY * 2;
@@ -437,7 +517,7 @@ function renderPromo(ctx, w, h){
 
   if (state.headline && state.layerVis.headline){
     ctx.save();
-    ctx.font = `800 ${headlineFit.size}px "${theme.font}", sans-serif`;
+    ctx.font = `800 ${headlineFit.size}px ${FF(theme.font)}`;
     const hw = Math.max(...headlineFit.lines.map(l => ctx.measureText(l).width));
     const box = { x:pad, y:headlineTopY, w:hw, h:headlineFit.lines.length * headlineFit.lh };
     place(ctx, 'headline', box, w, h, () => {
@@ -451,7 +531,7 @@ function renderPromo(ctx, w, h){
   }
   if (state.subheadline && state.layerVis.sub){
     ctx.save();
-    ctx.font = `500 ${subFontSz}px "${theme.bodyFont}", sans-serif`;
+    ctx.font = `500 ${subFontSz}px ${FF(theme.bodyFont)}`;
     const sw = ctx.measureText(state.subheadline).width;
     place(ctx, 'sub', { x:pad, y:subY - subFontSz * 0.95, w:sw, h:subFontSz * 1.25 }, w, h, () => {
       ctx.fillStyle = theme.textSub;
@@ -462,7 +542,7 @@ function renderPromo(ctx, w, h){
   }
   if (state.price && state.layerVis.price){
     ctx.save();
-    ctx.font = `700 ${priceFontSz}px "${theme.font}", sans-serif`;
+    ctx.font = `700 ${priceFontSz}px ${FF(theme.font)}`;
     const pw = ctx.measureText(state.price).width;
     place(ctx, 'price', { x:pad, y:priceY - priceFontSz * 0.95, w:pw, h:priceFontSz * 1.2 }, w, h, () => {
       ctx.fillStyle = theme.accent;
@@ -475,7 +555,7 @@ function renderPromo(ctx, w, h){
   }
   if (state.cta && state.layerVis.cta){
     ctx.save();
-    ctx.font = `700 ${ctaFontSz}px "${theme.font}", sans-serif`;
+    ctx.font = `700 ${ctaFontSz}px ${FF(theme.font)}`;
     const label   = state.cta + '  →';
     const labelW  = ctx.measureText(label).width;
     const btnPadX = w * 0.045;
@@ -518,7 +598,7 @@ function renderPromo(ctx, w, h){
   if (state.contact && state.layerVis.contact){
     ctx.save();
     const cFontSz = Math.round(Math.max(12, w * 0.02));
-    ctx.font = `500 ${cFontSz}px "${theme.bodyFont}", sans-serif`;
+    ctx.font = `500 ${cFontSz}px ${FF(theme.bodyFont)}`;
     const cw = ctx.measureText(state.contact).width;
     const base = h - pad * 0.45;
     place(ctx, 'contact', { x:w - pad - cw, y:base - cFontSz * 0.95, w:cw, h:cFontSz * 1.25 }, w, h, () => {
@@ -599,7 +679,7 @@ function renderReview(ctx, w, h){
   });
   if (state.layerVis.rv_quote !== false){
     ctx.save();
-    ctx.font = `700 ${qFit.size}px "${theme.font}", sans-serif`;
+    ctx.font = `700 ${qFit.size}px ${FF(theme.font)}`;
     const qw = Math.max(...qFit.lines.map(l => ctx.measureText(l).width));
     const qy = y;
     place(ctx, 'rv_quote', { x:pad, y:qy, w:qw, h:qFit.lines.length * qFit.lh }, w, h, () => {
@@ -616,7 +696,7 @@ function renderReview(ctx, w, h){
     const nSize = Math.max(15, w * 0.028);
     if (state.layerVis.rv_name !== false){
       ctx.save();
-      ctx.font = `700 ${nSize}px "${theme.font}", sans-serif`;
+      ctx.font = `700 ${nSize}px ${FF(theme.font)}`;
       const label = '— ' + state.reviewName;
       const nw = ctx.measureText(label).width, ny = y;
       place(ctx, 'rv_name', { x:pad, y:ny + nSize * 0.05, w:nw, h:nSize * 1.2 }, w, h, () => {
@@ -633,7 +713,7 @@ function renderReview(ctx, w, h){
   if (state.layerVis.rv_verified !== false){
     ctx.save();
     const vLabel = '✓ Verified Customer';
-    ctx.font = `700 ${Math.max(11, w * 0.017)}px "${theme.bodyFont}", sans-serif`;
+    ctx.font = `700 ${Math.max(11, w * 0.017)}px ${FF(theme.bodyFont)}`;
     const vTextW = ctx.measureText(vLabel).width;
     const vPadX = w * 0.022;
     const vW = vTextW + vPadX * 2, vH = Math.max(24, w * 0.042), vy = y;
@@ -685,13 +765,14 @@ function render(){
   if (recordWithWatermark) drawWatermark(ctx, canvas.width, canvas.height);
   stageEmptyHint.style.display = activeMediaEl() ? 'none' : 'flex';
   if (typeof updateSelectionBox === 'function') updateSelectionBox();
+  ensureScriptFonts();
 }
 
 /* Free-trial downloads carry a watermark (plan.watermark = true) */
 function drawWatermark(ctx, w, h){
   ctx.save();
   const fs = Math.max(14, Math.round(Math.min(w, h) * 0.035));
-  ctx.font = `700 ${fs}px "Space Grotesk", sans-serif`;
+  ctx.font = `700 ${fs}px ${FF('Space Grotesk')}`;
   ctx.fillStyle = 'rgba(255,255,255,.16)';
   ctx.strokeStyle = 'rgba(0,0,0,.10)';
   ctx.lineWidth = 1;
@@ -711,7 +792,7 @@ function drawWatermark(ctx, w, h){
   ctx.fillStyle = 'rgba(26,26,46,.82)';
   ctx.fillRect(0, h - sh, w, sh);
   ctx.fillStyle = '#fff';
-  ctx.font = `600 ${Math.round(sh * 0.45)}px "Inter", sans-serif`;
+  ctx.font = `600 ${Math.round(sh * 0.45)}px ${FF('Inter')}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('Made with PostForge — upgrade to remove this watermark', w / 2, h - sh / 2);
 }
@@ -1223,8 +1304,16 @@ $('inputHeadline').addEventListener('input', e => {
 });
 $('inputSubheadline').addEventListener('input', e => { state.subheadline = e.target.value; render(); });
 $('inputPrice').addEventListener('input',       e => { state.price = e.target.value;       render(); });
-$('inputCTA').addEventListener('change',        e => { state.cta   = e.target.value;       render(); });
+$('inputCTA').addEventListener('change',        e => { state.cta   = e.target.value; $('inputCtaCustom').value = ''; render(); });
+$('inputCtaCustom').addEventListener('input', e => {
+  const v = e.target.value.trim(); if (!v) return;
+  state.cta = v;
+  if (![...$('inputCTA').options].some(o => o.value === v)) $('inputCTA').add(new Option(v, v));
+  $('inputCTA').value = v; render(); markDirty();
+});
 $('inputContact').addEventListener('input',     e => { state.contact = e.target.value;     render(); });
+['inputHeadline', 'inputSubheadline', 'inputPrice', 'inputCtaCustom', 'inputBadgeCustom', 'inputContact', 'inputReviewQuote', 'inputReviewName']
+  .forEach(id => { const el = $(id); if (el) el.addEventListener('input', refreshFontOptionsSoon); });
 $('headlineCount').textContent = $('inputHeadline').value.length;
 
 /* ---------------------------------------------------------------
@@ -1233,7 +1322,12 @@ $('headlineCount').textContent = $('inputHeadline').value.length;
 $('badgeChips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
   $('badgeChips').querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
-  b.classList.add('selected'); state.badge = b.dataset.badge; render();
+  b.classList.add('selected'); state.badge = b.dataset.badge; $('inputBadgeCustom').value = ''; render();
+});
+$('inputBadgeCustom').addEventListener('input', e => {
+  state.badge = e.target.value.trim();
+  $('badgeChips').querySelectorAll('.chip').forEach(x => x.classList.toggle('selected', x.dataset.badge === state.badge));
+  render(); markDirty(); refreshFontOptionsSoon();
 });
 $('themeChips').addEventListener('click', async e => {
   const b = e.target.closest('.theme-chip'); if (!b) return;
@@ -1353,11 +1447,39 @@ function themeFontsInUse(){ const t = activeTheme(); return [t.font, t.bodyFont]
 function buildStyleControls(){
   $('themeChips').innerHTML = Object.entries(THEMES).map(([k, t]) =>
     `<button class="chip theme-chip${k === state.theme ? ' active' : ''}" data-theme="${k}" title="${PF.esc(t.label)}"><span class="tc-dot" style="background:${t.bg};box-shadow:inset 0 0 0 3px ${t.accent}"></span>${PF.esc(t.label)}</button>`).join('');
-  const opts = FONTS.map(f => `<option value="${PF.esc(f.name)}">${PF.esc(f.name)} — ${PF.esc(f.kind)}</option>`).join('');
-  $('headingFont').innerHTML = '<option value="">Theme default</option>' + opts;
-  $('bodyFont').innerHTML = '<option value="">Theme default (Inter)</option>' + opts;
+  buildFontOptions();
   $('layoutChips').innerHTML = LAYOUTS.map(l => `<button class="chip${l.key === state.layout ? ' selected' : ''}" data-layout="${l.key}">${PF.esc(l.label)}</button>`).join('');
 }
+/* Font lists: fonts that support the language being typed come first */
+let fontScriptKey = null;
+function buildFontOptions(){
+  const found = textScripts(designText()).filter(sc => sc.key !== 'cjk');
+  const key = found.map(f => f.key).join(',');
+  if (key === fontScriptKey) return;
+  fontScriptKey = key;
+  const o = f => `<option value="${PF.esc(f.name)}">${PF.esc(f.name)} — ${PF.esc(f.kind)}${f.lang ? ' · ' + PF.esc(f.lang) : ''}</option>`;
+  let html;
+  if (found.length){
+    const ok = FONTS.filter(f => found.every(sc => (FONT_SCRIPTS[f.name] || []).includes(sc.key)));
+    const rest = FONTS.filter(f => !ok.includes(f));
+    html = `<optgroup label="✓ Fonts for ${PF.esc(found.map(f => f.label).join(' + '))}">${ok.map(o).join('')}</optgroup>`
+      + `<optgroup label="Other fonts (your ${PF.esc(found[0].label.split(' /')[0])} text uses ${PF.esc(found[0].font)})">${rest.map(o).join('')}</optgroup>`;
+  } else {
+    const latin = FONTS.filter(f => !f.lang), local = FONTS.filter(f => f.lang);
+    html = `<optgroup label="Popular">${latin.map(o).join('')}</optgroup><optgroup label="Local languages">${local.map(o).join('')}</optgroup>`;
+  }
+  const hv = $('headingFont').value, bv = $('bodyFont').value;
+  $('headingFont').innerHTML = '<option value="">Theme default</option>' + html;
+  $('bodyFont').innerHTML = '<option value="">Theme default (Inter)</option>' + html;
+  $('headingFont').value = state.headingFont || hv || ''; $('bodyFont').value = state.bodyFont || bv || '';
+  const hint = $('langHint');
+  if (hint) hint.innerHTML = found.length
+    ? `🌐 ${PF.esc(found.map(f => f.label).join(' + '))} text detected — fonts that support it are listed first.`
+    : '🌐 Type in any language (नेपाली, हिन्दी, العربية, ไทย…) — PostForge picks a matching font automatically.';
+}
+let fontListTimer;
+function refreshFontOptionsSoon(){ clearTimeout(fontListTimer); fontListTimer = setTimeout(buildFontOptions, 400); }
+
 function syncStyleControls(){
   $('headingFont').value = state.headingFont || '';
   $('bodyFont').value = state.bodyFont || '';
@@ -2229,6 +2351,8 @@ function syncUI(){
   setStars(state.reviewStars);
   $('inputContact').value = state.contact;
   document.querySelectorAll('#badgeChips .chip').forEach(b => b.classList.toggle('selected', b.dataset.badge === state.badge));
+  $('inputBadgeCustom').value = [...document.querySelectorAll('#badgeChips .chip')].some(b => b.dataset.badge === state.badge) ? '' : state.badge;
+  fontScriptKey = null; buildFontOptions();
   document.querySelectorAll('.theme-chip').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
   document.querySelectorAll('#logoPosGrid .seg-b').forEach(b => b.classList.toggle('active', b.dataset.pos === state.logoPos));
   document.querySelectorAll('#logoSizeGrid .seg-b').forEach(b => b.classList.toggle('active', b.dataset.size === state.logoSize));
