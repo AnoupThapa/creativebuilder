@@ -83,6 +83,28 @@
         </div>
         <label class="co-shadow"><input type="checkbox" id="cutoutShadow" checked> Soft drop shadow</label>
       </div>
+      <div class="cutout-opts fit-opts" id="fitOpts" style="display:none">
+        <div class="co-lbl">How the photo fits each size <span class="fit-now" id="fitNow"></span></div>
+        <div class="chips" id="fitChips">
+          <button class="chip selected" data-fit="auto" title="Keeps the whole photo when a size is a very different shape">✨ Auto</button>
+          <button class="chip" data-fit="fit" title="Never crop — show the whole photo">Show whole photo</button>
+          <button class="chip" data-fit="fill" title="Fill the frame, cropping the edges">Fill &amp; crop</button>
+        </div>
+        <div id="fitBgRow">
+          <div class="co-lbl">Empty space</div>
+          <div class="chips" id="fitBgChips">
+            <button class="chip selected" data-fbg="blur">Blurred photo</button>
+            <button class="chip" data-fbg="brand">Brand colour</button>
+            <button class="chip" data-fbg="white">White</button>
+            <button class="chip" data-fbg="black">Black</button>
+          </div>
+        </div>
+        <div id="fitFocusRow">
+          <div class="co-lbl">Keep this part in view</div>
+          <label class="fit-slider"><span>◀ Left</span><input type="range" id="focusX" min="0" max="100" value="50" aria-label="Keep left or right part in view"><span>Right ▶</span></label>
+          <label class="fit-slider"><span>▲ Top</span><input type="range" id="focusY" min="0" max="100" value="50" aria-label="Keep top or bottom part in view"><span>Bottom ▼</span></label>
+        </div>
+      </div>
     </div>
 
     <!-- 3. LOGO -->

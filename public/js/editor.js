@@ -83,6 +83,10 @@ const state = {
   maskAlpha:   null,          // { alpha, W, H } of the current cut-out (not persisted directly)
   cutoutBg:    'theme',       // backdrop behind a cut-out: theme | gradient | spotlight | blur
   cutoutShadow: true,
+  mediaFit:    'auto',        // how a photo/video fits each size: auto | fill (crop) | fit (whole photo)
+  fitBg:       'blur',        // what fills the empty space in 'fit': blur | brand | white | black
+  focusX:      0.5,           // which part stays in view when cropping (0 = left/top, 1 = right/bottom)
+  focusY:      0.5,
   logoMediaId: null,
   logoName:    ''
 };
@@ -160,13 +164,13 @@ function elDims(el){
 }
 
 /* Cover-fit: scale to fill target rect, centre-cropping the overflow */
-function drawImageCover(ctx, el, dx, dy, dw, dh){
+function drawImageCover(ctx, el, dx, dy, dw, dh, fx = 0.5, fy = 0.5){
   const { w:sw, h:sh } = elDims(el);
   if (!sw || !sh) return;
   const imgR = sw / sh, boxR = dw / dh;
   let sx, sy, scW, scH;
-  if (imgR > boxR){ scH = sh; scW = scH * boxR; sy = 0; sx = (sw - scW) / 2; }
-  else            { scW = sw; scH = scW / boxR; sx = 0; sy = (sh - scH) / 2; }
+  if (imgR > boxR){ scH = sh; scW = scH * boxR; sy = 0; sx = (sw - scW) * fx; }
+  else            { scW = sw; scH = scW / boxR; sx = 0; sy = (sh - scH) * fy; }
   ctx.drawImage(el, sx, sy, scW, scH, dx, dy, dw, dh);
 }
 
@@ -174,6 +178,42 @@ function drawImageCover(ctx, el, dx, dy, dw, dh){
 function fitContain(sw, sh, maxW, maxH){
   const s = Math.min(maxW / sw, maxH / sh);
   return { w: sw * s, h: sh * s, s };
+}
+
+/* Which fit a size really uses. 'auto' keeps the whole photo when cropping would cut off a lot
+   (e.g. a square photo in a 9:16 story), and fills the frame when the shapes are close. */
+function resolvedFit(media, w, h){
+  if (state.mediaFit === 'fill' || state.mediaFit === 'fit') return state.mediaFit;
+  const { w:sw, h:sh } = elDims(media);
+  if (!sw || !sh) return 'fill';
+  const r = (sw / sh) / (w / h);
+  return (r > 1.25 || r < 0.8) ? 'fit' : 'fill';
+}
+
+/* Draw the photo/video over the whole canvas: cropped to fill, or whole with a matching background */
+function drawMediaFull(ctx, media, w, h, theme){
+  if (resolvedFit(media, w, h) === 'fill'){ drawImageCover(ctx, media, 0, 0, w, h, state.focusX, state.focusY); return; }
+  const { w:sw, h:sh } = elDims(media);
+  if (!sw || !sh) return;
+  const bg = state.fitBg;
+  if (bg === 'blur'){
+    const t = document.createElement('canvas');
+    t.width = Math.max(4, Math.round(w / 24)); t.height = Math.max(4, Math.round(h / 24));
+    const tc = t.getContext('2d'); tc.imageSmoothingQuality = 'high';
+    drawImageCover(tc, media, 0, 0, t.width, t.height);
+    ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(t, 0, 0, w, h);
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = bg === 'white' ? '#ffffff' : bg === 'black' ? '#0d0d12' : (state.brandColor || theme.accent || theme.bg);
+    ctx.fillRect(0, 0, w, h);
+  }
+  const f = fitContain(sw, sh, w, h);
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  // a little above centre, so the headline sits in the free space underneath
+  ctx.drawImage(media, 0, 0, sw, sh, (w - f.w) / 2, (h - f.h) * 0.3, f.w, f.h);
+  ctx.restore();
 }
 
 function wrapText(ctx, text, maxWidth){
@@ -320,7 +360,7 @@ function renderPromo(ctx, w, h){
         ctx.drawImage(media, 0, 0, sw, sh, dx, dy, fit.w, fit.h);
       });
     } else {
-      drawImageCover(ctx, media, 0, 0, w, h);
+      drawMediaFull(ctx, media, w, h, theme);
     }
   }
 
@@ -514,7 +554,7 @@ function renderReview(ctx, w, h){
         ctx.drawImage(media, 0, 0, sw, sh, dx, dy, fit.w, fit.h);
       });
     } else {
-      drawImageCover(ctx, media, 0, 0, w, h);
+      drawMediaFull(ctx, media, w, h, theme);
       ctx.fillStyle = 'rgba(10,10,18,.5)';
       ctx.fillRect(0, 0, w, h);
     }
@@ -772,6 +812,7 @@ function applyPlatform(key){
   canvas.width = p.w; canvas.height = p.h;
   fitStageShell();
   stageDims.textContent = `${p.w} × ${p.h} px`;
+  if (typeof updateFitUI === 'function') updateFitUI();
   render();
 }
 
@@ -926,6 +967,7 @@ function setMediaThumb(name, src, dims){
   $('mediaName').textContent = name;
   $('mediaDims').textContent = dims;
   $('dzMedia').classList.add('done');
+  setTimeout(updateFitUI, 50);
 }
 function setMediaThumbVideo(name, video){
   const draw = () => {
@@ -947,6 +989,7 @@ function clearMedia(){
   $('mediaThumbRow').style.display = 'none';
   $('dzMedia').classList.remove('done');
   $('bgRow').style.display = 'none';
+  updateFitUI();
   render();
 }
 
@@ -1013,7 +1056,23 @@ $('logoRemove').addEventListener('click', () => { clearLogo(); markDirty(); });
 /* ---------------------------------------------------------------
    BACKGROUND-REMOVAL TOGGLE
    --------------------------------------------------------------- */
+function updateFitUI(){
+  const box = $('fitOpts'); if (!box) return;
+  const show = !!state.mediaSrcEl && !(state.bgRemoved && !state.mediaIsVideo);
+  box.style.display = show ? 'block' : 'none';
+  if (!show) return;
+  document.querySelectorAll('#fitChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.fit === state.mediaFit));
+  document.querySelectorAll('#fitBgChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.fbg === state.fitBg));
+  const eff = resolvedFit(state.mediaSrcEl, canvas.width, canvas.height);
+  $('fitBgRow').style.display = eff === 'fit' ? '' : 'none';
+  $('fitFocusRow').style.display = eff === 'fill' ? '' : 'none';
+  $('fitNow').textContent = state.mediaFit === 'auto'
+    ? (eff === 'fit' ? 'This size: whole photo shown' : 'This size: photo fills the frame') : '';
+  $('focusX').value = Math.round(state.focusX * 100); $('focusY').value = Math.round(state.focusY * 100);
+}
+
 function updateCutoutUI(){
+  updateFitUI();
   $('bgToggle').checked = !!state.bgRemoved;
   $('cutoutOpts').style.display = state.bgRemoved && !state.mediaIsVideo ? 'block' : 'none';
   document.querySelectorAll('#cutoutBgChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.cbg === state.cutoutBg));
@@ -1105,6 +1164,18 @@ $('cutoutBgChips').addEventListener('click', e => {
   state.cutoutBg = c.dataset.cbg; updateCutoutUI(); render(); markDirty();
 });
 $('cutoutShadow').addEventListener('change', e => { state.cutoutShadow = e.target.checked; render(); markDirty(); });
+$('fitChips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c || READONLY) return;
+  state.mediaFit = c.dataset.fit; updateFitUI(); render(); markDirty();
+});
+$('fitBgChips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c || READONLY) return;
+  state.fitBg = c.dataset.fbg; updateFitUI(); render(); markDirty();
+});
+['focusX', 'focusY'].forEach(id => $(id).addEventListener('input', e => {
+  if (READONLY) return;
+  state[id] = Math.min(1, Math.max(0, e.target.value / 100)); render(); markDirty();
+}));
 
 /* ---------------------------------------------------------------
    CONTENT-TYPE TOGGLE + STARS
@@ -2080,6 +2151,7 @@ function serialize(){
     contentType: state.contentType, platformKey: state.platformKey,
     mediaId: state.mediaId, mediaName: state.mediaName, mediaKind: state.mediaIsVideo ? 'video' : 'image', bgRemoved: !!state.bgRemoved, bgMaskId: state.bgMaskId,
     cutoutBg: state.cutoutBg, cutoutShadow: state.cutoutShadow !== false,
+    mediaFit: state.mediaFit, fitBg: state.fitBg, focusX: state.focusX, focusY: state.focusY,
     logoMediaId: state.logoMediaId, logoName: state.logoName,
     logoPos: state.logoPos, logoSize: state.logoSize, logoMargin: state.logoMargin,
     headline: state.headline, subheadline: state.subheadline, price: state.price, cta: state.cta, badge: state.badge,
@@ -2112,6 +2184,10 @@ async function restore(d){
   state.contact     = str(d.contact, 60, '');
   state.cutoutBg    = ['theme','gradient','spotlight','blur'].includes(d.cutoutBg) ? d.cutoutBg : 'theme';
   state.cutoutShadow = d.cutoutShadow !== false;
+  state.mediaFit    = ['auto','fill','fit'].includes(d.mediaFit) ? d.mediaFit : 'auto';
+  state.fitBg       = ['blur','brand','white','black'].includes(d.fitBg) ? d.fitBg : 'blur';
+  const unit = v => { const n = Number(v); return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.5; };
+  state.focusX = unit(d.focusX); state.focusY = unit(d.focusY);
   state.logoPos     = ['tl','tr','bl','br'].includes(d.logoPos) ? d.logoPos : 'tr';
   state.logoSize    = ['s','m','l'].includes(d.logoSize) ? d.logoSize : 'm';
   state.logoMargin  = Math.min(60, Math.max(0, parseInt(d.logoMargin, 10) || 24));
