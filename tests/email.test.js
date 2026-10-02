@@ -203,3 +203,11 @@ test('plain-English fix for common email errors', () => {
   assert.match(mailHint('Invalid login: 535 Authentication failed'), /SMTP_PASS/);
   assert.match(mailHint('553 Sender address rejected'), /MAIL_FROM/);
 });
+
+test('admin outbox hides private links that were delivered to the user', async () => {
+  const r = await admin.get('/api/admin/outbox');
+  const reset = r.data.find(m => /Reset your/.test(m.subject) && m.status === 'sent');
+  assert.ok(reset, 'has a delivered reset email');
+  assert.doesNotMatch(reset.body, /token=/);
+  assert.match(reset.body, /private link/);
+});

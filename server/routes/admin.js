@@ -141,7 +141,11 @@ router.get('/audit', (req, res) => {
   res.json(rows);
 });
 
-router.get('/outbox', (req, res) => res.json(q.all('SELECT * FROM outbox ORDER BY id DESC LIMIT 50')));
+// Private links (password reset, email confirmation, invites) go only to the person they were sent to.
+// Admins see them only when the email could NOT be delivered, so they can still help someone by hand.
+const PRIVATE_LINK = /https?:\/\/\S*[?&]token=[A-Za-z0-9_-]+/g;
+router.get('/outbox', (req, res) => res.json(q.all('SELECT * FROM outbox ORDER BY id DESC LIMIT 50').map(m =>
+  m.status === 'sent' || m.status === 'sending' ? { ...m, body: m.body.replace(PRIVATE_LINK, '[private link — sent only to the user]') } : m)));
 
 /* ---------------- Email sending status + test ---------------- */
 const mailer = require('../mailer');
