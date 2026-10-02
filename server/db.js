@@ -367,6 +367,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_jobs_ws ON ai_jobs(workspace_id, local_month);
 CREATE INDEX IF NOT EXISTS idx_ai_jobs_user ON ai_jobs(user_id, created_at);
 `);
 addColumn('ai_jobs', 'redone', 'INTEGER NOT NULL DEFAULT 0');  // images the quality check rejected and made again
+addColumn('ai_jobs', 'remote_op', "TEXT NOT NULL DEFAULT ''");  // video: the AI service's job name, so waiting can resume after a restart
 addColumn('ai_jobs', 'rejected', 'INTEGER NOT NULL DEFAULT 0'); // images still failing after the retry (not delivered, refunded)
 const metaGet = k => q.get('SELECT value FROM meta WHERE key = ?', k)?.value;
 const metaSet = (k, v) => q.run('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, String(v));

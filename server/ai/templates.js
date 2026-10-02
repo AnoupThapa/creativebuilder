@@ -118,4 +118,31 @@ Colour mood: {colours}. Feeling: {mood}.`,
     { setting: 'bold colour block backdrop', text_space: 'top' }),
 ];
 
-module.exports = { INDUSTRIES, TEMPLATES };
+/* ---------- Video motions (phase B) ----------
+   Image-to-video from a start picture. Only the camera, light and small background elements move —
+   the product itself stays rigid so its shape and label never change. Rules shared by every motion
+   (no lettering, rigid product, smooth camera) are added in prompts.js. */
+const V = (key, name, emoji, description, prompt, extra = {}) =>
+  ({ key, industry: 'video', kind: 'video', name, emoji, description, prompt, needs_photo: 1, text_space: 'none', setting: '', ...extra });
+
+const VIDEO_TEMPLATES = [
+  V('vid_light_sweep', 'Light sweep', '✨', 'A soft studio light glides across your product — classy and safe for any product',
+    `A premium product commercial shot of {product}. The camera stays almost still with a very slight slow push-in.
+A soft beam of studio light sweeps slowly across the scene from left to right, creating a gentle moving highlight and reflection over the product, then settles. Subtle floating dust particles glow in the light. Elegant, calm, high-end.`),
+  V('vid_push_in', 'Slow push-in', '🎯', 'Camera glides gently towards your product — draws the eye',
+    `A cinematic product commercial shot of {product}. The camera performs one smooth, slow dolly push-in towards the product, ending slightly closer with the product still fully in frame and centred. Background softly defocuses as the camera moves. Calm, premium, steady.`),
+  V('vid_orbit', 'Slow orbit (3D feel)', '🔄', 'Camera circles a little around the product for a 3D look',
+    `A product commercial shot of {product}. The camera makes a slow, smooth partial orbit of about 25 degrees around the product at the same height, keeping it centred, showing a little more of its side for a three-dimensional feel. Realistic parallax in the background; lighting follows naturally.`),
+  V('vid_float', 'Floating hero', '🎈', 'Product gently floats and turns slightly — great for launches',
+    `A playful premium product commercial shot of {product}. The product gently levitates a few centimetres and bobs up and down slowly with a very slight rotation (less than 15 degrees), its soft shadow below growing and shrinking accordingly. Smooth, weightless, satisfying loop-like motion.`),
+  V('vid_parallax', 'Parallax depth', '🌄', 'Background drifts behind your product — subtle and modern',
+    `A modern product commercial shot of {product}. Slow lateral camera slide to the right creating gentle parallax: the background and any props drift more than the product, which stays sharp and centred. Subtle, smooth, cinematic depth.`),
+  V('vid_steam', 'Hot & fresh', '♨️', 'Steam rises from the food or drink — makes it look just made',
+    `An appetising food commercial shot of {product}. The food or drink stays exactly as it is; delicate natural wisps of steam rise slowly and curl in warm backlight, with a very slow push-in. Warm, inviting, mouth-watering.`),
+  V('vid_splash', 'Fresh splash', '💧', 'Water droplets and a gentle splash around the product — beauty & drinks',
+    `A fresh product commercial shot of {product}. Around and behind the product, clear water droplets fall in slow motion and a gentle splash of water rises and settles at its base; small droplets glisten on surfaces. The product itself does not move or change. Crisp, refreshing, clean.`),
+  V('vid_festive', 'Festive glow', '🪔', 'Twinkling lights and slowly falling petals or confetti — festivals & sales',
+    `A festive product commercial shot of {product}. Warm bokeh lights twinkle softly in the background and a few marigold petals or plain confetti pieces drift slowly down behind and around the product, never covering it. Slight slow push-in. Joyful, celebratory, warm.`),
+];
+
+module.exports = { INDUSTRIES, TEMPLATES: [...TEMPLATES, ...VIDEO_TEMPLATES], IMAGE_TEMPLATES: TEMPLATES, VIDEO_TEMPLATES };

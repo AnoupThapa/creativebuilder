@@ -74,7 +74,7 @@ api.use(['/auth/login', '/auth/signup', '/auth/forgot', '/auth/reset', '/auth/ac
 api.post('/media', uploadLimiter);
 api.post('/video/convert', uploadLimiter);
 api.post('/gif/make', uploadLimiter);
-api.post(['/ai/jobs', '/ai/from-url'], uploadLimiter);
+api.post(['/ai/jobs', '/ai/videos', '/ai/from-url'], uploadLimiter);
 api.post('/support', limiter(15, 6, 'Too many messages — please wait a few minutes or email us.'));
 api.post(['/client-error', '/pv'], limiter(1, 60, 'Slow down.'));
 

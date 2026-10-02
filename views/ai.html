@@ -21,10 +21,13 @@
   <span class="g-usage a-credits" id="credits">…</span>
 </header>
 <div class="a-demo hidden" id="demoBar">🧪 <b>Demo mode</b> — no AI key is set up yet, so you’ll get a free placeholder picture (your photo on a styled background). Real AI images start once the admin adds a Gemini or OpenAI key.</div>
+<div class="a-demo hidden" id="vdemoBar">🧪 <b>Demo video</b> — no AI key yet, so videos are a free slow zoom on your picture. Real AI motion starts once the admin adds a Gemini key.</div>
 <div class="a-demo a-warn hidden" id="offBar">⏸ AI Studio is paused right now. Please try again later.</div>
 
 <main class="g-main">
   <section class="g-panel">
+    <div class="g-seg a-mode" id="mode"><button data-v="image" class="on">📷 Photo ad</button><button data-v="video">🎬 Video ad</button></div>
+    <div id="imgPanel">
     <div class="g-step">
       <div class="g-lbl"><span class="n"></span>Your business</div>
       <div class="a-inds" id="inds"></div>
@@ -71,6 +74,49 @@
 
     <button class="btn btn-primary btn-block g-go" id="go" type="button" disabled>✨ Create</button>
     <p class="small muted center" id="goNote">Pick a style to start.</p>
+    </div>
+
+    <div id="vidPanel" class="hidden">
+      <div class="a-lock hidden" id="vlock">
+        <div class="g-empty-ic">🎬</div>
+        <b>AI product videos come with Pro and Business</b>
+        <p class="small muted">Turn your product photo into a smooth 4–8 second video for Reels, Stories and ads — the camera and light move, your product stays exactly the same.</p>
+        <a class="btn btn-primary btn-sm" href="/app#billing">See plans</a>
+      </div>
+      <div id="vform">
+        <div class="g-step">
+          <div class="g-lbl"><span class="n"></span>Start picture</div>
+          <div class="g-seg a-tabs" id="vsrcTabs"><button data-v="ai" class="on">✨ My AI images</button><button data-v="photo">📷 Upload a photo</button></div>
+          <div class="a-vsrc" data-vsrc="ai">
+            <div class="a-pick" id="vpick"></div>
+            <p class="small muted hidden" id="vpickEmpty">No AI images yet — make a <b>Photo ad</b> first (best results), or upload a photo.</p>
+          </div>
+          <div class="a-vsrc hidden" data-vsrc="photo">
+            <label class="g-drop a-drop" id="vdrop">
+              <input type="file" id="vphoto" accept="image/jpeg,image/png,image/webp">
+              <div class="g-drop-ic">📷</div>
+              <div class="g-drop-t">Add a clear photo of your product</div>
+              <div class="g-drop-s">Best: a clean photo with no writing around the product. Tip: AI images from the Photo ad tab make the best videos.</div>
+            </label>
+            <div class="a-photo hidden" id="vphotoBox"><img id="vphotoImg" alt=""><button class="btn btn-ghost btn-sm" type="button" id="vphotoClear">Change</button></div>
+          </div>
+          <div class="field"><label for="vproduct">Product name <span class="muted small">(helps the AI; never written on the video)</span></label><input class="input" id="vproduct" maxlength="120" placeholder="e.g. Rose face serum"></div>
+        </div>
+        <div class="g-step">
+          <div class="g-lbl"><span class="n"></span>Motion</div>
+          <div class="a-styles" id="vstyles"></div>
+        </div>
+        <div class="g-step">
+          <div class="g-lbl"><span class="n"></span>Shape &amp; length</div>
+          <div class="g-seg" id="vaspect"><button data-v="9:16" class="on">Reel / Story 9:16</button><button data-v="4:5">Feed 4:5</button><button data-v="1:1">Square 1:1</button><button data-v="16:9">Wide 16:9</button></div>
+          <div class="g-row"><label>Length</label>
+            <div class="g-seg" id="vsec"><button data-v="4">4 s</button><button data-v="6" class="on">6 s</button><button data-v="8">8 s</button></div></div>
+          <p class="small muted" style="margin-top:6px">Silent MP4 — add music, your headline, price and logo in the editor.</p>
+        </div>
+        <button class="btn btn-primary btn-block g-go" id="vgo" type="button" disabled>🎬 Create video</button>
+        <p class="small muted center" id="vgoNote">Pick a start picture.</p>
+      </div>
+    </div>
   </section>
 
   <section class="g-results">
@@ -80,9 +126,9 @@
       <p class="muted">Pick your business and a style, add a photo (or a link), and PostForge’s AI creates a clean scene around your real product — no prompts to write. Then add your headline, price and logo in the editor, in any language.</p>
       <ul class="g-tips"><li>No text in AI images — your words are added sharp and correctly spelled in the editor</li><li>Food styles always use your real photo, so the picture matches what you serve</li><li>Every picture is checked for stray writing or a changed product before you see it — failed ones are redone or refunded</li></ul>
     </div>
-    <div class="g-busy hidden" id="busy"><div class="spin"></div><b>Creating your image…</b><span class="small muted" id="busyNote">This usually takes 10–40 seconds.</span></div>
+    <div class="g-busy hidden" id="busy"><div class="spin"></div><b id="busyTitle">Creating your image…</b><span class="small muted" id="busyNote">This usually takes 10–40 seconds.</span></div>
     <div class="hidden" id="out">
-      <div class="g-out-head"><h3>Your images</h3><span class="grow"></span></div>
+      <div class="g-out-head"><h3 id="outTitle">Your images</h3><span class="grow"></span></div>
       <div class="g-grid a-grid" id="grid"></div>
     </div>
     <div class="a-recent hidden" id="recentWrap">

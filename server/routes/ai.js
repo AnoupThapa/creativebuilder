@@ -14,8 +14,12 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 
 const wrap = e => (e instanceof ai.HttpErr ? new S.HttpError(e.status, e.message, e.extra) : e);
 
 router.get('/ai/options', (req, res) => {
-  const tpls = ai.templates().map(t => ({ key: t.key, industry: t.industry, kind: t.kind, name: t.name, description: t.description, emoji: t.emoji, needsPhoto: !!t.needs_photo }));
-  res.json({ industries: ai.INDUSTRIES, templates: tpls, aspects: ai.ASPECTS, credits: ai.creditStatus(req.user),
+  const all = ai.templates().map(t => ({ key: t.key, industry: t.industry, kind: t.kind, name: t.name, description: t.description, emoji: t.emoji, needsPhoto: !!t.needs_photo }));
+  const { q } = require('../db');
+  const plan = require('../plans').effectivePlan(q.get('SELECT * FROM workspaces WHERE id = ?', req.user.workspace_id));
+  res.json({ industries: ai.INDUSTRIES, templates: all.filter(t => t.kind === 'image'), videoTemplates: all.filter(t => t.kind === 'video'),
+    video: { allowed: !!plan.video_export, credits: config.ai.videoCredits, seconds: [4, 6, 8], demo: require('../ai/videogen').active() === 'demo' },
+    aspects: ai.ASPECTS, credits: ai.creditStatus(req.user),
     enabled: ai.enabled(), demo: require('../ai/providers').active() === 'demo',
     topup: { credits: config.ai.topupCredits, price_cents: config.ai.topupPriceCents } });
 });
@@ -64,6 +68,27 @@ router.post('/ai/jobs', (req, res, next) => upload(req, res, err => {
   } catch (e) { throw wrap(e); }
 });
 
+/* AI video from one of your AI images (fromJob + n) or an uploaded photo */
+router.post('/ai/videos', (req, res, next) => upload(req, res, err => {
+  if (err) return next(new S.HttpError(400, err.code === 'LIMIT_FILE_SIZE' ? 'That photo is too big (max 15 MB).' : 'Upload failed.'));
+  next();
+}), (req, res) => {
+  let photo = null;
+  if (req.file) {
+    const t = sniff(req.file.buffer);
+    if (!t || t.kind !== 'image') throw new S.HttpError(415, 'Use a JPG, PNG or WEBP photo.');
+    photo = { buffer: req.file.buffer, mime: t.mime };
+  }
+  const str = (v, n) => String(v || '').slice(0, n);
+  const input = { product: str(req.body.product, 120), price: str(req.body.price, 30) };
+  try {
+    const job = ai.createVideoJob(req.user, { templateKey: req.body.template, input, photo, aspect: req.body.aspect, seconds: req.body.seconds,
+      from: req.body.fromJob ? { id: String(req.body.fromJob).slice(0, 40), n: parseInt(req.body.n, 10) || 0 } : null });
+    S.audit(req, 'ai.video_job', { id: job.id, template: job.template_key });
+    res.status(201).json({ job: ai.publicJob(job), credits: ai.creditStatus(req.user) });
+  } catch (e) { throw wrap(e); }
+});
+
 router.get('/ai/jobs', (req, res) => {
   const { q } = require('../db');
   const rows = q.all('SELECT * FROM ai_jobs WHERE user_id = ? ORDER BY created_at DESC LIMIT 24', req.user.id);
@@ -79,9 +104,9 @@ router.get('/ai/jobs/:id', (req, res) => {
 
 /* The image itself. Free-plan users must take it through the editor (watermarked downloads). */
 router.get('/ai/out/:id/:n', (req, res) => {
-  const out = ai.outputFile(req.user, req.params.id, req.params.n);
-  if (!out || !fs.existsSync(out.path)) return res.status(404).json({ error: 'This AI image is no longer available.' });
-  if (req.query.download) {
+  const out = ai.outputFile(req.user, req.params.id, req.params.n, { poster: !!req.query.poster });
+  if (!out || !fs.existsSync(out.path)) return res.status(404).json({ error: 'This AI result is no longer available.' });
+  if (req.query.download && !req.query.poster) {
     const st = ai.creditStatus(req.user);
     if (st.plan === 'free') return res.status(402).json({ error: 'Open it in the editor to download (free plan).' });
     res.attachment(`postforge-ai-${out.job.id.slice(0, 8)}-${req.params.n}.${out.file.split('.').pop()}`);

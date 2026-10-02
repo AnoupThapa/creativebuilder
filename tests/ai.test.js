@@ -225,6 +225,116 @@ test('quality check: images with lettering or a changed product are redone, then
   } finally { Object.assign(providers, real); }
 });
 
+test('AI video: Pro only, from an AI image or a photo, cropped to the post shape, checked, refunded on failure', { timeout: 180000, skip: !require('../server/video').available() && 'ffmpeg not available here' }, async () => {
+  const videogen = require('../server/ai/videogen.js');
+  const { buildVideoPrompt } = require('../server/ai/prompts.js');
+  const vt = ai.templates(true).filter(t => t.kind === 'video');
+  assert.ok(vt.length >= 8);
+  for (const t of vt) {
+    const p = buildVideoPrompt(t, { product: 'Rose serum' }, { seconds: 6 });
+    assert.match(p, /PRODUCT IS RIGID/); assert.match(p, /NO LETTERING/); assert.match(p, /6-second/);
+    assert.ok(!/headline|caption it|title card/i.test(p), t.key);
+  }
+
+  // free & starter: not allowed
+  const f = await signup('Vic', 'vic@example.com');
+  let r = await f.post('/api/ai/videos', { template: 'vid_push_in' });
+  assert.equal(r.status, 402);
+  assert.equal(r.data.code, 'ai_video_plan');
+  r = await f.get('/api/ai/options');
+  assert.equal(r.data.video.allowed, false);
+  assert.ok(!r.data.templates.some(t => t.kind === 'video'), 'image list has no video motions');
+
+  const c = await signup('Val', 'val@example.com');
+  const ws = q.get("SELECT workspace_id FROM users WHERE email = 'val@example.com'").workspace_id;
+  q.run("UPDATE workspaces SET plan_code = 'pro', sub_status = 'active', billing_mode = 'comp', current_period_end = ? WHERE id = ?", Date.now() + 864e5, ws);
+  r = await c.get('/api/ai/options');
+  assert.equal(r.data.video.allowed, true);
+  assert.equal(r.data.video.credits, 10);
+
+  // an AI image first
+  r = await c.post('/api/ai/jobs', { template: 'shop_studio', product: 'Desk lamp', aspect: '4:5' });
+  const img = await waitJob(c, r.data.job.id);
+  assert.equal(img.job.status, 'done');
+  // video motions can't be used as image styles and vice versa
+  r = await c.post('/api/ai/jobs', { template: 'vid_push_in', product: 'Lamp' });
+  assert.equal(r.status, 400);
+  r = await c.post('/api/ai/videos', { template: 'shop_studio', fromJob: img.job.id });
+  assert.equal(r.status, 400);
+  r = await c.post('/api/ai/videos', { template: 'vid_push_in' });
+  assert.equal(r.status, 400, 'needs a start picture');
+  const other = await signup('Wes', 'wes@example.com');
+  q.run("UPDATE workspaces SET plan_code = 'pro', sub_status = 'active', billing_mode = 'comp', current_period_end = ? WHERE id = (SELECT workspace_id FROM users WHERE email = 'wes@example.com')", Date.now() + 864e5);
+  r = await other.post('/api/ai/videos', { template: 'vid_push_in', fromJob: img.job.id });
+  assert.equal(r.status, 404, "can't start from someone else's image");
+
+  // demo video from the AI image, 4:5 feed
+  r = await c.post('/api/ai/videos', { template: 'vid_push_in', fromJob: img.job.id, n: 0, aspect: '4:5', seconds: 4 });
+  assert.equal(r.status, 201, JSON.stringify(r.data));
+  assert.equal(r.data.credits.used, 11);
+  let d = await waitJob(c, r.data.job.id);
+  assert.equal(d.job.status, 'done', d.job.error);
+  assert.equal(d.job.kind, 'video');
+  assert.equal(d.job.inputs.product, 'Desk lamp', 'product name carried over');
+  const mp4 = await c.get(d.job.outputs[0].url);
+  assert.equal(mp4.status, 200);
+  const probe = require('node:child_process').spawnSync(require('ffmpeg-static'), ['-hide_banner', '-i', 'pipe:0'], { input: mp4.data });
+  const info = String(probe.stderr);
+  assert.match(info, /h264/); assert.match(info, /1080x1350/); assert.ok(!/Audio:/.test(info), 'silent');
+  assert.match(info, /Duration: 00:00:0[34]/);
+  const poster = await c.get(d.job.outputs[0].poster);
+  assert.equal(poster.status, 200); assert.equal(poster.data[0], 0xff);
+  // into the editor as a video design
+  r = await c.post(`/api/ai/jobs/${d.job.id}/design`, { n: 0 });
+  assert.equal(r.status, 201);
+  assert.equal(q.get('SELECT kind FROM media WHERE id = ?', r.data.mediaId).kind, 'video');
+
+  // uploaded photo, story shape; pretend Veo: first clip fails the check, second passes
+  const realV = { active: videogen.active, veoStart: videogen.veoStart, veoWait: videogen.veoWait };
+  const realCheck = providers.checkImage;
+  const keyBefore = require('../server/config').ai.geminiKey;
+  const demoRaw = await videogen.demoClip({ png: (await videogen.prepareStart(fs.readFileSync(path.join(__dirname, '..', 'public', 'img', 'favicon.png')), '9:16', tmp)).png, gen: '9:16', seconds: 4, dir: tmp });
+  let starts = 0, checks = [];
+  videogen.active = () => 'veo';
+  videogen.veoStart = async () => `operations/op-${++starts}`;
+  videogen.veoWait = async () => demoRaw;
+  providers.checkImage = async () => checks.shift() ?? { ok: true, problems: [] };
+  require('../server/config').ai.geminiKey = 'test-key';
+  try {
+    checks = [{ ok: false, problems: ['lettering'] }];
+    const fd = new FormData();
+    fd.append('photo', new Blob([PNG]), 'lamp.png'); fd.append('template', 'vid_light_sweep'); fd.append('aspect', '9:16'); fd.append('seconds', '4'); fd.append('product', 'Lamp');
+    r = await c.post('/api/ai/videos', fd);
+    assert.equal(r.status, 201, JSON.stringify(r.data));
+    d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'done', d.job.error);
+    assert.equal(starts, 2, 'made again once');
+    let row = q.get('SELECT * FROM ai_jobs WHERE id = ?', r.data.job.id);
+    assert.equal(row.redone, 1); assert.equal(row.remote_op, '');
+    assert.ok(row.cost_usd >= 0.8, 'two 4 s clips counted');
+
+    // keeps failing → refunded, spend still counted for the budget
+    const before = (await c.get('/api/ai/credits')).data.used;
+    checks = [{ ok: false, problems: ['label changed'] }, { ok: false, problems: ['label changed'] }];
+    r = await c.post('/api/ai/videos', { template: 'vid_orbit', fromJob: img.job.id, aspect: '1:1', seconds: 4 });
+    d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'failed');
+    assert.match(d.job.error, /credits were returned/);
+    assert.equal((await c.get('/api/ai/credits')).data.used, before);
+    row = q.get('SELECT * FROM ai_jobs WHERE id = ?', r.data.job.id);
+    assert.ok(row.cost_usd > 0);
+
+    // service error → refunded, nothing spent
+    videogen.veoStart = async () => { throw new providers.AiError('busy', 'busy'); };
+    r = await c.post('/api/ai/videos', { template: 'vid_orbit', fromJob: img.job.id, seconds: 4 });
+    d = await waitJob(c, r.data.job.id);
+    assert.equal(d.job.status, 'failed');
+    assert.equal(q.get('SELECT cost_usd FROM ai_jobs WHERE id = ?', r.data.job.id).cost_usd, 0);
+  } finally {
+    Object.assign(videogen, realV); providers.checkImage = realCheck; require('../server/config').ai.geminiKey = keyBefore;
+  }
+});
+
 test('paid plan: monthly credits per seat', async () => {
   const c = await signup('Pia', 'pia@example.com');
   const ws = q.get("SELECT workspace_id FROM users WHERE email = 'pia@example.com'").workspace_id;

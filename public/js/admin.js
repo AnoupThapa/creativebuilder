@@ -304,7 +304,7 @@
     aiTpls = s.templates;
     const live = s.provider !== 'demo';
     $('aiStatus').innerHTML = live
-      ? `<strong>${s.enabled ? '✅ AI images are ON' : '⏸ AI images are PAUSED'}</strong> <span class="small muted">using ${esc(PROVIDER_NAME[s.provider])} · model ${esc(s.models[s.provider])}</span>`
+      ? `<strong>${s.enabled ? '✅ AI images are ON' : '⏸ AI images are PAUSED'}</strong> <span class="small muted">using ${esc(PROVIDER_NAME[s.provider])} · model ${esc(s.models[s.provider])} · videos: ${s.videoProvider === 'veo' ? 'Google Veo (' + esc(s.videoModel) + ')' : 'demo'}</span>`
       : `<strong>🧪 Demo mode.</strong> <span class="small">No AI key is set, so customers get sample pictures (free to you). To switch on real AI images add
          <b>GEMINI_API_KEY</b> (recommended) or <b>OPENAI_API_KEY</b> in Fly.io → Secrets. The app restarts by itself and this page will say which service is in use.</span>`;
     const t = s.today, m = s.month;
@@ -312,6 +312,7 @@
       ['Images today', t.images, `${t.jobs} requests · ${t.failed} failed`],
       ['Cost today', '$' + t.cost.toFixed(2), `cap $${Number(s.dailyBudget).toFixed(0)} a day`],
       ['Images this month', m.images, `${m.failed} failed (credits refunded)`],
+      ['Videos this month', m.videos, `${t.videos} today · ${s.videoProvider === 'veo' ? esc(s.videoModel) : 'demo videos'} · ${s.videoCredits} credits each`],
       ['Cost this month', '$' + m.cost.toFixed(2), 'estimated from the AI price list'],
       ['Quality check', s.qualityCheck ? 'On' : 'Off', `${m.redone} redone · ${m.rejected} refunded this month`],
       ['Working now', s.queue.running, `${s.queue.waiting} waiting`],
