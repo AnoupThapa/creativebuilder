@@ -245,6 +245,21 @@ router.patch('/ai/settings', (req, res) => {
   S.audit(req, 'admin.ai_settings', req.body);
   res.json({ ok: true, ...ai.stats() });
 });
+/* AI service keys (stored encrypted; never returned in full) */
+router.get('/ai/keys', (req, res) => res.json(require('../ai/keys').status()));
+router.put('/ai/keys', (req, res) => {
+  const keys = require('../ai/keys');
+  let st;
+  try { st = keys.save(req.body || {}); } catch (e) { throw new S.HttpError(e.status || 400, e.message); }
+  // audit what changed, never the key itself
+  S.audit(req, 'admin.ai_keys', { gemini: req.body.geminiKey ? 'set' : req.body.clear_geminiKey ? 'removed' : undefined,
+    openai: req.body.openaiKey ? 'set' : req.body.clear_openaiKey ? 'removed' : undefined, provider: req.body.provider });
+  res.json({ ...st, active: require('../ai/providers').active(), videoActive: require('../ai/videogen').active() });
+});
+router.post('/ai/keys/check', async (req, res) => {
+  const which = req.body.which === 'openai' ? 'openai' : 'gemini';
+  res.json(await require('../ai/keys').check(which));
+});
 router.put('/ai/templates/:id', (req, res) => {
   const t = q.get('SELECT * FROM ai_templates WHERE id = ?', +req.params.id);
   if (!t) throw new S.HttpError(404, 'Style not found.');

@@ -301,13 +301,13 @@
   const PROVIDER_NAME = { gemini: 'Google Gemini', openai: 'OpenAI', demo: 'Demo mode (no AI key yet)' };
   let aiTpls = [];
   async function loadAI() {
+    loadKeys();
     const s = await api('/admin/ai');
     aiTpls = s.templates;
     const live = s.provider !== 'demo';
     $('aiStatus').innerHTML = live
       ? `<strong>${s.enabled ? '✅ AI images are ON' : '⏸ AI images are PAUSED'}</strong> <span class="small muted">using ${esc(PROVIDER_NAME[s.provider])} · model ${esc(s.models[s.provider])} · videos: ${s.videoProvider === 'veo' ? 'Google Veo (' + esc(s.videoModel) + ')' : 'demo'}</span>`
-      : `<strong>🧪 Demo mode.</strong> <span class="small">No AI key is set, so customers get sample pictures (free to you). To switch on real AI images add
-         <b>GEMINI_API_KEY</b> (recommended) or <b>OPENAI_API_KEY</b> in Fly.io → Secrets. The app restarts by itself and this page will say which service is in use.</span>`;
+      : `<strong>🧪 Demo mode.</strong> <span class="small">No AI key is in use, so customers get free sample pictures. Paste a Gemini key (recommended) or an OpenAI key in <b>AI service keys</b> below to switch on real AI.</span>`;
     const t = s.today, m = s.month;
     const tiles = [
       ['Images today', t.images, `${t.jobs} requests · ${t.failed} failed`],
@@ -340,6 +340,54 @@
         </div>
       </div></details>`).join('');
   }
+  /* AI service keys */
+  function renderKeys(k) {
+    const st = (x, el, clr) => {
+      $(el).textContent = x.set ? `— saved ✓ ends in ${x.hint}${x.source === 'server' ? ' (from Fly.io settings)' : ''}` : '— not set';
+      $(clr).classList.toggle('hidden', x.source !== 'admin');
+    };
+    st(k.keys.geminiKey, 'akGemState', 'akGemClear');
+    st(k.keys.openaiKey, 'akOaiState', 'akOaiClear');
+    $('akProvider').value = k.provider || '';
+    $('akGemModel').value = k.models.geminiImageModel; $('akGemModel').placeholder = k.defaults.geminiImageModel;
+    $('akVeoModel').value = k.models.veoModel; $('akVeoModel').placeholder = k.defaults.veoModel;
+    $('akOaiModel').value = k.models.openaiImageModel; $('akOaiModel').placeholder = k.defaults.openaiImageModel;
+    $('akGem').value = ''; $('akOai').value = '';
+  }
+  async function loadKeys() { try { renderKeys(await api('/admin/ai/keys')); } catch (e) { toast(e.message, { error: true }); } }
+  $('aiKeys').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = { provider: $('akProvider').value, geminiImageModel: $('akGemModel').value, veoModel: $('akVeoModel').value, openaiImageModel: $('akOaiModel').value };
+    if ($('akGem').value.trim()) body.geminiKey = $('akGem').value.trim();
+    if ($('akOai').value.trim()) body.openaiKey = $('akOai').value.trim();
+    try {
+      const r = await api('/admin/ai/keys', { method: 'PUT', body });
+      renderKeys(r);
+      toast(r.active === 'demo' ? 'Saved — still in demo mode (no key in use)' : `Saved ✓ AI pictures now use ${PROVIDER_NAME[r.active] || r.active}`);
+      $('akOut').textContent = '';
+      loadAI();
+    } catch (err) { toast(err.message, { error: true }); }
+  });
+  $('aiKeys').addEventListener('click', async e => {
+    const c = e.target.closest('[data-clear]');
+    if (c) {
+      if (!(await confirmBox('Remove this key?', 'AI will fall back to the Fly.io setting, or to demo mode if there is none.', 'Remove', true))) return;
+      try { renderKeys(await api('/admin/ai/keys', { method: 'PUT', body: { ['clear_' + c.dataset.clear]: true } })); toast('Key removed'); loadAI(); }
+      catch (err) { toast(err.message, { error: true }); }
+      return;
+    }
+    const b = e.target.closest('[data-check]'); if (!b) return;
+    b.disabled = true; $('akOut').textContent = 'Checking…';
+    try {
+      const r = await api('/admin/ai/keys/check', { method: 'POST', body: { which: b.dataset.check } });
+      const name = b.dataset.check === 'gemini' ? 'Gemini' : 'OpenAI';
+      $('akOut').innerHTML = r.ok
+        ? `✅ ${name} key works (${r.count} models available). ` + r.models.map(m => `${m.found ? '✅' : '⚠️'} <span class="mono">${esc(m.name)}</span>${m.found ? '' : ' not found for this key — check the model name or your account access'}`).join(' · ')
+        : `❌ ${name}: ${esc(r.error)}${r.detail ? ` <span class="muted">(${esc(r.detail)})</span>` : ''}`;
+    } catch (err) { $('akOut').textContent = '❌ ' + err.message; }
+    b.disabled = false;
+  });
+
   $('aiTpls').addEventListener('click', async e => {
     if (!e.target.matches('[data-save]')) return;
     const box = e.target.closest('[data-id]');

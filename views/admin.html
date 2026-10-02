@@ -179,6 +179,43 @@ pre.mail{white-space:pre-wrap;font-size:12px;background:var(--paper);padding:10p
     <section class="view hidden" id="view-ai">
       <div class="card" id="aiStatus" style="margin-bottom:12px"><span class="muted small">Loading…</span></div>
       <div class="stats" id="aiStats"></div>
+      <div class="card" id="aiKeysCard">
+        <h3>🔑 AI service keys</h3>
+        <p class="small muted">Paste a key here to switch on real AI pictures and videos — no server settings needed. Keys are saved encrypted and are never shown again in full.
+          Get a Gemini key (recommended — pictures <b>and</b> videos) at <b>aistudio.google.com/apikey</b> with billing switched on, or an OpenAI key (pictures only) at <b>platform.openai.com/api-keys</b>.</p>
+        <form id="aiKeys" autocomplete="off" style="display:grid;gap:12px;margin-top:10px">
+          <div class="ak-row">
+            <label class="small"><b>Google Gemini key</b> <span class="small muted" id="akGemState"></span></label>
+            <div class="row wrap" style="gap:8px">
+              <input class="input" id="akGem" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste a new Gemini key (starts with AIza…)" style="flex:1;min-width:240px">
+              <button class="btn btn-ghost btn-sm" type="button" data-check="gemini">Check key (free)</button>
+              <button class="btn btn-ghost btn-sm hidden" type="button" data-clear="geminiKey" id="akGemClear">Remove</button>
+            </div>
+          </div>
+          <div class="ak-row">
+            <label class="small"><b>OpenAI key</b> <span class="small muted">(optional)</span> <span class="small muted" id="akOaiState"></span></label>
+            <div class="row wrap" style="gap:8px">
+              <input class="input" id="akOai" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste a new OpenAI key (starts with sk-…)" style="flex:1;min-width:240px">
+              <button class="btn btn-ghost btn-sm" type="button" data-check="openai">Check key (free)</button>
+              <button class="btn btn-ghost btn-sm hidden" type="button" data-clear="openaiKey" id="akOaiClear">Remove</button>
+            </div>
+          </div>
+          <div class="row wrap" style="gap:12px;align-items:flex-end">
+            <div><label class="small muted" for="akProvider">Service for AI pictures</label><br>
+              <select class="input" id="akProvider" style="width:auto"><option value="">Automatic (Gemini first)</option><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="demo">Demo pictures only (free)</option></select></div>
+            <button class="btn btn-dark btn-sm" type="submit">Save keys</button>
+          </div>
+          <details class="small"><summary class="muted" style="cursor:pointer">Advanced: model names</summary>
+            <div style="display:grid;gap:8px;margin-top:8px;max-width:520px">
+              <label class="small muted">Gemini picture model<input class="input" id="akGemModel" spellcheck="false"></label>
+              <label class="small muted">Veo video model<input class="input" id="akVeoModel" spellcheck="false"></label>
+              <label class="small muted">OpenAI picture model<input class="input" id="akOaiModel" spellcheck="false"></label>
+              <span class="small muted">Leave a box empty to use the default. “Check key” tells you if these models are available to your key.</span>
+            </div>
+          </details>
+          <div id="akOut" class="small"></div>
+        </form>
+      </div>
       <div class="card">
         <h3>Controls</h3>
         <div class="row wrap" style="gap:12px;align-items:flex-end">

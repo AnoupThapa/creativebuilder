@@ -85,11 +85,12 @@
   $('vpick').addEventListener('click', e => { const b = e.target.closest('[data-job]'); if (b) pickFrom(b.dataset.job, b.dataset.n, b.dataset.product); });
   function setVPhoto(file) {
     vphotoFile = file || null;
-    $('vphotoBox').classList.toggle('hidden', !file); $('vdrop').classList.toggle('hidden', !!file);
+    $('vphotoBox').classList.toggle('hidden', !file); $('vdrop').classList.toggle('hidden', !!file); $('vsnap').classList.toggle('hidden', !!file);
     if (file) $('vphotoImg').src = URL.createObjectURL(file);
     updateVGo();
   }
   $('vphoto').addEventListener('change', e => { const f = e.target.files[0]; if (f) setVPhoto(f); });
+  $('vphotoSnap').addEventListener('change', e => { const f = e.target.files[0]; if (f) setVPhoto(f); e.target.value = ''; });
   const vdrop = $('vdrop');
   ['dragenter', 'dragover'].forEach(t => vdrop.addEventListener(t, e => { e.preventDefault(); vdrop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(t => vdrop.addEventListener(t, () => vdrop.classList.remove('over')));
@@ -167,12 +168,13 @@
   function setPhoto(file, dataUrl) {
     photoFile = file || null; photoData = dataUrl || null;
     const has = !!(photoFile || photoData);
-    $('photoBox').classList.toggle('hidden', !has); $('drop').classList.toggle('hidden', has);
+    $('photoBox').classList.toggle('hidden', !has); $('drop').classList.toggle('hidden', has); $('snapAi').classList.toggle('hidden', has);
     if (has) $('photoImg').src = photoData || URL.createObjectURL(photoFile);
     if (has && src !== 'photo') { $('srcTabs').querySelector('[data-v=photo]').click(); }
     updateGo();
   }
   $('photo').addEventListener('change', e => { const f = e.target.files[0]; if (f) setPhoto(f, null); });
+  $('photoSnap').addEventListener('change', e => { const f = e.target.files[0]; if (f) setPhoto(f, null); e.target.value = ''; });
   const drop = $('drop');
   ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('over')));

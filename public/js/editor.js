@@ -1098,6 +1098,8 @@ function clearMedia(){
 }
 
 setupDZ('dzMedia', 'inputMedia', handleMediaFile);
+// phones: open the camera straight away
+$('inputSnap').addEventListener('change', e => { if (e.target.files[0] && !READONLY) handleMediaFile(e.target.files[0]); e.target.value = ''; });
 $('mediaRemove').addEventListener('click', () => { clearMedia(); markDirty(); });
 
 /* ---- Logo ---- */

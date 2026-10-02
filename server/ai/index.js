@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 const config = require('../config');
 const { q, tx, metaGet, metaSet } = require('../db');
 const { effectivePlan, localParts, storageUsed } = require('../plans');
+require('./keys'); // keys saved by the admin take effect before anything else
 const providers = require('./providers');
 const { buildPrompt, buildVideoPrompt, VIDEO_NEGATIVE } = require('./prompts');
 const videogen = require('./videogen');

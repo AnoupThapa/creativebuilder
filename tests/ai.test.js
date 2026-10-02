@@ -463,6 +463,57 @@ test('admin: kill switch, budget, styles, test, credits', { timeout: 60000 }, as
   assert.equal(r.data.ok, true, JSON.stringify(r.data));
   assert.match(r.data.preview, /^data:image\//);
 
+  // AI service keys entered in the admin panel: encrypted, never shown in full, switch the AI on and off
+  const config = require('../server/config');
+  const fakeGoogle = http.createServer((req, res) => {
+    res.writeHead(req.headers['x-goog-api-key'] === 'AIzaTestKey_1234567890abcdWXYZ' ? 200 : 403, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ models: [{ name: 'models/gemini-3.1-flash-image' }, { name: 'models/gemini-flash-latest' }] }));
+  });
+  await new Promise(res => fakeGoogle.listen(0, '127.0.0.1', res));
+  const realBase = config.ai.geminiBase;
+  config.ai.geminiBase = `http://127.0.0.1:${fakeGoogle.address().port}`;
+  try {
+    r = await a.get('/api/admin/ai/keys');
+    assert.equal(r.data.keys.geminiKey.set, false);
+    r = await a.put('/api/admin/ai/keys', { geminiKey: 'short' });
+    assert.equal(r.status, 400);
+    r = await a.put('/api/admin/ai/keys', { openaiKey: 'not-an-openai-key-1234567890' });
+    assert.equal(r.status, 400);
+    r = await a.put('/api/admin/ai/keys', { geminiKey: '  AIzaTestKey_1234567890abcdWXYZ ' });
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+    assert.equal(r.data.active, 'gemini');
+    assert.equal(r.data.videoActive, 'veo');
+    assert.equal(r.data.keys.geminiKey.source, 'admin');
+    assert.equal(r.data.keys.geminiKey.hint, '…WXYZ');
+    assert.ok(!JSON.stringify(r.data).includes('AIzaTestKey'), 'full key never sent back');
+    const stored = q.get("SELECT value FROM meta WHERE key = 'ai_settings'").value;
+    assert.ok(!stored.includes('AIzaTestKey'), 'stored encrypted');
+    assert.ok(!JSON.stringify(q.all("SELECT detail FROM audit_log WHERE action = 'admin.ai_keys'")).includes('AIzaTestKey'), 'not in the audit log');
+    assert.equal(config.ai.geminiKey, 'AIzaTestKey_1234567890abcdWXYZ', 'in use straight away');
+    r = await u.get('/api/ai/options');
+    assert.equal(r.data.demo, false, 'customers now get real AI');
+    // free key check lists the models
+    r = await a.post('/api/admin/ai/keys/check', { which: 'gemini' });
+    assert.equal(r.data.ok, true, JSON.stringify(r.data));
+    assert.deepEqual(r.data.models.map(m => m.found), [true, false], 'image model found, Veo model not in this account');
+    r = await a.post('/api/admin/ai/keys/check', { which: 'openai' });
+    assert.equal(r.data.ok, false);
+    // empty box keeps the saved key; model names can be changed
+    r = await a.put('/api/admin/ai/keys', { geminiKey: '', veoModel: 'veo-3.1-lite-generate-preview' });
+    assert.equal(r.data.keys.geminiKey.set, true);
+    assert.equal(config.ai.veoModel, 'veo-3.1-lite-generate-preview');
+    r = await a.put('/api/admin/ai/keys', { veoModel: 'bad model; rm' });
+    assert.equal(r.status, 400);
+    // ordinary users can't see or change keys
+    assert.ok([403, 404].includes((await u.get('/api/admin/ai/keys')).status));
+    assert.ok([403, 404].includes((await u.put('/api/admin/ai/keys', { geminiKey: 'AIzaOther_1234567890abcdefgh' })).status));
+    // remove → back to demo
+    r = await a.put('/api/admin/ai/keys', { clear_geminiKey: true, veoModel: '' });
+    assert.equal(r.data.active, 'demo');
+    assert.equal(config.ai.geminiKey, '');
+    assert.equal(config.ai.veoModel, 'veo-3.1-fast-generate-preview', 'default restored');
+  } finally { config.ai.geminiBase = realBase; fakeGoogle.close(); }
+
   // ordinary users can't reach any of it
   r = await u.get('/api/admin/ai');
   assert.ok([403, 404].includes(r.status));
