@@ -16,14 +16,31 @@ const wsOf = u => q.get('SELECT * FROM workspaces WHERE id = ?', u.workspace_id)
 /* BRAND KITS                                                          */
 /* ================================================================== */
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const SOCIALS = ['instagram', 'facebook', 'tiktok', 'linkedin', 'youtube', 'x', 'whatsapp'];
+const FONT_RE = /^[A-Za-z0-9 \-]{0,60}$/;
+function parseJson(v, fallback) { try { return typeof v === 'string' ? JSON.parse(v) : (v ?? fallback); } catch { return fallback; } }
 function kitInput(body, prev = {}) {
   const color = body.color ?? prev.color ?? '#ff6b4a';
   if (!HEX.test(color)) throw new S.HttpError(400, 'Colour must look like #ff6b4a.');
+  const colors = body.colors !== undefined ? body.colors : parseJson(prev.colors, []);
+  if (!Array.isArray(colors) || colors.length > 5 || colors.some(c => !HEX.test(c))) throw new S.HttpError(400, 'Extra colours must look like #ff6b4a (up to 5).');
+  const fonts = {};
+  for (const f of ['font_heading', 'font_body']) {
+    fonts[f] = String(body[f] ?? prev[f] ?? '').trim();
+    if (!FONT_RE.test(fonts[f])) throw new S.HttpError(400, 'Font names only use letters, numbers and spaces.');
+  }
+  const inSoc = body.socials !== undefined ? body.socials : parseJson(prev.socials, {});
+  const socials = {};
+  for (const k of SOCIALS) if (inSoc && inSoc[k]) socials[k] = S.str(String(inSoc[k]), { field: k, max: 120 });
   return {
     name: S.str(body.name ?? prev.name, { field: 'Name', required: true, max: 80 }),
-    color,
+    color, colors: JSON.stringify(colors), ...fonts,
     phone: S.str(body.phone ?? prev.phone ?? '', { field: 'Phone', max: 40 }),
     website: S.str(body.website ?? prev.website ?? '', { field: 'Website', max: 120 }),
+    tagline: S.str(body.tagline ?? prev.tagline ?? '', { field: 'Tagline', max: 120 }),
+    email: S.str(body.email ?? prev.email ?? '', { field: 'Email', max: 120 }),
+    address: S.str(body.address ?? prev.address ?? '', { field: 'Address', max: 200 }),
+    socials: JSON.stringify(socials),
     logo_media_id: body.logo_media_id !== undefined ? body.logo_media_id : (prev.logo_media_id ?? null),
   };
 }
@@ -33,10 +50,15 @@ function checkLogo(u, mediaId) {
   if (!m) throw new S.HttpError(400, 'Logo file not found.');
   return m.id;
 }
-const kitOut = k => ({ ...k, logo_url: k.logo_media_id ? `/media/${k.logo_media_id}` : null });
+const kitOut = k => ({ ...k, colors: parseJson(k.colors, []), socials: parseJson(k.socials, {}), logo_url: k.logo_media_id ? `/media/${k.logo_media_id}` : null,
+  designs: q.get('SELECT COUNT(*) n FROM designs WHERE brand_kit_id = ? AND deleted_at IS NULL', k.id).n,
+  clients: q.get("SELECT COUNT(*) n FROM users WHERE client_brand_id = ? AND status != 'removed'", k.id).n });
 
 router.get('/brand-kits', (req, res) => {
-  res.json(q.all('SELECT * FROM brand_kits WHERE workspace_id = ? ORDER BY id', req.user.workspace_id).map(kitOut));
+  const rows = S.isClient(req.user)
+    ? q.all('SELECT * FROM brand_kits WHERE workspace_id = ? AND id = ?', req.user.workspace_id, req.user.client_brand_id)
+    : q.all('SELECT * FROM brand_kits WHERE workspace_id = ? ORDER BY id', req.user.workspace_id);
+  res.json(rows.map(kitOut));
 });
 router.post('/brand-kits', S.requireRole('designer'), (req, res) => {
   const plan = effectivePlan(wsOf(req.user));
@@ -45,21 +67,31 @@ router.post('/brand-kits', S.requireRole('designer'), (req, res) => {
     throw new S.HttpError(402, `Your ${plan.name} plan includes ${plan.max_brand_kits} brand kit${plan.max_brand_kits > 1 ? 's' : ''}. Edit the existing one or upgrade.`);
   const k = kitInput(req.body);
   const now = Date.now();
-  const id = q.run(`INSERT INTO brand_kits (workspace_id, name, color, phone, website, logo_media_id, created_at, updated_at)
-                    VALUES (?,?,?,?,?,?,?,?)`, req.user.workspace_id, k.name, k.color, k.phone, k.website,
-    checkLogo(req.user, k.logo_media_id), now, now).lastInsertRowid;
+  const id = q.run(`INSERT INTO brand_kits (workspace_id, name, color, colors, font_heading, font_body, phone, website, tagline, email, address, socials,
+                    logo_media_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, req.user.workspace_id, k.name, k.color, k.colors,
+    k.font_heading, k.font_body, k.phone, k.website, k.tagline, k.email, k.address, k.socials, checkLogo(req.user, k.logo_media_id), now, now).lastInsertRowid;
+  S.audit(req, 'brand.created', { id, name: k.name });
   res.status(201).json(kitOut(q.get('SELECT * FROM brand_kits WHERE id = ?', id)));
 });
 router.put('/brand-kits/:id', S.requireRole('designer'), (req, res) => {
   const prev = q.get('SELECT * FROM brand_kits WHERE id = ? AND workspace_id = ?', +req.params.id, req.user.workspace_id);
   if (!prev) throw new S.HttpError(404, 'Brand kit not found.');
   const k = kitInput(req.body, prev);
-  q.run('UPDATE brand_kits SET name=?, color=?, phone=?, website=?, logo_media_id=?, updated_at=? WHERE id=?',
-    k.name, k.color, k.phone, k.website, checkLogo(req.user, k.logo_media_id), Date.now(), prev.id);
+  q.run(`UPDATE brand_kits SET name=?, color=?, colors=?, font_heading=?, font_body=?, phone=?, website=?, tagline=?, email=?, address=?, socials=?,
+         logo_media_id=?, updated_at=? WHERE id=?`, k.name, k.color, k.colors, k.font_heading, k.font_body, k.phone, k.website, k.tagline, k.email,
+    k.address, k.socials, checkLogo(req.user, k.logo_media_id), Date.now(), prev.id);
   res.json(kitOut(q.get('SELECT * FROM brand_kits WHERE id = ?', prev.id)));
 });
 router.delete('/brand-kits/:id', S.requireRole('admin'), (req, res) => {
-  q.run('DELETE FROM brand_kits WHERE id = ? AND workspace_id = ?', +req.params.id, req.user.workspace_id);
+  const k = q.get('SELECT * FROM brand_kits WHERE id = ? AND workspace_id = ?', +req.params.id, req.user.workspace_id);
+  if (!k) return res.json({ ok: true });
+  if (q.get("SELECT COUNT(*) n FROM users WHERE client_brand_id = ? AND status != 'removed'", k.id).n)
+    throw new S.HttpError(409, 'This brand still has client logins. Remove them in Team first.');
+  tx(() => {
+    q.run('UPDATE designs SET brand_kit_id = NULL WHERE brand_kit_id = ?', k.id);
+    q.run('DELETE FROM brand_kits WHERE id = ?', k.id);
+  });
+  S.audit(req, 'brand.deleted', { id: k.id, name: k.name });
   res.json({ ok: true });
 });
 
@@ -105,7 +137,12 @@ function authoriseExports(u, items, quality, designId) {
 
 router.post('/exports', (req, res) => {
   const u = req.user;
-  if (u.role === 'viewer') throw new S.HttpError(403, 'Viewers can look at designs but not download them.');
+  if (u.role === 'viewer' && !S.isClient(u)) throw new S.HttpError(403, 'Viewers can look at designs but not download them.');
+  if (S.isClient(u)) {
+    // agency clients download their own brand's shared designs only
+    const d = q.get('SELECT * FROM designs WHERE id = ?', String(req.body.designId || ''));
+    if (!require('./designs').canView(u, d)) throw new S.HttpError(403, 'Open one of your brand’s designs to download it.');
+  }
   if (config.security.requireVerifiedEmailToExport && !u.email_verified)
     throw new S.HttpError(403, 'Please confirm your email address before downloading.', { code: 'verify_email' });
 
@@ -125,7 +162,7 @@ router.post('/exports', (req, res) => {
 
 /* Recorded video → Instagram/Facebook-ready MP4 (H.264 + AAC). Quota is counted at /exports. */
 router.post('/video/convert', express.raw({ type: () => true, limit: '200mb' }), async (req, res) => {
-  if (req.user.role === 'viewer') throw new S.HttpError(403, 'Viewers cannot export video.');
+  if (req.user.role === 'viewer' && !S.isClient(req.user)) throw new S.HttpError(403, 'Viewers cannot export video.');
   const plan = effectivePlan(wsOf(req.user));
   if (!plan.video_export) throw new S.HttpError(402, 'Video export is included from the Starter plan.', { code: 'upgrade' });
   if (!video.available()) throw new S.HttpError(501, 'MP4 conversion is not available on this server.');
@@ -158,31 +195,56 @@ function pendingInvites(wsId) {
     .map(t => ({ id: t.token_hash.slice(0, 24), ...JSON.parse(t.data), expires_at: t.expires_at, created_at: t.created_at }));
 }
 
+/* Seats: everyone except client viewers (agency clients log in free, up to 3 per brand) */
+const seatUsers = wsId => q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed' AND client_brand_id IS NULL", wsId).n;
+const clientUsers = wsId => q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed' AND client_brand_id IS NOT NULL", wsId).n;
+
 router.get('/team', (req, res) => {
   const ws = wsOf(req.user);
-  const members = q.all(`SELECT id, name, email, role, status, totp_enabled, email_verified, last_login_at, created_at
-                         FROM users WHERE workspace_id = ? AND status != 'removed' ORDER BY id`, ws.id);
+  const members = q.all(`SELECT u.id, u.name, u.email, u.role, u.status, u.totp_enabled, u.email_verified, u.last_login_at, u.created_at,
+                         u.client_brand_id, b.name client_brand FROM users u LEFT JOIN brand_kits b ON b.id = u.client_brand_id
+                         WHERE u.workspace_id = ? AND u.status != 'removed' ORDER BY u.id`, ws.id);
   const isAdmin = S.ROLE_RANK[req.user.role] >= S.ROLE_RANK.admin;
-  res.json({ seats: ws.seats, members, invites: isAdmin ? pendingInvites(ws.id) : [] });
+  const inv = isAdmin ? pendingInvites(ws.id) : [];
+  res.json({ seats: ws.seats, seatsUsed: seatUsers(ws.id) + inv.filter(i => !i.client_brand_id).length,
+    clients: clientUsers(ws.id), clientLimit: effectivePlan(ws).max_brand_kits * 3, members, invites: inv });
 });
 
 router.post('/team/invite', S.requireRole('admin'), async (req, res) => {
   const email = S.email(req.body.email);
-  const role = String(req.body.role || 'designer');
+  let role = String(req.body.role || 'designer');
+  let clientBrand = null;
+  if (role === 'client') {
+    // agency client: view & download one brand's shared designs; no seat needed
+    const kit = q.get('SELECT * FROM brand_kits WHERE id = ? AND workspace_id = ?', +req.body.brand_kit_id, req.user.workspace_id);
+    if (!kit) throw new S.HttpError(400, 'Pick the client’s brand.');
+    clientBrand = kit.id; role = 'viewer';
+  }
   if (!ASSIGNABLE.has(role)) throw new S.HttpError(400, 'Pick a valid role.');
   if (role === 'admin' && req.user.role !== 'owner') throw new S.HttpError(403, 'Only the owner can invite admins.');
   const ws = wsOf(req.user);
   const plan = effectivePlan(ws);
   if (plan.code === 'free') throw new S.HttpError(402, 'Team members are available on paid plans. Upgrade to add seats.', { code: 'upgrade' });
   if (q.get('SELECT id FROM users WHERE email = ?', email)) throw new S.HttpError(409, 'That email already has an account.');
-  const used = q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed'", ws.id).n + pendingInvites(ws.id).length;
-  if (used >= ws.seats) throw new S.HttpError(402, `All ${ws.seats} seats are in use. Add a seat in Billing first (each seat is billed per user).`, { code: 'seats' });
+  const pend = pendingInvites(ws.id);
+  if (clientBrand) {
+    if (ws.account_type !== 'business') throw new S.HttpError(400, 'Client logins are part of Business accounts. Switch your account type in Account & security.');
+    const limit = plan.max_brand_kits * 3;
+    if (clientUsers(ws.id) + pend.filter(i => i.client_brand_id).length >= limit)
+      throw new S.HttpError(402, `Your ${plan.name} plan allows ${limit} client logins.`, { code: 'upgrade' });
+  } else {
+    const used = seatUsers(ws.id) + pend.filter(i => !i.client_brand_id).length;
+    if (used >= ws.seats) throw new S.HttpError(402, `All ${ws.seats} seats are in use. Add a seat in Billing first (each seat is billed per user).`, { code: 'seats' });
+  }
 
-  const token = S.createToken('invite', { data: { workspace_id: ws.id, email, role, invited_by: req.user.id }, ttlMs: 7 * 86400000 });
+  const token = S.createToken('invite', { data: { workspace_id: ws.id, email, role, client_brand_id: clientBrand, invited_by: req.user.id }, ttlMs: 7 * 86400000 });
   const link = `${config.appUrl}/invite?token=${token}`;
-  await sendMail(email, `${req.user.name} invited you to ${ws.name} on ${config.appName}`,
-    `Hi,\n\n${req.user.name} invited you to join "${ws.name}" as a ${role}.\n\nAccept the invite (valid 7 days):\n${link}`);
-  S.audit(req, 'team.invite', { email, role });
+  const brandName = clientBrand ? q.get('SELECT name FROM brand_kits WHERE id = ?', clientBrand).name : '';
+  await sendMail(email, clientBrand ? `${ws.name} shared your ${brandName} designs with you` : `${req.user.name} invited you to ${ws.name} on ${config.appName}`,
+    clientBrand
+      ? `Hi,\n\n${req.user.name} from ${ws.name} invited you to review and download the designs for ${brandName}.\n\nCreate your login (valid 7 days):\n${link}`
+      : `Hi,\n\n${req.user.name} invited you to join "${ws.name}" as a ${role}.\n\nAccept the invite (valid 7 days):\n${link}`);
+  S.audit(req, 'team.invite', { email, role: clientBrand ? 'client' : role, brand: clientBrand });
   res.status(201).json({ ok: true, ...(isDev ? { devInviteLink: link } : {}) });
 });
 
@@ -198,6 +260,7 @@ router.patch('/team/:id', S.requireRole('admin'), (req, res) => {
   if (!m) throw new S.HttpError(404, 'Member not found.');
   if (m.role === 'owner') throw new S.HttpError(403, "The owner's role can't be changed.");
   if (m.id === req.user.id) throw new S.HttpError(403, "You can't change your own role.");
+  if (m.client_brand_id) throw new S.HttpError(400, 'Client logins can’t be changed to team roles. Remove the client and invite them as a team member instead.');
   const role = String(req.body.role || '');
   if (!ASSIGNABLE.has(role)) throw new S.HttpError(400, 'Pick a valid role.');
   if ((role === 'admin' || m.role === 'admin') && req.user.role !== 'owner') throw new S.HttpError(403, 'Only the owner can manage admins.');
@@ -215,6 +278,40 @@ router.delete('/team/:id', S.requireRole('admin'), (req, res) => {
   q.run('DELETE FROM sessions WHERE user_id = ?', m.id);
   S.audit(req, 'team.member_removed', { member: m.id, email: m.email });
   res.json({ ok: true });
+});
+
+/* ================================================================== */
+/* PROFILE (retail / business) & ACTIVITY LOG                          */
+/* ================================================================== */
+router.put('/workspace/account-type', S.requireRole('owner'), (req, res) => {
+  const t = String(req.body.account_type || '');
+  if (!['retail', 'business'].includes(t)) throw new S.HttpError(400, 'Pick Retail or Business.');
+  const ws = wsOf(req.user);
+  if (t === 'retail' && clientUsers(ws.id)) throw new S.HttpError(409, 'Remove your client logins (Team) before switching to Retail.');
+  q.run('UPDATE workspaces SET account_type = ? WHERE id = ?', t, ws.id);
+  S.audit(req, 'workspace.account_type', { from: ws.account_type, to: t });
+  res.json({ ok: true, account_type: t });
+});
+
+/* Workspace activity log for owners/admins — on screen, or downloaded as CSV / JSON for auditors */
+router.get('/workspace/activity', S.requireRole('admin'), (req, res) => {
+  const days = Math.max(1, Math.min(3650, parseInt(req.query.days, 10) || 90));
+  const rows = q.all(`SELECT a.id, a.created_at, a.action, a.detail, a.ip, a.hash, u.email, u.name
+                      FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
+                      WHERE a.workspace_id = ? AND a.created_at > ? ORDER BY a.id DESC LIMIT ?`,
+  req.user.workspace_id, Date.now() - days * 86400000, req.query.format ? 100000 : 300);
+  const out = rows.map(r => ({ id: r.id, time: new Date(r.created_at).toISOString(), user: r.email || '', name: r.name || '', action: r.action,
+    ip: r.ip || '', detail: r.detail === '{}' ? '' : r.detail, hash: r.hash || '' }));
+  if (req.query.format === 'csv' || req.query.format === 'json') {
+    S.audit(req, 'workspace.activity_exported', { format: req.query.format, days, rows: out.length });
+    const name = `postforge-activity-${new Date().toISOString().slice(0, 10)}.${req.query.format}`;
+    res.attachment(name);
+    if (req.query.format === 'json') return res.json({ workspace: req.user.workspace_id, exported_at: new Date().toISOString(), days, rows: out });
+    const cell = v => { const s = String(v ?? ''); return /[",\n\r]/.test(s) || /^[=+\-@]/.test(s) ? `"${(/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""')}"` : s; };
+    const cols = ['id', 'time', 'user', 'name', 'action', 'ip', 'detail', 'hash'];
+    return res.type('text/csv').send([cols.join(','), ...out.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n'));
+  }
+  res.json(out);
 });
 
 module.exports = { router, authoriseExports, PLATFORM_KEYS };

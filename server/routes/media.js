@@ -83,6 +83,7 @@ router.post('/media', S.requireRole('designer'), (req, res, next) => {
 });
 
 router.get('/media', (req, res) => {
+  if (S.isClient(req.user)) return res.json([]); // clients don't browse the media library
   res.json(q.all(`SELECT id, filename, mime, kind, size, created_at, owner_id FROM media
                   WHERE workspace_id = ? ORDER BY created_at DESC LIMIT 200`, req.user.workspace_id)
     .map(m => ({ ...m, url: `/media/${m.id}` })));
@@ -106,6 +107,14 @@ function serveMedia(req, res) {
   if (!/^[0-9a-f-]{36}$/.test(id)) return res.status(404).end();
   const m = q.get('SELECT * FROM media WHERE id = ? AND workspace_id = ?', id, req.user.workspace_id);
   if (!m) return res.status(404).end();
+  // client viewers: only files used by their brand (its logo, or a design shared with them)
+  if (S.isClient(req.user)) {
+    const b = req.user.client_brand_id;
+    const used = q.get('SELECT 1 x FROM brand_kits WHERE id = ? AND workspace_id = ? AND logo_media_id = ?', b, m.workspace_id, id)
+      || q.get(`SELECT 1 x FROM designs WHERE workspace_id = ? AND brand_kit_id = ? AND deleted_at IS NULL AND visibility != 'private'
+                AND instr(data, ?) > 0 LIMIT 1`, m.workspace_id, b, id);
+    if (!used) return res.status(404).end();
+  }
   res.sendFile(filePath(m), {
     headers: {
       'Content-Type': m.mime,

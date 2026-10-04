@@ -1423,13 +1423,22 @@ async function loadKits(){
   renderKitSelect();
 }
 
-async function applyKit(k){
+async function applyKit(k, { quiet = false } = {}){
   if (!k) return;
   state.brandColor = k.color;
   selectSwatch(k.color);
-  const contact = [k.phone && '📞 ' + k.phone, k.website].filter(Boolean).join(' · ');
+  const ig = k.socials && k.socials.instagram ? '@' + String(k.socials.instagram).replace(/^@/, '') : '';
+  const contact = [k.phone && '📞 ' + k.phone, k.website || ig].filter(Boolean).join(' · ');
   if (contact){ state.contact = contact; $('inputContact').value = contact; }
+  // brand fonts (when the kit has them)
+  if (k.font_heading || k.font_body){
+    if (k.font_heading) state.headingFont = k.font_heading;
+    if (k.font_body) state.bodyFont = k.font_body;
+    await ensureFonts(themeFontsInUse());
+    fontScriptKey = null; buildFontOptions(); syncStyleControls();
+  }
   if (k.logo_media_id) await loadLogo(k.logo_media_id, k.name + ' logo');
+  if (quiet){ render(); markDirty(); return; }
   render(); markDirty();
   showToast(`Brand kit “${k.name}” applied ✓`);
 }
@@ -2485,10 +2494,11 @@ async function init(){
     ME = await PF.loadMe();
   } catch (e){ return; } // api() redirects to login on 401
   PLAN = ME.plan;
-  CAN_EXPORT = ME.user.role !== 'viewer';
+  CAN_EXPORT = ME.user.role !== 'viewer' || !!ME.user.client_brand; // agency clients may download their brand's designs
+  document.body.classList.toggle('client', !!ME.user.client_brand);
   applyPlanUI();
   updateUsage(ME.usage);
-  loadKits();
+  const kitsReady = loadKits();
 
   if (!DESIGN_ID){ location.href = '/app'; return; }
   let design;
@@ -2504,7 +2514,9 @@ async function init(){
   $('btnSave').disabled = READONLY;
   if (READONLY){
     $('readonlyNote').style.display = 'block';
-    if (ME.user.role !== 'viewer'){
+    if (ME.user.client_brand){
+      $('readonlyNote').innerHTML = `👁 Shared with you by ${PF.esc(ME.workspace.name)} for <b>${PF.esc(ME.user.client_brand.name)}</b> — review it and download the sizes you need.`;
+    } else if (ME.user.role !== 'viewer'){
       $('readonlyNote').innerHTML = '👁 View only — shared with you for viewing. <a href="#" id="dupLink">Make a copy to edit</a>';
       $('dupLink').addEventListener('click', async e => {
         e.preventDefault();
@@ -2516,6 +2528,12 @@ async function init(){
   $('designName').value = design.name;
   document.title = `${design.name} — PostForge`;
   await restore(design.data);
+  // a new, empty design made for a brand/client starts with that brand's logo, colour, fonts and contact line
+  if (!READONLY && design.brand_kit_id && (!design.data || !Object.keys(design.data).length)){
+    await kitsReady;
+    const k = KITS.find(x => x.id === design.brand_kit_id);
+    if (k){ $('kitSelect').value = String(k.id); fillKitFields(k); await applyKit(k, { quiet:true }); }
+  }
   lastSavedJSON = JSON.stringify(serialize());
   lastSavedName = design.name;
   setSaveStatus(READONLY ? 'View only' : 'All changes saved');

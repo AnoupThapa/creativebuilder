@@ -83,6 +83,18 @@ api.use(publicRoutes.router);
 api.use(billing.router);             // /billing/plans is public; the rest check roles
 api.use('/admin', admin.router);
 api.use(S.requireAuth);              // everything below needs a signed-in user
+/* Client viewers (agency clients) may only look at and download their own brand's designs */
+const CLIENT_ALLOWED = [
+  ['GET', /^\/designs(\/[\w-]+)?$/], ['GET', /^\/brand-kits$/], ['GET', /^\/usage$/], ['GET', /^\/exports\/history$/],
+  ['POST', /^\/exports$/], ['POST', /^\/video\/convert$/], ['GET', /^\/media$/],
+  [null, /^\/me(\/|$)/], [null, /^\/auth\//],
+];
+api.use((req, res, next) => {
+  if (!S.isClient(req.user)) return next();
+  const ok = CLIENT_ALLOWED.some(([m, re]) => (!m || m === req.method) && re.test(req.path));
+  if (!ok) return next(new S.HttpError(403, 'Client accounts can view and download their own brand’s designs only.', { code: 'client_only' }));
+  next();
+});
 api.use(designs.router);
 api.use(media.router);
 api.use(workspace.router);
@@ -142,8 +154,8 @@ app.get('/social/connect-demo', S.pageAuth(), page('social-demo.html'));
 app.get('/pub/:file', socialRoutes.servePublic);
 app.get('/app', S.pageAuth(), page('app.html'));
 app.get('/editor', S.pageAuth(), page('editor.html'));
-app.get('/gif', S.pageAuth(), page('gif.html'));
-app.get('/ai', S.pageAuth(), page('ai.html'));
+app.get('/gif', S.pageAuth({ noClient: true }), page('gif.html'));
+app.get('/ai', S.pageAuth({ noClient: true }), page('ai.html'));
 app.get('/admin', S.pageAuth({ superadmin: true }), page('admin.html'));
 /* Health check for uptime monitors (UptimeRobot, Better Stack…): checks the database and disk */
 app.get('/health', (req, res) => {

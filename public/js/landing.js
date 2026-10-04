@@ -23,8 +23,9 @@
     return f.map(([ok, t]) => `<li class="${ok ? '' : 'no'}">${esc(t)}</li>`).join('');
   }
   function renderPlans() {
-    $('pricingGrid').innerHTML = plans.map(p => {
-      const hl = p.code === 'pro';
+    const shown = plans.filter(p => p.audience === 'both' || p.audience === audience);
+    $('pricingGrid').innerHTML = shown.map(p => {
+      const hl = p.code === (audience === 'business' ? 'business' : 'pro');
       const yearly = interval === 'year' && p.price_cents_annual;
       const perMonth = yearly ? Math.round(p.price_cents_annual / 12) : p.price_cents;
       const priceLine = !p.price_cents ? 'Free'
@@ -33,7 +34,10 @@
       const note = !p.price_cents ? '' : yearly
         ? `<div class="small muted">${money(p.price_cents_annual, p.currency)} billed yearly — save ${money(p.price_cents * 12 - p.price_cents_annual, p.currency)}</div>`
         : '<div class="small muted">Billed monthly</div>';
-      const href = `/signup${p.price_cents ? '?plan=' + encodeURIComponent(p.code) + (yearly ? '&interval=year' : '') : ''}`;
+      const qs = new URLSearchParams();
+      if (p.price_cents) { qs.set('plan', p.code); if (yearly) qs.set('interval', 'year'); }
+      if (audience === 'business') qs.set('type', 'business');
+      const href = `/signup${qs.toString() ? '?' + qs : ''}`;
       return `<div class="plan ${hl ? 'hl' : ''}">
         <div class="nm">${esc(p.name)} ${hl ? '<span class="badge badge-coral">Best value</span>' : ''}</div>
         <div class="pr">${priceLine}<small>${small}</small></div>${note}
@@ -44,6 +48,13 @@
     }).join('');
     applyBeta();
   }
+  let audience = 'retail';
+  $('audToggle').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    audience = b.dataset.aud;
+    $('audToggle').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    renderPlans();
+  });
   $('intToggle').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     interval = b.dataset.int;

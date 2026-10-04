@@ -76,6 +76,7 @@
     }
   }).catch(() => {});
   const wantPlan = params.get('plan');
+  if (params.get('type') === 'business') { const r = document.querySelector('input[name="su-type"][value="business"]'); if (r) r.checked = true; }
   if (wantPlan) $('signupLead').textContent = 'Create your account, then confirm your plan on the next screen.';
   $('f-signup').addEventListener('submit', async e => {
     e.preventDefault();
@@ -84,6 +85,7 @@
       await api('/auth/signup', { method: 'POST', body: {
         name: $('su-name').value, business: $('su-biz').value, email: $('su-email').value,
         password: $('su-pw').value, acceptTerms: $('su-terms').checked, timezone: tz, betaCode: $('su-code').value,
+        accountType: (document.querySelector('input[name="su-type"]:checked') || {}).value || 'retail',
       } });
       location.href = wantPlan ? `/app?plan=${encodeURIComponent(wantPlan)}${params.get('interval') === 'year' ? '&interval=year' : ''}#billing` : '/app?welcome=1';
     } catch (err) { show('error', esc(err.message)); busy(f, false); }

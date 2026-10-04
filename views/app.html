@@ -22,8 +22,9 @@
       <a href="#social" data-view="social"><span>📣</span>Social posts</a>
       <a href="/ai"><span>✨</span>AI Studio</a>
       <a href="/gif"><span>🎞</span>GIF maker</a>
-      <a href="#brand" data-view="brand"><span>🎨</span>Brand kits</a>
+      <a href="#brand" data-view="brand" id="navBrand"><span>🎨</span>Brand kits</a>
       <a href="#team" data-view="team"><span>👥</span>Team</a>
+      <a href="#activity" data-view="activity" id="navActivity" class="hidden"><span>🧾</span>Activity log</a>
       <a href="#billing" data-view="billing"><span>💳</span>Plan &amp; billing</a>
       <a href="#account" data-view="account"><span>🔐</span>Account &amp; security</a>
       <a href="/help" target="_blank" rel="noopener"><span>❓</span>Help &amp; support</a>
@@ -54,12 +55,20 @@
 
     <!-- DESIGNS -->
     <section class="view" id="view-designs">
+      <div class="client-bar hidden" id="clientBar"></div>
+      <div class="quick hidden" id="quickStart">
+        <label class="quick-card q-snap"><input type="file" id="snapInput" accept="image/*" capture="environment">
+          <span class="qi">📸</span><b>Snap your product</b><small>Take or pick a photo — we size it for every platform</small></label>
+        <a class="quick-card" href="/ai"><span class="qi">✨</span><b>AI product photo</b><small>Pro-looking scene around your product</small></a>
+        <a class="quick-card" href="/gif"><span class="qi">🎞</span><b>Make a GIF</b><small>From a video or a few photos</small></a>
+      </div>
       <div class="row wrap" style="margin-bottom:16px">
         <div class="tabs" id="designFilter">
           <button class="active" data-f="all">All</button>
           <button data-f="mine">My designs</button>
           <button data-f="shared">Shared with me</button>
         </div>
+        <select class="input hidden" id="brandFilter" aria-label="Brand / client" style="width:auto;max-width:220px"></select>
         <span class="grow"></span>
         <input class="input" id="designSearch" placeholder="Search designs…" style="max-width:240px">
       </div>
@@ -85,7 +94,7 @@
 
     <!-- BRAND KITS -->
     <section class="view hidden" id="view-brand">
-      <p class="muted" style="margin-bottom:16px">Your logo, colours and contact details — applied to designs in one click from the editor.</p>
+      <p class="muted" style="margin-bottom:16px" id="brandIntro">Your logo, colours and contact details — applied to designs in one click from the editor.</p>
       <div class="kit-grid" id="kitGrid"></div>
     </section>
 
@@ -97,6 +106,7 @@
         <div class="table-wrap" style="margin-top:14px"><table class="t"><thead><tr><th>Name</th><th>Role</th><th>Security</th><th>Last active</th><th></th></tr></thead><tbody id="memberRows"></tbody></table></div>
         <div class="role-help small muted">
           <b>Owner</b> — billing &amp; everything. <b>Admin</b> — manage team, see all designs. <b>Designer</b> — create, edit &amp; download. <b>Viewer</b> — view shared designs only.
+          <span class="biz-only"><b>Client</b> — your customer: sees and downloads only their own brand’s shared designs (free login, no seat).</span>
         </div>
       </div>
       <div class="card" id="inviteCard">
@@ -108,11 +118,25 @@
             <option value="designer">Designer</option>
             <option value="viewer">Viewer</option>
             <option value="admin">Admin</option>
+            <option value="client" class="biz-only">Client (one brand · free login)</option>
           </select>
+          <select class="input hidden" id="invBrand" style="width:auto" aria-label="Client brand"></select>
           <button class="btn btn-dark" type="submit">Send invite</button>
         </form>
         <div id="inviteResult"></div>
         <div id="pendingInvites"></div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY LOG -->
+    <section class="view hidden" id="view-activity">
+      <div class="card">
+        <div class="row wrap"><div class="grow" style="min-width:240px"><h3>Activity log</h3>
+          <p class="muted small">Sign-ins, invites, designs, downloads, brand and billing changes in your workspace. Each entry carries a security fingerprint, so any later change to the log can be detected. Download it for your records or a client’s security review.</p></div>
+          <select class="input" id="actDays" style="width:auto"><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90" selected>Last 90 days</option><option value="365">Last year</option></select>
+          <a class="btn btn-ghost btn-sm" id="actCsv" href="#">⬇ CSV</a>
+          <a class="btn btn-ghost btn-sm" id="actJson" href="#">⬇ JSON</a></div>
+        <div class="table-wrap" style="margin-top:12px"><table class="t"><thead><tr><th>When</th><th>Who</th><th>What</th><th>IP</th><th>Details</th></tr></thead><tbody id="actRows"></tbody></table></div>
       </div>
     </section>
 
@@ -130,6 +154,7 @@
         <input class="input" type="number" id="seatCount" min="1" max="200" value="1" style="width:90px">
         <span class="small muted" id="seatHint"></span>
       </div>
+      <p class="small muted" id="audienceNote" style="margin:-4px 0 12px"></p>
       <div class="plan-grid" id="planGrid"></div>
       <h2 class="section-h">Recent downloads</h2>
       <div class="table-wrap"><table class="t"><thead><tr><th>When</th><th>Design</th><th>Size</th><th>Type</th><th>Quality</th></tr></thead><tbody id="historyRows"></tbody></table></div>
@@ -155,6 +180,14 @@
             <div class="field"><label for="pwNew">New password</label><input id="pwNew" type="password" autocomplete="new-password" required><div class="hint">10+ characters with a letter and a number. Other devices will be signed out.</div></div>
             <button class="btn btn-dark" type="submit">Change password</button>
           </form>
+        </div>
+      </div>
+      <div class="card" id="acctTypeCard">
+        <h3>Account type</h3>
+        <p class="muted small">Choose how PostForge works for you. You can switch any time — nothing is deleted.</p>
+        <div class="acct-types" id="acctTypes" style="margin-top:12px">
+          <button type="button" data-type="retail"><span class="qi">🛍️</span><b>Retail / Shop owner</b><small>I post for my own shop or business. Simple snap → edit → post, AI photos, festival posts.</small></button>
+          <button type="button" data-type="business"><span class="qi">🏢</span><b>Business / Agency (B2B)</b><small>I manage several brands or clients — wholesalers, multi-store brands, marketing agencies. Brand switcher, client logins, activity log.</small></button>
         </div>
       </div>
       <div class="card">
@@ -194,8 +227,18 @@
           <button type="button" class="btn btn-ghost btn-sm hidden" id="kLogoRemove">Remove</button></div>
       </div>
       <div class="field"><label for="kColor">Brand colour</label><div class="row"><input type="color" id="kColor" value="#ff6b4a" style="width:52px;height:38px;padding:2px"><input id="kColorHex" class="input" maxlength="7" style="width:110px"></div></div>
-      <div class="field"><label for="kPhone">Phone</label><input id="kPhone" maxlength="40"></div>
-      <div class="field"><label for="kWeb">Website</label><input id="kWeb" maxlength="120"></div>
+      <div class="field"><label>Extra brand colours <span class="muted small">(up to 5)</span></label><div class="row wrap" id="kColors"></div></div>
+      <div class="field"><label for="kTag">Tagline</label><input id="kTag" maxlength="120" placeholder="e.g. Fresh momos since 2010"></div>
+      <div class="two-col" style="gap:10px">
+        <div class="field"><label for="kPhone">Phone</label><input id="kPhone" maxlength="40"></div>
+        <div class="field"><label for="kWeb">Website</label><input id="kWeb" maxlength="120"></div>
+        <div class="field"><label for="kEmail">Email</label><input id="kEmail" maxlength="120"></div>
+        <div class="field"><label for="kAddr">Address</label><input id="kAddr" maxlength="200"></div>
+        <div class="field"><label for="kFontH">Heading font</label><select id="kFontH"></select></div>
+        <div class="field"><label for="kFontB">Text font</label><select id="kFontB"></select></div>
+      </div>
+      <details class="small" style="margin:4px 0 10px"><summary style="cursor:pointer;font-weight:700">Social media accounts</summary>
+        <div class="two-col" style="gap:10px;margin-top:8px" id="kSocials"></div></details>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger hidden" id="kDelete" style="margin-right:auto">Delete</button>
         <button type="button" class="btn btn-ghost" data-close>Cancel</button>
@@ -232,6 +275,7 @@
 </div>
 
 <script src="/js/api.js"></script>
+<script src="/js/content.js"></script>
 <script src="/js/social.js"></script>
 <script src="/js/app-social.js"></script>
 <script src="/js/app.js"></script>

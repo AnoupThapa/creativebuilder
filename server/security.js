@@ -17,13 +17,30 @@ class HttpError extends Error {
 
 function clientIp(req) { return req.ip || req.socket?.remoteAddress || ''; }
 
+/* Activity log. Each row carries a hash of itself + the previous row (a chain), so any later edit or
+   deletion of a row is detectable with verifyAuditChain() — "tamper-evident". */
+const auditHash = (prev, r) => sha256([prev, r.user_id ?? '', r.workspace_id ?? '', r.action, r.detail, r.ip ?? '', r.created_at].join('|'));
 function audit(req, action, detail = {}, userOverride) {
   const u = userOverride || req.user;
   try {
-    q.run('INSERT INTO audit_log (user_id, workspace_id, action, detail, ip, created_at) VALUES (?,?,?,?,?,?)',
-      u?.id ?? null, u?.workspace_id ?? null, action, JSON.stringify(detail), clientIp(req), Date.now());
+    const row = { user_id: u?.id ?? null, workspace_id: u?.workspace_id ?? null, action, detail: JSON.stringify(detail), ip: clientIp(req), created_at: Date.now() };
+    const prev = q.get("SELECT hash FROM audit_log WHERE hash != '' ORDER BY id DESC LIMIT 1")?.hash || '';
+    q.run('INSERT INTO audit_log (user_id, workspace_id, action, detail, ip, created_at, prev_hash, hash) VALUES (?,?,?,?,?,?,?,?)',
+      row.user_id, row.workspace_id, row.action, row.detail, row.ip, row.created_at, prev, auditHash(prev, row));
   } catch (e) { console.error('audit failed', e); }
 }
+function verifyAuditChain() {
+  let prev = null, checked = 0;
+  for (const r of q.iterate ? q.iterate("SELECT * FROM audit_log WHERE hash != '' ORDER BY id") : q.all("SELECT * FROM audit_log WHERE hash != '' ORDER BY id")) {
+    if (prev !== null && r.prev_hash !== prev) return { ok: false, checked, brokenAt: r.id, reason: 'a row before this one was changed or deleted' };
+    if (auditHash(r.prev_hash, r) !== r.hash) return { ok: false, checked, brokenAt: r.id, reason: 'this row was changed' };
+    prev = r.hash; checked++;
+  }
+  return { ok: true, checked };
+}
+
+/* Client viewers: a viewer tied to one brand (agency clients). They only see that brand's shared designs. */
+const isClient = u => !!(u && u.role === 'viewer' && u.client_brand_id);
 
 /* ------------------------------------------------------------------ */
 /* Passwords                                                           */
@@ -249,6 +266,7 @@ function pageAuth(opts = {}) {
     if (!req.user) return res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
     if (opts.superadmin && !req.user.is_superadmin) return res.redirect('/app');
     if (opts.superadmin && config.requireAdmin2fa && !req.user.totp_enabled) return res.redirect('/app?admin2fa=1#account');
+    if (opts.noClient && isClient(req.user)) return res.redirect('/app');
     next();
   };
 }
@@ -276,7 +294,7 @@ function validTimezone(tz) {
 }
 
 module.exports = {
-  HttpError, sha256, randomToken, audit, clientIp,
+  HttpError, sha256, randomToken, audit, verifyAuditChain, isClient, clientIp,
   passwordProblem, hashPassword, verifyPassword,
   encrypt, decrypt, newTotpSecret, verifyTotp, hotp,
   createToken, peekToken, consumeToken,

@@ -79,6 +79,11 @@ body{display:grid;grid-template-columns:1fr 1fr;min-height:100vh}
       <h1>Create your account</h1>
       <p class="lead" id="signupLead">Start with a free trial — no card needed.</p>
       <div class="field hidden" id="codeField"><label for="su-code">Invite code</label><input id="su-code" autocomplete="off" maxlength="30" placeholder="e.g. BETA-3F9A21" style="text-transform:uppercase"></div>
+      <div class="field"><label>I’m signing up as</label>
+        <div class="acct-pick" id="su-type">
+          <label><input type="radio" name="su-type" value="retail" checked><span><b>🛍️ A shop or small business</b><small>I post for my own business</small></span></label>
+          <label><input type="radio" name="su-type" value="business"><span><b>🏢 An agency or wholesaler</b><small>I manage several brands or clients</small></span></label>
+        </div></div>
       <div class="field"><label for="su-name">Your name</label><input id="su-name" autocomplete="name" maxlength="80" required></div>
       <div class="field"><label for="su-biz">Business name</label><input id="su-biz" autocomplete="organization" maxlength="80" placeholder="e.g. Sunrise Café"></div>
       <div class="field"><label for="su-email">Work email</label><input id="su-email" type="email" autocomplete="email" required></div>

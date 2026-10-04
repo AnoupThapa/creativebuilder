@@ -13,8 +13,17 @@ const router = express.Router();
 const isAdmin = u => S.ROLE_RANK[u.role] >= S.ROLE_RANK.admin;
 
 function canView(u, d) {
-  return d && !d.deleted_at && d.workspace_id === u.workspace_id &&
-    (d.owner_id === u.id || isAdmin(u) || d.visibility !== 'private');
+  if (!d || d.deleted_at || d.workspace_id !== u.workspace_id) return false;
+  // client viewers (agency clients) see only their own brand's shared designs
+  if (S.isClient(u)) return d.brand_kit_id === u.client_brand_id && d.visibility !== 'private';
+  return d.owner_id === u.id || isAdmin(u) || d.visibility !== 'private';
+}
+/* brand / client a design belongs to (must be one of this workspace's brand kits) */
+function brandId(u, v) {
+  if (v === null || v === '' || v === undefined) return null;
+  const k = q.get('SELECT id FROM brand_kits WHERE id = ? AND workspace_id = ?', +v, u.workspace_id);
+  if (!k) throw new S.HttpError(400, 'Brand not found.');
+  return k.id;
 }
 function canEdit(u, d) {
   return canView(u, d) && u.role !== 'viewer' &&
@@ -33,7 +42,7 @@ function load(req) {
 function summary(d, u) {
   const owner = q.get('SELECT name FROM users WHERE id = ?', d.owner_id);
   return {
-    id: d.id, name: d.name, visibility: d.visibility, thumbnail: d.thumbnail,
+    id: d.id, name: d.name, visibility: d.visibility, thumbnail: d.thumbnail, brand_kit_id: d.brand_kit_id ?? null,
     owner_id: d.owner_id, owner_name: owner?.name || '', created_at: d.created_at, updated_at: d.updated_at,
     can_edit: canEdit(u, d), can_manage: canManage(u, d),
   };
@@ -56,7 +65,10 @@ const VIS = new Set(['private', 'team_view', 'team_edit']);
 
 router.get('/designs', (req, res) => {
   const u = req.user;
-  const rows = isAdmin(u)
+  const rows = S.isClient(u)
+    ? q.all(`SELECT * FROM designs WHERE workspace_id = ? AND deleted_at IS NULL AND brand_kit_id = ? AND visibility != 'private'
+             ORDER BY updated_at DESC`, u.workspace_id, u.client_brand_id)
+    : isAdmin(u)
     ? q.all('SELECT * FROM designs WHERE workspace_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC', u.workspace_id)
     : q.all(`SELECT * FROM designs WHERE workspace_id = ? AND deleted_at IS NULL
              AND (owner_id = ? OR visibility != 'private') ORDER BY updated_at DESC`, u.workspace_id, u.id);
@@ -72,19 +84,20 @@ router.post('/designs', S.requireRole('designer'), (req, res) => {
     if (n >= plan.max_designs)
       throw new S.HttpError(402, `Your ${plan.name} plan can keep ${plan.max_designs} saved designs. Delete one or upgrade.`);
   }
-  let data = '{}', name = 'Untitled design';
+  let data = '{}', name = 'Untitled design', brand = brandId(u, req.body.brand_kit_id);
   if (req.body.duplicateOf) {
     const src = q.get('SELECT * FROM designs WHERE id = ?', String(req.body.duplicateOf));
     if (!canView(u, src)) throw new S.HttpError(404, 'Design not found.');
     data = src.data; name = (src.name + ' (copy)').slice(0, 100);
     req.body.thumbnail = src.thumbnail;
+    if (req.body.brand_kit_id === undefined) brand = src.brand_kit_id ?? null;
   }
   if (req.body.name) name = S.str(req.body.name, { field: 'Name', max: 100 }) || name;
   if (req.body.data !== undefined) data = cleanData(req.body.data);
   const id = crypto.randomUUID();
   const now = Date.now();
-  q.run(`INSERT INTO designs (id, workspace_id, owner_id, name, data, thumbnail, visibility, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?)`, id, u.workspace_id, u.id, name, data, cleanThumb(req.body.thumbnail) || null, 'private', now, now);
+  q.run(`INSERT INTO designs (id, workspace_id, owner_id, name, data, thumbnail, visibility, brand_kit_id, created_at, updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?)`, id, u.workspace_id, u.id, name, data, cleanThumb(req.body.thumbnail) || null, 'private', brand, now, now);
   S.audit(req, 'design.create', { id });
   res.status(201).json(summary(q.get('SELECT * FROM designs WHERE id = ?', id), u));
 });
@@ -106,8 +119,14 @@ router.put('/designs/:id', (req, res) => {
     if (!VIS.has(req.body.visibility)) throw new S.HttpError(400, 'Unknown sharing option.');
     vis = req.body.visibility;
   }
-  q.run('UPDATE designs SET name = ?, data = ?, thumbnail = ?, visibility = ?, updated_at = ? WHERE id = ?',
-    name, data, thumb, vis, Date.now(), d.id);
+  let brand = d.brand_kit_id ?? null;
+  if (req.body.brand_kit_id !== undefined) {
+    if (!canManage(req.user, d)) throw new S.HttpError(403, 'Only the creator or an admin can change the brand.');
+    brand = brandId(req.user, req.body.brand_kit_id);
+  }
+  q.run('UPDATE designs SET name = ?, data = ?, thumbnail = ?, visibility = ?, brand_kit_id = ?, updated_at = ? WHERE id = ?',
+    name, data, thumb, vis, brand, Date.now(), d.id);
+  if (brand !== (d.brand_kit_id ?? null)) S.audit(req, 'design.brand', { id: d.id, brand });
   if (vis !== d.visibility) S.audit(req, 'design.share', { id: d.id, visibility: vis });
   res.json(summary(q.get('SELECT * FROM designs WHERE id = ?', d.id), req.user));
 });

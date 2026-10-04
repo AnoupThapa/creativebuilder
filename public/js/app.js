@@ -11,7 +11,10 @@
 
   const RANK = { viewer: 0, designer: 1, admin: 2, owner: 3 };
   const can = role => RANK[me.user.role] >= RANK[role];
-  const TITLES = { designs: 'Designs', social: 'Social posts', brand: 'Brand kits', team: 'Team', billing: 'Plan & billing', account: 'Account & security' };
+  const TITLES = { designs: 'Designs', social: 'Social posts', brand: 'Brand kits', team: 'Team', billing: 'Plan & billing', account: 'Account & security', activity: 'Activity log' };
+  const isBiz = () => me && me.workspace.account_type === 'business';
+  const isClient = () => !!(me && me.user.client_brand);
+  const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
 
   /* ================= Shell ================= */
   async function refreshMe() {
@@ -30,6 +33,17 @@
     $('ucReset').textContent = (us.day && us.month ? usageText(us) + '. ' : '') + us.resets;
     $('ucUpgrade').classList.toggle('hidden', !(p.code === 'free' && u.role === 'owner'));
     $('btnNewDesign').classList.toggle('hidden', u.role === 'viewer');
+    // profile: retail shop vs business/agency vs agency client
+    document.body.classList.toggle('acct-business', isBiz());
+    document.body.classList.toggle('acct-retail', !isBiz());
+    document.body.classList.toggle('client', isClient());
+    TITLES.brand = isBiz() ? 'Brands & clients' : 'Brand kit';
+    $('navBrand').lastChild.textContent = TITLES.brand;
+    $('navActivity').classList.toggle('hidden', !(isBiz() && can('admin')));
+    if (isClient()) {
+      document.querySelectorAll('#nav a').forEach(a => { a.classList.toggle('hidden', !['designs', 'account'].includes(a.dataset.view) && !/help/.test(a.getAttribute('href') || '')); });
+      $('ucUpgrade').classList.add('hidden');
+    }
     renderBanners();
   }
 
@@ -58,12 +72,13 @@
 
   function route() {
     const v = (location.hash.replace('#', '') || 'designs').split('?')[0];
-    const view = TITLES[v] ? v : 'designs';
+    let view = TITLES[v] ? v : 'designs';
+    if (isClient() && !['designs', 'account'].includes(view)) view = 'designs';
     document.querySelectorAll('.view').forEach(s => s.classList.toggle('hidden', s.id !== 'view-' + view));
     document.querySelectorAll('#nav a[data-view]').forEach(a => a.classList.toggle('active', a.dataset.view === view));
     $('viewTitle').textContent = TITLES[view];
     $('sidebar').classList.remove('open');
-    ({ designs: loadDesigns, social: () => window.PFSocialView.load(me), brand: loadKits, team: loadTeam, billing: loadBilling, account: loadAccount })[view]();
+    ({ designs: loadDesigns, social: () => window.PFSocialView.load(me), brand: loadKits, team: loadTeam, billing: loadBilling, account: loadAccount, activity: loadActivity })[view]();
   }
 
   $('menuBtn').addEventListener('click', () => $('sidebar').classList.toggle('open'));
@@ -75,15 +90,50 @@
   /* ================= Designs ================= */
   $('btnNewDesign').addEventListener('click', async () => {
     try {
-      const d = await api('/designs', { method: 'POST', body: { name: 'Untitled design' } });
+      const brand = isBiz() && /^\d+$/.test(brandFilter) ? +brandFilter : undefined;
+      const d = await api('/designs', { method: 'POST', body: { name: 'Untitled design', ...(brand ? { brand_kit_id: brand } : {}) } });
       location.href = '/editor?id=' + encodeURIComponent(d.id);
     } catch (e) { toast(e.message, { error: true, ms: 4500 }); }
   });
 
+  let brandFilter = store.get('pf-brand-filter') || 'all';
   async function loadDesigns() {
-    try { designs = await api('/designs'); } catch (e) { toast(e.message, { error: true }); designs = []; }
+    const tasks = [api('/designs').catch(e => { toast(e.message, { error: true }); return []; })];
+    if (isBiz() || isClient()) tasks.push(api('/brand-kits').catch(() => []));
+    const [d, k] = await Promise.all(tasks);
+    designs = d; if (k) kits = k;
+    // retail shops get the quick "snap → edit → post" start; agency clients see their brand header
+    $('quickStart').classList.toggle('hidden', isBiz() || me.user.role === 'viewer');
+    $('designFilter').classList.toggle('hidden', isClient());
+    const cb = $('clientBar');
+    cb.classList.toggle('hidden', !isClient());
+    if (isClient()) {
+      const kit = kits[0];
+      cb.innerHTML = `${kit && kit.logo_url ? `<img src="${esc(kit.logo_url)}" alt="">` : ''}<div><b>${esc(me.user.client_brand.name)}</b><br><span class="small muted">Designs shared with you by ${esc(me.workspace.name)}. Open one to review it and download the sizes you need.</span></div>`;
+    }
+    const bf = $('brandFilter');
+    bf.classList.toggle('hidden', !isBiz() || isClient());
+    if (isBiz() && !isClient()) {
+      if (brandFilter !== 'all' && brandFilter !== 'none' && !kits.some(x => String(x.id) === brandFilter)) brandFilter = 'all';
+      bf.innerHTML = `<option value="all">All brands</option>${kits.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}<option value="none">No brand</option>`;
+      bf.value = brandFilter;
+    }
     renderDesigns();
   }
+  $('brandFilter').addEventListener('change', e => { brandFilter = e.target.value; store.set('pf-brand-filter', brandFilter); renderDesigns(); });
+  /* Snap → edit → post: upload the photo and open it as a new design */
+  $('snapInput').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    toast('Uploading your photo…');
+    try {
+      const fd = new FormData(); fd.append('file', f, f.name || 'photo.jpg');
+      const m = await api('/media', { method: 'POST', form: fd });
+      const data = { v: 1, contentType: 'promo', platformKey: 'ig_portrait', mediaId: m.id, mediaName: f.name || 'Product photo', mediaKind: m.kind, mediaFit: 'auto', fitBg: 'blur', headline: 'New Arrival' };
+      const d = await api('/designs', { method: 'POST', body: { name: 'Product post', data } });
+      location.href = '/editor?id=' + encodeURIComponent(d.id);
+    } catch (err) { toast(err.message, { error: true, ms: 5000 }); }
+  });
   $('designFilter').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     designFilter = b.dataset.f;
@@ -96,12 +146,20 @@
   function renderDesigns() {
     const term = $('designSearch').value.trim().toLowerCase();
     const list = designs.filter(d =>
-      (designFilter === 'all' || (designFilter === 'mine' ? d.owner_id === me.user.id : d.owner_id !== me.user.id)) &&
+      (isClient() || designFilter === 'all' || (designFilter === 'mine' ? d.owner_id === me.user.id : d.owner_id !== me.user.id)) &&
+      (!isBiz() || isClient() || brandFilter === 'all' || (brandFilter === 'none' ? !d.brand_kit_id : String(d.brand_kit_id) === brandFilter)) &&
       (!term || d.name.toLowerCase().includes(term)));
+    const kitOf = id => kits.find(k => k.id === id);
+    const brandCell = d => {
+      if (!isBiz()) return '';
+      if (d.can_manage) return `<div class="dmeta"><select data-brand aria-label="Brand"><option value="">No brand</option>${kits.map(k => `<option value="${k.id}" ${k.id === d.brand_kit_id ? 'selected' : ''}>🏷 ${esc(k.name)}</option>`).join('')}</select></div>`;
+      const k = kitOf(d.brand_kit_id);
+      return k ? `<div class="dmeta"><span class="brand-tag"><i style="background:${esc(k.color)}"></i>${esc(k.name)}</span></div>` : '';
+    };
     const grid = $('designGrid');
     if (!list.length) {
       grid.innerHTML = `<div class="empty"><h3>${designs.length ? 'No designs match' : 'No designs yet'}</h3>
-        <p>${me.user.role === 'viewer' ? 'Designs your team shares with you will appear here.' : 'Click “New design” to make your first post.'}</p></div>`;
+        <p>${isClient() ? 'Designs shared with you will appear here.' : me.user.role === 'viewer' ? 'Designs your team shares with you will appear here.' : isBiz() ? 'Pick a brand above and click “New design” — it starts with that brand’s logo, colours and fonts.' : 'Snap a product photo above, or click “New design”.'}</p></div>`;
       return;
     }
     grid.innerHTML = list.map(d => `
@@ -110,11 +168,12 @@
         <div class="dbody">
           <div class="dname" title="${esc(d.name)}">${esc(d.name)}</div>
           <div class="dmeta"><span>${esc(d.owner_id === me.user.id ? 'You' : d.owner_name)}</span>·<span>${ago(d.updated_at)}</span></div>
+          ${brandCell(d)}
           <div class="dmeta">${d.can_manage
             ? `<select data-vis aria-label="Sharing">${Object.entries(VIS_LABEL).map(([k, v]) => `<option value="${k}" ${k === d.visibility ? 'selected' : ''}>${v}</option>`).join('')}</select>`
-            : `<span class="badge">${VIS_LABEL[d.visibility]}</span>`}</div>
+            : isClient() ? '' : `<span class="badge">${VIS_LABEL[d.visibility]}</span>`}</div>
           <div class="dactions">
-            <button data-open>${d.can_edit ? 'Edit' : 'View'}</button>
+            <button data-open>${d.can_edit ? 'Edit' : isClient() ? 'Open & download' : 'View'}</button>
             ${me.user.role !== 'viewer' ? '<button data-dup>Duplicate</button>' : ''}
             ${d.can_edit ? '<button data-rename>Rename</button>' : ''}
             ${d.can_manage ? '<button class="del" data-del>Delete</button>' : ''}
@@ -140,6 +199,12 @@
     }
   });
   $('designGrid').addEventListener('change', async e => {
+    if (e.target.matches('[data-brand]')) {
+      const id = e.target.closest('.dcard').dataset.id;
+      try { await api('/designs/' + id, { method: 'PUT', body: { brand_kit_id: e.target.value ? +e.target.value : null } }); toast('Brand updated ✓'); loadDesigns(); }
+      catch (err) { toast(err.message, { error: true }); }
+      return;
+    }
     if (!e.target.matches('[data-vis]')) return;
     const id = e.target.closest('.dcard').dataset.id;
     try { await api('/designs/' + id, { method: 'PUT', body: { visibility: e.target.value } }); toast('Sharing updated ✓'); loadDesigns(); }
@@ -162,19 +227,48 @@
     kits = await api('/brand-kits');
     const max = me.plan.max_brand_kits;
     const canEditKits = can('designer');
+    $('brandIntro').textContent = isBiz()
+      ? `One brand kit per brand or client (up to ${max} on ${me.plan.name}) — logo, colours, fonts, contact details and social accounts. New designs made for a brand start with its kit, and you can give each client a free login to review and download their designs.`
+      : 'Your logo, colours, fonts and contact details — applied to designs in one click from the editor.';
     $('kitGrid').innerHTML = kits.map(k => `
       <div class="kit">
         <div class="logo">${k.logo_url ? `<img src="${esc(k.logo_url)}" alt="">` : '<span class="muted small">No logo</span>'}</div>
         <div class="row"><strong class="grow">${esc(k.name)}</strong><span class="sw" style="background:${esc(k.color)}"></span></div>
-        <div class="small muted">${esc(k.phone || '—')}<br>${esc(k.website || '—')}</div>
-        ${canEditKits ? `<button class="btn btn-ghost btn-sm" data-kit="${k.id}">Edit</button>` : ''}
+        ${k.colors && k.colors.length ? `<div class="palette">${k.colors.map(c => `<span style="background:${esc(c)}"></span>`).join('')}</div>` : ''}
+        <div class="small muted">${esc(k.tagline || '')}${k.tagline ? '<br>' : ''}${esc(k.phone || '—')}<br>${esc(k.website || '—')}</div>
+        ${isBiz() ? `<div class="kstats">${k.designs} design${k.designs === 1 ? '' : 's'} · ${k.clients} client login${k.clients === 1 ? '' : 's'}</div>` : ''}
+        <div class="row wrap" style="gap:6px">
+          ${canEditKits ? `<button class="btn btn-ghost btn-sm" data-kit="${k.id}">Edit</button>` : ''}
+          ${isBiz() ? `<button class="btn btn-ghost btn-sm" data-kit-designs="${k.id}">Designs →</button>` : ''}
+        </div>
       </div>`).join('') +
       (canEditKits ? (kits.length < max
-        ? '<button class="kit empty" id="addKit" style="cursor:pointer"><h3>＋ Add brand kit</h3><p class="small">Logo, colour, phone &amp; website</p></button>'
+        ? `<button class="kit empty" id="addKit" style="cursor:pointer"><h3>＋ ${isBiz() ? 'Add a brand / client' : 'Add brand kit'}</h3><p class="small">Logo, colours, fonts &amp; contact details</p></button>`
         : `<div class="kit empty"><p class="small">Your ${esc(me.plan.name)} plan includes ${max} brand kit${max > 1 ? 's' : ''}.</p>${me.plan.code !== 'pro' ? '<a class="btn btn-primary btn-sm" href="#billing">Upgrade for more</a>' : ''}</div>`) : '');
     $('addKit')?.addEventListener('click', () => openKit(null));
     $('kitGrid').querySelectorAll('[data-kit]').forEach(b => b.addEventListener('click', () => openKit(kits.find(k => k.id === +b.dataset.kit))));
+    $('kitGrid').querySelectorAll('[data-kit-designs]').forEach(b => b.addEventListener('click', () => {
+      brandFilter = b.dataset.kitDesigns; store.set('pf-brand-filter', brandFilter); location.hash = 'designs';
+    }));
   }
+  const SOCIAL_FIELDS = [['instagram', 'Instagram'], ['facebook', 'Facebook'], ['tiktok', 'TikTok'], ['linkedin', 'LinkedIn'], ['youtube', 'YouTube'], ['x', 'X (Twitter)'], ['whatsapp', 'WhatsApp']];
+  $('kSocials').innerHTML = SOCIAL_FIELDS.map(([k, l]) => `<div class="field" style="margin:0"><label for="kSoc-${k}">${l}</label><input id="kSoc-${k}" maxlength="120" placeholder="@handle or link"></div>`).join('');
+  const fontOpts = (() => {
+    const F = (window.PF_CONTENT && window.PF_CONTENT.FONTS) || [];
+    const o = f => `<option value="${esc(f.name)}">${esc(f.name)}${f.lang ? ' · ' + esc(f.lang) : ''}</option>`;
+    return '<option value="">Design default</option>' + `<optgroup label="Popular">${F.filter(f => !f.lang).map(o).join('')}</optgroup><optgroup label="Local languages">${F.filter(f => f.lang).map(o).join('')}</optgroup>`;
+  })();
+  $('kFontH').innerHTML = fontOpts; $('kFontB').innerHTML = fontOpts;
+  let kitColors = [];
+  function renderKitColors() {
+    $('kColors').innerHTML = kitColors.map((c, i) => `<span class="cw"><input type="color" value="${esc(c)}" data-ci="${i}" aria-label="Colour ${i + 1}"><button type="button" class="btn btn-ghost btn-sm" data-cdel="${i}" title="Remove">✕</button></span>`).join('')
+      + (kitColors.length < 5 ? '<button type="button" class="btn btn-ghost btn-sm" id="kAddColor">＋ Add colour</button>' : '');
+  }
+  $('kColors').addEventListener('input', e => { if (e.target.dataset.ci) kitColors[+e.target.dataset.ci] = e.target.value; });
+  $('kColors').addEventListener('click', e => {
+    if (e.target.id === 'kAddColor') { kitColors.push('#1a1a2e'); renderKitColors(); }
+    else if (e.target.dataset.cdel !== undefined) { kitColors.splice(+e.target.dataset.cdel, 1); renderKitColors(); }
+  });
   function setKitLogo(id, url) {
     kitLogoId = id;
     $('kLogoPrev').innerHTML = url ? `<img src="${esc(url)}" alt="">` : 'No logo';
@@ -182,11 +276,18 @@
   }
   function openKit(k) {
     editingKit = k;
-    $('kitModalTitle').textContent = k ? 'Edit brand kit' : 'New brand kit';
-    $('kName').value = k?.name || me.workspace.name;
+    $('kitModalTitle').textContent = k ? 'Edit brand kit' : isBiz() ? 'New brand / client' : 'New brand kit';
+    $('kName').value = k?.name || (isBiz() && kits.length ? '' : me.workspace.name);
     $('kColor').value = $('kColorHex').value = k?.color || '#ff6b4a';
     $('kPhone').value = k?.phone || '';
     $('kWeb').value = k?.website || '';
+    $('kTag').value = k?.tagline || '';
+    $('kEmail').value = k?.email || '';
+    $('kAddr').value = k?.address || '';
+    $('kFontH').value = k?.font_heading || '';
+    $('kFontB').value = k?.font_body || '';
+    SOCIAL_FIELDS.forEach(([s]) => { $('kSoc-' + s).value = (k?.socials || {})[s] || ''; });
+    kitColors = [...(k?.colors || [])]; renderKitColors();
     setKitLogo(k?.logo_media_id || null, k?.logo_url || null);
     $('kDelete').classList.toggle('hidden', !k || !can('admin'));
     $('kitModal').classList.add('open');
@@ -203,7 +304,9 @@
   $('kLogoRemove').addEventListener('click', () => setKitLogo(null, null));
   $('kitForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const body = { name: $('kName').value, color: $('kColorHex').value, phone: $('kPhone').value, website: $('kWeb').value, logo_media_id: kitLogoId };
+    const body = { name: $('kName').value, color: $('kColorHex').value, phone: $('kPhone').value, website: $('kWeb').value, logo_media_id: kitLogoId,
+      tagline: $('kTag').value, email: $('kEmail').value, address: $('kAddr').value, font_heading: $('kFontH').value, font_body: $('kFontB').value,
+      colors: kitColors, socials: Object.fromEntries(SOCIAL_FIELDS.map(([s]) => [s, $('kSoc-' + s).value.trim()]).filter(([, v]) => v)) };
     try {
       if (editingKit) await api('/brand-kits/' + editingKit.id, { method: 'PUT', body });
       else await api('/brand-kits', { method: 'POST', body });
@@ -219,14 +322,19 @@
   /* ================= Team ================= */
   async function loadTeam() {
     const t = await api('/team');
-    const used = t.members.length + t.invites.length;
-    $('seatInfo').textContent = `${used} of ${t.seats} seat${t.seats > 1 ? 's' : ''} in use` + (me.plan.code === 'free' ? ' · Team members need a paid plan' : '');
+    const used = t.seatsUsed;
+    $('seatInfo').textContent = `${used} of ${t.seats} seat${t.seats > 1 ? 's' : ''} in use` + (me.plan.code === 'free' ? ' · Team members need a paid plan' : '')
+      + (isBiz() ? ` · ${t.clients} of ${t.clientLimit} free client logins` : '');
+    if (isBiz()) {
+      if (!kits.length) kits = await api('/brand-kits').catch(() => []);
+      $('invBrand').innerHTML = kits.length ? kits.map(k => `<option value="${k.id}">for ${esc(k.name)}</option>`).join('') : '<option value="">Add a brand first</option>';
+    }
     $('addSeatsLink').classList.toggle('hidden', me.user.role !== 'owner');
     $('inviteCard').classList.toggle('hidden', !can('admin'));
     $('invRole').querySelector('[value=admin]').disabled = me.user.role !== 'owner';
     $('memberRows').innerHTML = t.members.map(m => {
       const editable = can('admin') && m.role !== 'owner' && m.id !== me.user.id && (me.user.role === 'owner' || m.role !== 'admin');
-      const roleCell = editable
+      const roleCell = m.client_brand_id ? `<span class="badge badge-blue">Client · ${esc(m.client_brand || '')}</span>` : editable
         ? `<select class="input" data-role="${m.id}" style="width:auto;padding:5px 8px">${['admin', 'designer', 'viewer'].map(r =>
             `<option value="${r}" ${r === m.role ? 'selected' : ''} ${r === 'admin' && me.user.role !== 'owner' ? 'disabled' : ''}>${r[0].toUpperCase() + r.slice(1)}</option>`).join('')}</select>`
         : `<span class="badge ${m.role === 'owner' ? 'badge-dark' : ''}">${esc(m.role)}</span>`;
@@ -237,7 +345,7 @@
         <td>${editable ? `<button class="btn btn-danger btn-sm" data-remove="${m.id}" data-name="${esc(m.name)}">Remove</button>` : ''}</td></tr>`;
     }).join('');
     $('pendingInvites').innerHTML = t.invites.length ? `<h4 style="margin:18px 0 8px;font-size:13px">Pending invites</h4>
-      <div class="table-wrap"><table class="t"><tbody>${t.invites.map(i => `<tr><td>${esc(i.email)}</td><td><span class="badge">${esc(i.role)}</span></td>
+      <div class="table-wrap"><table class="t"><tbody>${t.invites.map(i => `<tr><td>${esc(i.email)}</td><td><span class="badge ${i.client_brand_id ? 'badge-blue' : ''}">${i.client_brand_id ? 'Client · ' + esc((kits.find(k => k.id === i.client_brand_id) || {}).name || 'brand') : esc(i.role)}</span></td>
         <td class="small muted">expires ${date(i.expires_at)}</td><td><button class="btn btn-ghost btn-sm" data-revoke="${esc(i.id)}">Revoke</button></td></tr>`).join('')}</tbody></table></div>` : '';
   }
   $('memberRows').addEventListener('change', async e => {
@@ -259,13 +367,29 @@
     e.preventDefault();
     $('inviteResult').innerHTML = '';
     try {
-      const r = await api('/team/invite', { method: 'POST', body: { email: $('invEmail').value, role: $('invRole').value } });
+      const r = await api('/team/invite', { method: 'POST', body: { email: $('invEmail').value, role: $('invRole').value, brand_kit_id: $('invRole').value === 'client' ? +$('invBrand').value : undefined } });
       $('inviteResult').innerHTML = `<div class="alert alert-ok" style="margin-top:12px"><div class="grow">Invite sent to ${esc($('invEmail').value)} ✓${r.devInviteLink ? `<br><span class="small">Dev mode link: <code>${esc(r.devInviteLink)}</code></span>` : ''}</div></div>`;
       $('invEmail').value = ''; loadTeam();
     } catch (err) {
       $('inviteResult').innerHTML = `<div class="alert alert-error" style="margin-top:12px"><div class="grow">${esc(err.message)}</div>${err.data?.code ? '<a class="btn btn-ghost btn-sm" href="#billing">Billing</a>' : ''}</div>`;
     }
   });
+
+  $('invRole').addEventListener('change', () => $('invBrand').classList.toggle('hidden', $('invRole').value !== 'client'));
+
+  /* ================= Activity log (business) ================= */
+  async function loadActivity() {
+    const days = $('actDays').value;
+    $('actCsv').href = `/api/workspace/activity?format=csv&days=${days}`;
+    $('actJson').href = `/api/workspace/activity?format=json&days=${days}`;
+    try {
+      const rows = await api('/workspace/activity?days=' + days);
+      $('actRows').innerHTML = rows.map(r => `<tr><td class="small" title="${esc(r.time)}">${ago(Date.parse(r.time))}</td><td class="small">${esc(r.name || r.user || '—')}</td>
+        <td class="mono small">${esc(r.action)}</td><td class="small mono">${esc(r.ip)}</td><td class="small mono" style="max-width:320px;overflow:hidden;text-overflow:ellipsis">${esc(r.detail).slice(0, 140)}</td></tr>`).join('')
+        || '<tr><td colspan="5" class="center muted small">No activity in this period.</td></tr>';
+    } catch (e) { toast(e.message, { error: true }); }
+  }
+  $('actDays').addEventListener('change', loadActivity);
 
   /* ================= Billing ================= */
   const STATUS = { active: ['Active', 'badge-green'], trialing: ['Trial', 'badge-blue'], past_due: ['Payment failed', 'badge-red'], canceled: ['Cancelled', 'badge'], none: ['Free', 'badge'] };
@@ -339,7 +463,7 @@
     if (want && owner && !live) { const b = document.querySelector(`[data-plan="${CSS.escape(want)}"]`); b?.scrollIntoView({ behavior: 'smooth', block: 'center' }); b?.closest('.pcard')?.classList.add('current'); }
   }
 
-  let interval = params.get('interval') === 'year' ? 'year' : 'month', intervalTouched = params.get('interval') === 'year';
+  let interval = params.get('interval') === 'year' ? 'year' : 'month', intervalTouched = params.get('interval') === 'year', showAllPlans = !!params.get('plan');
   const unitPrice = (p, int) => int === 'year' && p.price_cents_annual ? p.price_cents_annual : p.price_cents;
   $('intervalToggle').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -351,7 +475,12 @@
     const w = me.workspace, owner = me.user.role === 'owner';
     const seats = Math.max(1, parseInt($('seatCount').value, 10) || 1);
     const live = me.plan.code !== 'free';
-    $('planGrid').innerHTML = plans.map(p => {
+    const fits = p => p.audience === 'both' || p.audience === (isBiz() ? 'business' : 'retail') || (live && p.code === w.plan_code);
+    const shown = showAllPlans ? plans : plans.filter(fits);
+    $('audienceNote').innerHTML = (isBiz() ? 'Showing plans for <b>businesses &amp; agencies</b>.' : 'Showing plans for <b>shops &amp; small businesses</b>.')
+      + (shown.length < plans.length ? ' <a href="#" id="allPlans">Show all plans</a>' : '');
+    $('allPlans')?.addEventListener('click', e => { e.preventDefault(); showAllPlans = true; renderPlanCards(); });
+    $('planGrid').innerHTML = shown.map(p => {
       const isCur = live ? p.code === w.plan_code : p.code === 'free';
       const sameInt = (w.billing_interval || 'month') === interval;
       let action = '';
@@ -403,10 +532,20 @@
     $('pfBiz').value = me.workspace.name;
     $('pfBizField').classList.toggle('hidden', !can('admin'));
     fillTimezones($('pfTz'), me.user.timezone);
+    $('acctTypeCard').classList.toggle('hidden', me.user.role !== 'owner');
+    $('acctTypes').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.type === me.workspace.account_type));
     renderTwofa();
     loadSessions();
     $('deleteHint').textContent = deleteText();
   }
+  $('acctTypes').addEventListener('click', async e => {
+    const b = e.target.closest('[data-type]'); if (!b || b.dataset.type === me.workspace.account_type) return;
+    const biz = b.dataset.type === 'business';
+    if (!(await confirmBox(biz ? 'Switch to Business / Agency?' : 'Switch to Retail / Shop owner?',
+      biz ? 'You get a brand switcher, client logins and an activity log. Your designs and brand kits stay as they are.' : 'The dashboard becomes simpler: snap → edit → post. Your designs and brand kits stay as they are.', 'Switch'))) return;
+    try { await api('/workspace/account-type', { method: 'PUT', body: { account_type: b.dataset.type } }); await refreshMe(); loadAccount(); toast('Account type updated ✓'); }
+    catch (err) { toast(err.message, { error: true, ms: 5000 }); }
+  });
   $('profileForm').addEventListener('submit', async e => {
     e.preventDefault();
     try {

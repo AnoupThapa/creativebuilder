@@ -174,6 +174,7 @@ const q = {
   get: (sql, ...p) => stmt(sql).get(...p),
   all: (sql, ...p) => stmt(sql).all(...p),
   run: (sql, ...p) => stmt(sql).run(...p),
+  iterate: (sql, ...p) => stmt(sql).iterate(...p),
 };
 
 /* Serialised write transaction. BEGIN IMMEDIATE takes the write lock up
@@ -326,6 +327,20 @@ addColumn('plans', 'ai_credits_lifetime', 'INTEGER NOT NULL DEFAULT 0');   // on
 addColumn('plans', 'ai_video', 'INTEGER NOT NULL DEFAULT 0');           // AI product videos (Pro, Business)
 addColumn('plans', 'max_video_seconds', 'INTEGER NOT NULL DEFAULT 0');  // longest own video allowed (0 = no limit)
 addColumn('plans', 'max_video_mb', 'INTEGER NOT NULL DEFAULT 0');       // biggest own video file (0 = same as max_upload_mb)
+/* Retail vs Business (B2B) profiles */
+addColumn('workspaces', 'account_type', "TEXT NOT NULL DEFAULT 'retail'");  // retail | business
+addColumn('plans', 'audience', "TEXT NOT NULL DEFAULT 'both'");              // retail | business | both (which pricing page shows it)
+addColumn('brand_kits', 'colors', "TEXT NOT NULL DEFAULT '[]'");           // extra palette colours (#hex)
+addColumn('brand_kits', 'font_heading', "TEXT NOT NULL DEFAULT ''");
+addColumn('brand_kits', 'font_body', "TEXT NOT NULL DEFAULT ''");
+addColumn('brand_kits', 'tagline', "TEXT NOT NULL DEFAULT ''");
+addColumn('brand_kits', 'email', "TEXT NOT NULL DEFAULT ''");
+addColumn('brand_kits', 'address', "TEXT NOT NULL DEFAULT ''");
+addColumn('brand_kits', 'socials', "TEXT NOT NULL DEFAULT '{}'");          // {instagram, facebook, tiktok, linkedin, youtube, x, whatsapp}
+addColumn('designs', 'brand_kit_id', 'INTEGER');                           // which brand / client the design belongs to
+addColumn('users', 'client_brand_id', 'INTEGER');                          // set = client viewer who only sees this brand
+addColumn('audit_log', 'prev_hash', "TEXT NOT NULL DEFAULT ''");          // tamper-evident chain
+addColumn('audit_log', 'hash', "TEXT NOT NULL DEFAULT ''");
 addColumn('workspaces', 'ai_topup_credits', 'INTEGER NOT NULL DEFAULT 0'); // bought credit packs (never expire)
 db.exec(`
 CREATE TABLE IF NOT EXISTS ai_templates (
@@ -393,6 +408,10 @@ const SEED_PLANS = [
     price_cents: 7900, price_cents_annual: 79000, currency: 'usd', quota_limit: 1000, quota_period: 'month', daily_limit: 50, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 20, max_upload_mb: 200, storage_mb: 20480, public: 1, sort: 3,
     ai_credits_monthly: 500, ai_credits_lifetime: 0, ai_video: 1 },
+  { code: 'agency', name: 'Agency', description: 'For agencies and wholesalers managing many brands: up to 50 client brands, client review logins, 1,000 AI images.',
+    price_cents: 14900, price_cents_annual: 149000, currency: 'usd', quota_limit: 2000, quota_period: 'month', daily_limit: 100, max_quality: 3, video_export: 1, batch_export: 1,
+    premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 50, max_upload_mb: 500, storage_mb: 51200, public: 1, sort: 4,
+    ai_credits_monthly: 1000, ai_credits_lifetime: 0, ai_video: 1, audience: 'business' },
 ];
 for (const p of SEED_PLANS) {
   const exists = q.get('SELECT code FROM plans WHERE code = ?', p.code);
@@ -423,6 +442,12 @@ if (!metaGet('starter_video_v1')) {
   q.run("UPDATE plans SET description = ? WHERE code = 'starter' AND description = ?", 'Post every day: 5 a day, up to 100 a month, your own videos up to 30 s, plus 40 AI images.', 'Post every day: 5 images a day, up to 100 a month, plus 40 AI images.');
   q.run("UPDATE plans SET ai_video = 1 WHERE code IN ('pro', 'business')");
   metaSet('starter_video_v1', Date.now());
+}
+/* One-time: which pricing page each plan appears on */
+if (!metaGet('audience_v1')) {
+  q.run("UPDATE plans SET audience = 'retail' WHERE code = 'starter'");
+  q.run("UPDATE plans SET audience = 'business' WHERE code = 'agency'");
+  metaSet('audience_v1', Date.now());
 }
 // Stripe price IDs from env override whatever is stored
 for (const [code, price] of Object.entries(config.stripe.prices)) {

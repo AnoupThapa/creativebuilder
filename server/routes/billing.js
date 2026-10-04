@@ -19,7 +19,7 @@ router.get('/billing/plans', (req, res) => {
 });
 
 function memberCount(wsId) {
-  return q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed'", wsId).n;
+  return q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed' AND client_brand_id IS NULL", wsId).n;
 }
 
 router.post('/billing/checkout', S.requireRole('owner'), async (req, res) => {

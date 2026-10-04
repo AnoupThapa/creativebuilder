@@ -43,8 +43,8 @@ router.get('/users', (req, res) => {
   const page = Math.max(0, parseInt(req.query.page, 10) || 0);
   const rows = q.all(`
     SELECT u.id, u.name, u.email, u.role, u.status, u.is_superadmin, u.email_verified, u.totp_enabled,
-           u.created_at, u.last_login_at, u.locked_until,
-           w.id workspace_id, w.name workspace, w.plan_code, w.sub_status, w.seats, w.billing_mode, w.current_period_end,
+           u.created_at, u.last_login_at, u.locked_until, u.client_brand_id,
+           w.id workspace_id, w.name workspace, w.account_type, w.plan_code, w.sub_status, w.seats, w.billing_mode, w.current_period_end,
            (SELECT COUNT(*) FROM exports e WHERE e.user_id = u.id AND e.created_at > ?) exports30d
     FROM users u JOIN workspaces w ON w.id = u.workspace_id
     WHERE u.status != 'removed' AND (u.email LIKE ? OR u.name LIKE ? OR w.name LIKE ?)
@@ -67,6 +67,17 @@ router.patch('/users/:id', (req, res) => {
   if (req.body.unlock) q.run('UPDATE users SET locked_until = NULL, failed_logins = 0 WHERE id = ?', u.id);
   if (req.body.reset2fa) q.run('UPDATE users SET totp_enabled = 0, totp_secret = NULL WHERE id = ?', u.id);
   S.audit(req, 'admin.user_updated', { target: u.id, changes: req.body });
+  res.json({ ok: true });
+});
+
+/* Switch a workspace between Retail and Business profiles */
+router.patch('/workspaces/:id', (req, res) => {
+  const ws = q.get('SELECT * FROM workspaces WHERE id = ?', +req.params.id);
+  if (!ws) throw new S.HttpError(404, 'Workspace not found.');
+  const t = String(req.body.account_type || '');
+  if (!['retail', 'business'].includes(t)) throw new S.HttpError(400, 'Pick retail or business.');
+  q.run('UPDATE workspaces SET account_type = ? WHERE id = ?', t, ws.id);
+  S.audit(req, 'admin.account_type', { workspace: ws.id, from: ws.account_type, to: t });
   res.json({ ok: true });
 });
 
@@ -94,13 +105,14 @@ const PLAN_FIELDS = {
   max_quality: 'int', video_export: 'bool', batch_export: 'bool', premium_templates: 'bool', watermark: 'bool',
   max_designs: 'int', max_brand_kits: 'int', max_upload_mb: 'int', storage_mb: 'int', public: 'bool', active: 'bool',
   sort: 'int', stripe_price_id: 'str', stripe_price_id_annual: 'str',
-  ai_credits_monthly: 'int', ai_credits_lifetime: 'int', ai_video: 'bool', max_video_seconds: 'int', max_video_mb: 'int',
+  ai_credits_monthly: 'int', ai_credits_lifetime: 'int', ai_video: 'bool', max_video_seconds: 'int', max_video_mb: 'int', audience: 'audience',
 };
 function planValues(body) {
   const out = {};
   for (const [k, t] of Object.entries(PLAN_FIELDS)) {
     if (body[k] === undefined) continue;
     const v = body[k];
+    if (t === 'audience') { if (!['retail', 'business', 'both'].includes(v)) throw new S.HttpError(400, 'Audience must be retail, business or both.'); out[k] = v; continue; }
     if (t === 'str') out[k] = S.str(String(v), { field: k, max: 300 });
     else if (t === 'bool') out[k] = v ? 1 : 0;
     else if (t === 'period') { if (!['day', 'month', 'lifetime'].includes(v)) throw new S.HttpError(400, 'Period must be day, month or lifetime.'); out[k] = v; }
@@ -135,6 +147,7 @@ router.put('/plans/:code', (req, res) => {
   res.json({ ok: true });
 });
 
+router.get('/audit/verify', (req, res) => res.json(S.verifyAuditChain()));
 router.get('/audit', (req, res) => {
   const action = String(req.query.action || '');
   const rows = q.all(`SELECT a.*, u.email FROM audit_log a LEFT JOIN users u ON u.id = a.user_id

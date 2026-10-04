@@ -21,12 +21,13 @@ function meResponse(req) {
     user: {
       id: u.id, name: u.name, email: u.email, role: u.role, is_superadmin: !!u.is_superadmin,
       email_verified: !!u.email_verified, timezone: u.timezone, totp_enabled: !!u.totp_enabled,
+      client_brand: u.client_brand_id ? (q.get('SELECT id, name FROM brand_kits WHERE id = ?', u.client_brand_id) || null) : null,
     },
     workspace: {
-      id: ws.id, name: ws.name, seats: ws.seats, plan_code: ws.plan_code, sub_status: ws.sub_status,
+      id: ws.id, name: ws.name, seats: ws.seats, plan_code: ws.plan_code, sub_status: ws.sub_status, account_type: ws.account_type || 'retail',
       current_period_end: ws.current_period_end, cancel_at_period_end: !!ws.cancel_at_period_end,
       billing_mode: ws.billing_mode, billing_interval: ws.billing_interval || 'month',
-      members: q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed'", ws.id).n,
+      members: q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed' AND client_brand_id IS NULL", ws.id).n,
       subscribed_plan: publicPlan(getPlan(ws.plan_code)),
     },
     plan: publicPlan(plan),
@@ -57,6 +58,7 @@ router.post('/auth/signup', async (req, res) => {
   if (problem) throw new S.HttpError(400, problem);
   if (!req.body.acceptTerms) throw new S.HttpError(400, 'Please accept the terms to continue.');
   const tz = S.validTimezone(String(req.body.timezone || 'UTC'));
+  const accountType = req.body.accountType === 'business' ? 'business' : 'retail';
 
   if (q.get('SELECT id FROM users WHERE email = ?', email))
     throw new S.HttpError(409, 'An account with that email already exists. Try logging in.');
@@ -76,7 +78,7 @@ router.post('/auth/signup', async (req, res) => {
   const hash = await S.hashPassword(password);
   const user = tx(() => {
     const now = Date.now();
-    const wsId = q.run('INSERT INTO workspaces (name, created_at) VALUES (?, ?)', business, now).lastInsertRowid;
+    const wsId = q.run('INSERT INTO workspaces (name, account_type, created_at) VALUES (?, ?, ?)', business, accountType, now).lastInsertRowid;
     const uid = q.run(`INSERT INTO users (email, name, password_hash, workspace_id, role, timezone, created_at)
                        VALUES (?,?,?,?,?,?,?)`, email, name, hash, wsId, 'owner', tz, now).lastInsertRowid;
     q.run('UPDATE workspaces SET owner_id = ? WHERE id = ?', uid, wsId);
@@ -90,7 +92,7 @@ router.post('/auth/signup', async (req, res) => {
   });
   const link = await sendVerification(user);
   S.createSession(req, res, user);
-  S.audit(req, 'auth.signup', { email, beta: beta?.code || null }, user);
+  S.audit(req, 'auth.signup', { email, accountType, beta: beta?.code || null }, user);
   res.status(201).json({ ok: true, ...(isDev ? { devVerifyLink: link } : {}) });
 });
 
@@ -249,11 +251,17 @@ router.post('/auth/accept-invite', async (req, res) => {
   const ws = q.get('SELECT * FROM workspaces WHERE id = ?', t.data.workspace_id);
   const hash = await S.hashPassword(password);
   const user = tx(() => {
-    const members = q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed'", ws.id).n;
-    if (members >= ws.seats) throw new S.HttpError(409, 'This team has no free seats. Ask the owner to add a seat.');
-    const uid = q.run(`INSERT INTO users (email, name, password_hash, workspace_id, role, email_verified, timezone, created_at)
-                       VALUES (?,?,?,?,?,1,?,?)`, t.data.email, name, hash, ws.id, t.data.role,
-      S.validTimezone(String(req.body.timezone || 'UTC')), Date.now()).lastInsertRowid;
+    const clientBrand = t.data.client_brand_id
+      ? q.get('SELECT id FROM brand_kits WHERE id = ? AND workspace_id = ?', t.data.client_brand_id, ws.id)?.id
+      : null;
+    if (t.data.client_brand_id && !clientBrand) throw new S.HttpError(409, 'That brand no longer exists. Ask for a new invite.');
+    if (!clientBrand) {
+      const members = q.get("SELECT COUNT(*) n FROM users WHERE workspace_id = ? AND status != 'removed' AND client_brand_id IS NULL", ws.id).n;
+      if (members >= ws.seats) throw new S.HttpError(409, 'This team has no free seats. Ask the owner to add a seat.');
+    }
+    const uid = q.run(`INSERT INTO users (email, name, password_hash, workspace_id, role, email_verified, timezone, client_brand_id, created_at)
+                       VALUES (?,?,?,?,?,1,?,?,?)`, t.data.email, name, hash, ws.id, clientBrand ? 'viewer' : t.data.role,
+      S.validTimezone(String(req.body.timezone || 'UTC')), clientBrand, Date.now()).lastInsertRowid;
     q.run('UPDATE tokens SET used_at = ? WHERE token_hash = ?', Date.now(), t.token_hash);
     return q.get('SELECT * FROM users WHERE id = ?', uid);
   });

@@ -88,11 +88,13 @@ module.exports = {
       starter: env.STRIPE_PRICE_STARTER || '',
       pro: env.STRIPE_PRICE_PRO || '',
       business: env.STRIPE_PRICE_BUSINESS || '',
+      agency: env.STRIPE_PRICE_AGENCY || '',
     },
     pricesAnnual: {
       starter: env.STRIPE_PRICE_STARTER_ANNUAL || '',
       pro: env.STRIPE_PRICE_PRO_ANNUAL || '',
       business: env.STRIPE_PRICE_BUSINESS_ANNUAL || '',
+      agency: env.STRIPE_PRICE_AGENCY_ANNUAL || '',
     },
   },
 

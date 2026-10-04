@@ -49,7 +49,7 @@
       const locked = u.locked_until && u.locked_until > Date.now();
       return `<tr data-id="${u.id}" data-ws="${u.workspace_id}">
         <td><strong>${esc(u.name)}</strong>${u.is_superadmin ? ' <span class="badge badge-dark">admin</span>' : ''}<br><span class="small muted">${esc(u.email)}</span></td>
-        <td>${esc(u.workspace)} <span class="small muted">#${u.workspace_id}</span><br><span class="badge ${u.plan_code === 'free' ? '' : 'badge-coral'}">${esc(u.plan_code)}</span>
+        <td>${esc(u.workspace)} <span class="small muted">#${u.workspace_id}</span> <span class="badge ${u.account_type === 'business' ? 'badge-blue' : ''}">${u.account_type === 'business' ? '🏢 Business' : '🛍️ Retail'}</span>${u.client_brand_id ? ' <span class="badge">client login</span>' : ''}<br><span class="badge ${u.plan_code === 'free' ? '' : 'badge-coral'}">${esc(u.plan_code)}</span>
           <span class="small muted">${esc(u.role)} · ${u.seats} seat${u.seats > 1 ? 's' : ''}${u.plan_code !== 'free' ? ' · ' + esc(u.sub_status) + ' · ' + esc(u.billing_mode) : ''}</span></td>
         <td>${u.status === 'active' ? '<span class="badge badge-green">active</span>' : '<span class="badge badge-red">' + esc(u.status) + '</span>'}
           ${u.email_verified ? '' : '<span class="badge">unverified</span>'}${u.totp_enabled ? ' <span class="badge badge-blue">2FA</span>' : ''}${locked ? ' <span class="badge badge-red">locked</span>' : ''}</td>
@@ -63,6 +63,7 @@
           ${locked ? '<option value="unlock">Unlock</option>' : ''}
           ${u.totp_enabled ? '<option value="reset2fa">Reset 2FA</option>' : ''}
           <option value="grant">Grant plan…</option>
+          ${u.account_type === 'business' ? '<option value="toretail">Switch workspace to Retail</option>' : '<option value="tobusiness">Switch workspace to Business</option>'}
           ${u.is_superadmin ? '<option value="demote">Remove admin</option>' : '<option value="promote">Make platform admin</option>'}
         </select></td></tr>`;
     }).join('') || '<tr><td colspan="6" class="center muted">No users found.</td></tr>';
@@ -75,6 +76,11 @@
         const r = await api('/admin/users/' + tr.dataset.id + '/send-reset', { method: 'POST' });
         toast(r.sending ? 'Reset link emailed to the user ✓' : 'Email sending is off — copy the link from Email outbox and send it yourself');
       } catch (err) { toast(err.message, { error: true }); }
+      return;
+    }
+    if (act === 'tobusiness' || act === 'toretail') {
+      try { await api('/admin/workspaces/' + tr.dataset.ws, { method: 'PATCH', body: { account_type: act === 'tobusiness' ? 'business' : 'retail' } }); toast('Workspace updated ✓'); loadUsers(); }
+      catch (err) { toast(err.message, { error: true }); }
       return;
     }
     if (act === 'grant') { location.hash = 'plans'; setTimeout(() => { $('gWs').value = tr.dataset.ws; $('gWs').focus(); }, 50); return; }
@@ -90,11 +96,12 @@
   const COLS = [['name', 'text'], ['price_cents', 'number'], ['price_cents_annual', 'number'], ['quota_limit', 'number'], ['quota_period', 'period'], ['daily_limit', 'number'], ['max_quality', 'number'],
     ['video_export', 'bool'], ['batch_export', 'bool'], ['premium_templates', 'bool'], ['watermark', 'bool'], ['max_designs', 'number'],
     ['max_brand_kits', 'number'], ['max_upload_mb', 'number'], ['max_video_mb', 'number'], ['max_video_seconds', 'number'], ['storage_mb', 'number'],
-    ['ai_credits_monthly', 'number'], ['ai_credits_lifetime', 'number'], ['ai_video', 'bool'], ['public', 'bool'], ['active', 'bool'], ['stripe_price_id', 'text'], ['stripe_price_id_annual', 'text']];
+    ['ai_credits_monthly', 'number'], ['ai_credits_lifetime', 'number'], ['ai_video', 'bool'], ['audience', 'audience'], ['public', 'bool'], ['active', 'bool'], ['stripe_price_id', 'text'], ['stripe_price_id_annual', 'text']];
   async function loadPlans() {
     plans = await api('/admin/plans');
     $('planRows').innerHTML = plans.map(p => `<tr data-code="${esc(p.code)}"><td class="mono">${esc(p.code)}</td>${COLS.map(([k, t]) => {
       if (t === 'bool') return `<td><input type="checkbox" data-k="${k}" ${p[k] ? 'checked' : ''}></td>`;
+      if (t === 'audience') return `<td><select data-k="${k}">${['both', 'retail', 'business'].map(o => `<option ${o === p[k] ? 'selected' : ''}>${o}</option>`).join('')}</select></td>`;
       if (t === 'period') return `<td><select data-k="${k}">${['day', 'month', 'lifetime'].map(o => `<option ${o === p[k] ? 'selected' : ''}>${o}</option>`).join('')}</select></td>`;
       return `<td><input type="${t}" data-k="${k}" value="${esc(p[k])}" ${k === 'max_quality' ? 'min="1" max="3"' : ''} style="${k === 'name' || k.startsWith('stripe_price_id') ? 'min-width:120px' : ''}"></td>`;
     }).join('')}<td><button class="btn btn-dark btn-sm" data-save>Save</button></td></tr>`).join('');
@@ -133,6 +140,14 @@
       <td class="small mono">${esc(r.ip || '')}</td><td class="small mono">${esc(r.detail === '{}' ? '' : r.detail).slice(0, 160)}</td></tr>`).join('')
       || '<tr><td colspan="5" class="center muted">No events.</td></tr>';
   }
+
+  $('btnVerifyLog').addEventListener('click', async () => {
+    try {
+      const r = await api('/admin/audit/verify');
+      $('verifyOut').innerHTML = r.ok ? `✅ The activity log is untouched (${r.checked} protected entries checked).`
+        : `❌ The log was changed at entry #${r.brokenAt} — ${esc(r.reason)}.`;
+    } catch (e) { toast(e.message, { error: true }); }
+  });
 
   /* Outbox */
   const MAIL_BADGE = { sent: '<span class="badge badge-green">delivered to email</span>', failed: '<span class="badge badge-red">failed</span>',
