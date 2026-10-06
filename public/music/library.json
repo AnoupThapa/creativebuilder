@@ -1,0 +1,110 @@
+[
+ {
+  "key": "sunny-market",
+  "name": "Sunny Market",
+  "mood": "Upbeat",
+  "description": "Bright guitar pop — sales, new arrivals",
+  "bpm": 118,
+  "seconds": 30.0,
+  "file": "/music/sunny-market.mp3"
+ },
+ {
+  "key": "chill-cafe",
+  "name": "Chill Café",
+  "mood": "Chill",
+  "description": "Lo-fi keys — cafés, food, slow mornings",
+  "bpm": 80,
+  "seconds": 30.0,
+  "file": "/music/chill-cafe.mp3"
+ },
+ {
+  "key": "big-sale",
+  "name": "Big Sale",
+  "mood": "Energetic",
+  "description": "Punchy dance beat — flash sales, offers",
+  "bpm": 128,
+  "seconds": 30.0,
+  "file": "/music/big-sale.mp3"
+ },
+ {
+  "key": "bright-business",
+  "name": "Bright Business",
+  "mood": "Corporate",
+  "description": "Clean piano arps — services, B2B, launches",
+  "bpm": 105,
+  "seconds": 30.0,
+  "file": "/music/bright-business.mp3"
+ },
+ {
+  "key": "festive-bells",
+  "name": "Festive Bells",
+  "mood": "Festive",
+  "description": "Bells and claps — Dashain, Tihar, Christmas, Eid",
+  "bpm": 112,
+  "seconds": 30.0,
+  "file": "/music/festive-bells.mp3"
+ },
+ {
+  "key": "acoustic-morning",
+  "name": "Acoustic Morning",
+  "mood": "Acoustic",
+  "description": "Fingerpicked guitar — handmade, organic, bakery",
+  "bpm": 96,
+  "seconds": 30.0,
+  "file": "/music/acoustic-morning.mp3"
+ },
+ {
+  "key": "luxury-night",
+  "name": "Luxury Night",
+  "mood": "Elegant",
+  "description": "Warm pads and soft keys — beauty, jewellery, fashion",
+  "bpm": 88,
+  "seconds": 30.0,
+  "file": "/music/luxury-night.mp3"
+ },
+ {
+  "key": "tech-pulse",
+  "name": "Tech Pulse",
+  "mood": "Electronic",
+  "description": "Driving synth arps — phones, gadgets, tech",
+  "bpm": 122,
+  "seconds": 30.0,
+  "file": "/music/tech-pulse.mp3"
+ },
+ {
+  "key": "calm-spa",
+  "name": "Calm Spa",
+  "mood": "Relaxing",
+  "description": "Soft ambient — spa, salon, wellness",
+  "bpm": 68,
+  "seconds": 30.0,
+  "file": "/music/calm-spa.mp3"
+ },
+ {
+  "key": "street-groove",
+  "name": "Street Groove",
+  "mood": "Hip-hop",
+  "description": "Laid-back boom-bap — streetwear, sneakers",
+  "bpm": 90,
+  "seconds": 30.0,
+  "file": "/music/street-groove.mp3"
+ },
+ {
+  "key": "party-night",
+  "name": "Party Night",
+  "mood": "Dance",
+  "description": "Club beat — events, nightlife, weekends",
+  "bpm": 124,
+  "seconds": 30.0,
+  "file": "/music/party-night.mp3"
+ },
+ {
+  "key": "happy-kids",
+  "name": "Happy Days",
+  "mood": "Cheerful",
+  "description": "Ukulele and bells — kids, toys, family",
+  "bpm": 126,
+  "seconds": 30.0,
+  "file": "/music/happy-kids.mp3"
+ }
+]

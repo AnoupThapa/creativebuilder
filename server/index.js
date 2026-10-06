@@ -173,6 +173,7 @@ app.get('/editor', S.pageAuth(), page('editor.html'));
 app.get('/gif', S.pageAuth({ noClient: true }), page('gif.html'));
 app.get('/ai', S.pageAuth({ noClient: true }), page('ai.html'));
 app.get('/bulk', S.pageAuth({ noClient: true }), page('bulk.html'));
+app.get('/slideshow', S.pageAuth({ noClient: true }), page('slideshow.html'));
 app.get('/developers', page('developers.html'));
 app.get('/r/:token', (req, res, next) => { res.set({ 'X-Robots-Tag': 'noindex, nofollow', 'Referrer-Policy': 'no-referrer' }); next(); }, page('portal.html'));
 app.get('/admin', S.pageAuth({ superadmin: true }), page('admin.html'));

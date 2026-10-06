@@ -72,7 +72,19 @@ const state = {
   layout:      'classic',     // last layout preset applied (classic | centered | top | middle)
   brandColor:  '',            // '' = use the theme's own accent; '#rrggbb' overrides it
   contact:     '',
-  layerVis:    { media:true, logo:true, headline:true, sub:true, price:true, cta:true, badge:true, contact:true,
+  /* text effects (Instagram-style) for headline / subheadline / price */
+  textFx:      'auto',        // auto (theme) | shadow | outline | highlight | box | neon | retro | none
+  textColor:   '',            // '' = theme colour
+  fxColor:     '',            // highlight / glow / 3D colour; '' = brand accent
+  /* free "post content" text laid over the photo or video */
+  overlayText:  '',
+  overlaySize:  'm',          // s | m | l
+  overlayAlign: 'center',     // left | center | right
+  overlayFx:    'highlight',
+  overlayFont:  '',           // '' = heading font
+  overlayColor: '#ffffff',
+  overlayAccent:'#1a1a2e',
+  layerVis:    { media:true, logo:true, headline:true, sub:true, price:true, cta:true, badge:true, contact:true, overlay:true,
                  rv_mark:true, rv_stars:true, rv_quote:true, rv_name:true, rv_verified:true },
   pos:         {},            // free positioning: { key: { x, y, s } } — fractions of canvas size + scale
 
@@ -247,7 +259,7 @@ function FF(family){ return `"${family}", ${FALLBACK_STACK}`; }
 const FONT_SCRIPTS = window.PF_FONT_SCRIPTS || {};
 function textScripts(text){ return SCRIPTS.filter(s => s.re.test(text)); }
 function designText(){
-  return [state.headline, state.subheadline, state.price, state.cta, state.badge, state.contact, state.reviewQuote, state.reviewName].filter(Boolean).join(' ');
+  return [state.headline, state.subheadline, state.price, state.cta, state.badge, state.contact, state.reviewQuote, state.reviewName, state.overlayText].filter(Boolean).join(' ');
 }
 
 /* Download the font files a design's text needs (each script is a separate small file), then redraw */
@@ -330,6 +342,91 @@ function drawWrapped(ctx, lines, x, y, lh, align='left'){
   lines.forEach((line, i) => ctx.fillText(line, x, y + i * lh));
 }
 
+/* ---------------------------------------------------------------
+   TEXT EFFECTS — Instagram-style shadow, outline, highlight, box, neon, 3D
+   (ctx.font must already be set; y is the first line's baseline)
+   --------------------------------------------------------------- */
+const TEXT_FX = [['auto', 'Theme'], ['shadow', 'Shadow'], ['outline', 'Outline'], ['highlight', 'Highlight'], ['box', 'Soft box'],
+  ['neon', 'Neon glow'], ['retro', '3D'], ['none', 'Plain']];
+const TEXT_STYLES = { // one-tap looks for the text overlay (font + effect)
+  classic:    { label: 'Classic',    font: 'Poppins',          fx: 'shadow' },
+  modern:     { label: 'Modern',     font: 'Bebas Neue',       fx: 'outline' },
+  neon:       { label: 'Neon',       font: 'Pacifico',         fx: 'neon' },
+  typewriter: { label: 'Typewriter', font: 'Courier Prime',    fx: 'highlight' },
+  strong:     { label: 'Strong',     font: 'Anton',            fx: 'retro' },
+  editor:     { label: 'Editor',     font: 'Playfair Display', fx: 'box' },
+  hand:       { label: 'Handwritten',font: 'Caveat',           fx: 'shadow' },
+};
+function fxDraw(ctx, lines, x, y, lh, align, size, color, fx, accent){
+  ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  ctx.direction = lines.some(l => /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(l)) ? 'rtl' : 'ltr';
+  const widths = lines.map(l => ctx.measureText(l).width);
+  const leftOf = i => align === 'center' ? x - widths[i] / 2 : align === 'right' ? x - widths[i] : x;
+  const plain = () => { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; };
+  const each = (c, dx = 0, dy = 0) => { ctx.fillStyle = c; lines.forEach((l, i) => ctx.fillText(l, x + dx, y + i * lh + dy)); };
+  plain();
+  switch (fx){
+    case 'highlight': {
+      const px = size * 0.26, py = size * 0.14;
+      ctx.fillStyle = accent;
+      lines.forEach((l, i) => { if (!l.trim()) return;
+        roundRectPath(ctx, leftOf(i) - px, y + i * lh - size * 0.84 - py, widths[i] + px * 2, size * 1.1 + py * 2, size * 0.2); ctx.fill(); });
+      each(onColor(accent)); break;
+    }
+    case 'box': {
+      const px = size * 0.5, py = size * 0.4;
+      const l = Math.min(...lines.map((_, i) => leftOf(i))), r = Math.max(...lines.map((_, i) => leftOf(i) + widths[i]));
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      roundRectPath(ctx, l - px, y - size * 0.84 - py, r - l + px * 2, (lines.length - 1) * lh + size * 1.1 + py * 2, size * 0.45); ctx.fill();
+      each(color); break;
+    }
+    case 'shadow':
+      ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = size * 0.22; ctx.shadowOffsetY = size * 0.07;
+      each(color); break;
+    case 'outline':
+      ctx.lineJoin = 'round'; ctx.miterLimit = 2; ctx.lineWidth = Math.max(2, size * 0.1);
+      ctx.strokeStyle = lum(color) > 0.4 || !/^#/.test(color) ? '#111111' : '#ffffff';
+      lines.forEach((l, i) => ctx.strokeText(l, x, y + i * lh));
+      each(color); break;
+    case 'neon':
+      ctx.shadowColor = accent; ctx.shadowBlur = size * 0.45; each(accent);
+      ctx.shadowBlur = size * 0.18; each(accent);
+      ctx.shadowBlur = size * 0.05; ctx.shadowColor = accent; each(mixHex(accent, '#ffffff', 0.88)); break;
+    case 'retro':
+      each(accent, size * 0.07, size * 0.07); each(color); break;
+    default:
+      each(color);
+  }
+  plain();
+  return widths;
+}
+/* headline / sub / price effect: 'auto' keeps the theme's own look */
+const fxOn = () => state.textFx && state.textFx !== 'auto';
+function fxAccent(theme){ return state.fxColor || theme.badgeAccent || theme.accent; }
+
+/* "Post content" text over the photo or video — drawn last so it sits on top */
+function drawOverlayLayer(ctx, w, h){
+  const text = (state.overlayText || '').trim();
+  if (!text || state.layerVis.overlay === false) return;
+  const theme = activeTheme();
+  const size = Math.round(Math.min(w, h * 0.8) * ({ s: 0.045, m: 0.062, l: 0.085 }[state.overlaySize] || 0.062));
+  const font = state.overlayFont || theme.font;
+  ctx.save();
+  ctx.font = `700 ${size}px ${FF(font)}`;
+  const lines = text.split(/\n/).flatMap(p => p.trim() ? wrapText(ctx, p.trim(), w * 0.78) : ['']).slice(0, 14);
+  const lh = size * (state.overlayFx === 'highlight' ? 1.42 : 1.22);
+  const widths = lines.map(l => ctx.measureText(l).width), bw = Math.max(...widths, 1);
+  const blockH = (lines.length - 1) * lh + size * 1.1;
+  const al = ['left', 'right'].includes(state.overlayAlign) ? state.overlayAlign : 'center';
+  const ax = al === 'left' ? w * 0.1 : al === 'right' ? w * 0.9 : w / 2;
+  const top = (h - blockH) / 2;
+  const bx = al === 'left' ? ax : al === 'right' ? ax - bw : ax - bw / 2;
+  place(ctx, 'overlay', { x: bx, y: top, w: bw, h: blockH }, w, h, () => {
+    fxDraw(ctx, lines, ax, top + size * 0.86, lh, al, size, state.overlayColor || '#ffffff', state.overlayFx || 'none', state.overlayAccent || theme.accent);
+  });
+  ctx.restore();
+}
+
 /* 5-point star, used by the review-card star rating */
 function drawStarShape(ctx, cx, cy, outerR, fillColor){
   const innerR = outerR * 0.45;
@@ -370,7 +467,7 @@ function activeMediaEl(){
    --------------------------------------------------------------- */
 const POS_LABELS = {
   badge:'Badge', headline:'Headline', sub:'Subheadline', price:'Price / offer', cta:'Call to action', contact:'Contact line',
-  logo:'Logo', product:'Product cut-out',
+  logo:'Logo', product:'Product cut-out', overlay:'Text overlay',
   rv_mark:'Quote mark', rv_stars:'Star rating', rv_quote:'Review text', rv_name:'Customer name', rv_verified:'Verified badge'
 };
 let HIT = null;          // hit boxes collected during the live preview render
@@ -521,7 +618,13 @@ function renderPromo(ctx, w, h){
     const hw = Math.max(...headlineFit.lines.map(l => ctx.measureText(l).width));
     const box = { x:pad, y:headlineTopY, w:hw, h:headlineFit.lines.length * headlineFit.lh };
     place(ctx, 'headline', box, w, h, () => {
-      ctx.fillStyle = theme.textMain;
+      if (fxOn()){
+        const c = centeredText();
+        fxDraw(ctx, headlineFit.lines, c ? pad + hw / 2 : pad, headlineTopY + headlineFit.size, headlineFit.lh, c ? 'center' : 'left',
+          headlineFit.size, state.textColor || theme.textMain, state.textFx, fxAccent(theme));
+        return;
+      }
+      ctx.fillStyle = state.textColor || theme.textMain;
       ctx.shadowColor = (media && !cutout) ? 'rgba(0,0,0,.35)' : 'transparent';
       ctx.shadowBlur  = 12;
       if (centeredText()) drawWrapped(ctx, headlineFit.lines, pad + hw / 2, headlineTopY + headlineFit.size, headlineFit.lh, 'center');
@@ -534,6 +637,9 @@ function renderPromo(ctx, w, h){
     ctx.font = `500 ${subFontSz}px ${FF(theme.bodyFont)}`;
     const sw = ctx.measureText(state.subheadline).width;
     place(ctx, 'sub', { x:pad, y:subY - subFontSz * 0.95, w:sw, h:subFontSz * 1.25 }, w, h, () => {
+      if (fxOn() && state.textFx !== 'highlight' && state.textFx !== 'box'){
+        fxDraw(ctx, [state.subheadline], pad, subY, subFontSz, 'left', subFontSz, state.textColor || theme.textSub, state.textFx === 'retro' ? 'shadow' : state.textFx, fxAccent(theme)); return;
+      }
       ctx.fillStyle = theme.textSub;
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       ctx.fillText(state.subheadline, pad, subY);
@@ -545,6 +651,10 @@ function renderPromo(ctx, w, h){
     ctx.font = `700 ${priceFontSz}px ${FF(theme.font)}`;
     const pw = ctx.measureText(state.price).width;
     place(ctx, 'price', { x:pad, y:priceY - priceFontSz * 0.95, w:pw, h:priceFontSz * 1.2 }, w, h, () => {
+      if (fxOn() && state.textFx !== 'none'){
+        const pfx = state.textFx === 'neon' ? 'neon' : state.textFx === 'highlight' ? 'highlight' : state.textFx === 'box' ? 'box' : 'shadow';
+        fxDraw(ctx, [state.price], pad, priceY, priceFontSz, 'left', priceFontSz, theme.accent, pfx, pfx === 'highlight' ? (state.fxColor || theme.accent) : fxAccent(theme)); return;
+      }
       ctx.fillStyle = theme.accent;
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       ctx.shadowColor = (media && !cutout) ? 'rgba(0,0,0,.25)' : 'transparent';
@@ -742,6 +852,7 @@ function renderCore(ctx, w, h){
   ctx.imageSmoothingQuality = 'high';
   if (state.contentType === 'review') renderReview(ctx, w, h);
   else renderPromo(ctx, w, h);
+  drawOverlayLayer(ctx, w, h);
 }
 let recordWithWatermark = false;
 /* A layout preset (centred / top / middle) stays "live": when the text, font, theme or size
@@ -750,7 +861,7 @@ let layoutSig = '';
 function refreshLiveLayout(){
   if (!['centered', 'top', 'middle'].includes(state.layout)) { layoutSig = ''; return; }
   const sig = [state.contentType, state.platformW, state.platformH, state.headline, state.subheadline, state.price, state.cta, state.badge,
-    state.reviewQuote, state.reviewName, state.theme, state.headingFont, state.bodyFont, state.layout, JSON.stringify(state.layerVis),
+    state.reviewQuote, state.reviewName, state.theme, state.headingFont, state.textFx, state.bodyFont, state.layout, JSON.stringify(state.layerVis),
     !!(state.bgRemoved && state.mediaProcessed)].join('|');
   if (sig === layoutSig) return;
   layoutSig = sig;
@@ -1566,6 +1677,69 @@ $('layoutChips').addEventListener('click', e => {
 });
 
 /* ---------------------------------------------------------------
+   TEXT OVERLAY + TEXT EFFECTS — controls
+   --------------------------------------------------------------- */
+function buildTextFxControls(){
+  const chip = (k, l, on, attr) => `<button type="button" class="chip${on ? ' selected' : ''}" ${attr}="${k}">${PF.esc(l)}</button>`;
+  $('txtFx').innerHTML = TEXT_FX.map(([k, l]) => chip(k, l, k === state.textFx, 'data-fx')).join('');
+  $('ovFx').innerHTML = TEXT_FX.filter(f => f[0] !== 'auto').map(([k, l]) => chip(k, l, k === state.overlayFx, 'data-fx')).join('');
+  $('ovStyles').innerHTML = Object.entries(TEXT_STYLES).map(([k, t]) =>
+    `<button type="button" class="chip ov-style" data-style="${k}" style="font-family:${FF(t.font).replace(/"/g, "'")}">${PF.esc(t.label)}</button>`).join('');
+  ensureFonts(Object.values(TEXT_STYLES).map(t => t.font));
+  const o = f => `<option value="${PF.esc(f.name)}">${PF.esc(f.name)} — ${PF.esc(f.kind)}${f.lang ? ' · ' + PF.esc(f.lang) : ''}</option>`;
+  $('ovFont').innerHTML = '<option value="">Same as headline</option>' + FONTS.map(o).join('');
+}
+function syncTextFxUI(){
+  if (!$('txtFx')) return;
+  document.querySelectorAll('#txtFx .chip').forEach(c => c.classList.toggle('selected', c.dataset.fx === state.textFx));
+  document.querySelectorAll('#ovFx .chip').forEach(c => c.classList.toggle('selected', c.dataset.fx === state.overlayFx));
+  document.querySelectorAll('#ovSize .seg-b').forEach(b => b.classList.toggle('active', b.dataset.v === state.overlaySize));
+  document.querySelectorAll('#ovAlign .seg-b').forEach(b => b.classList.toggle('active', b.dataset.v === state.overlayAlign));
+  const th = activeTheme();
+  $('txtColor').value = state.textColor || (/^#[0-9a-f]{6}$/i.test(th.textMain) ? th.textMain : '#ffffff');
+  $('fxColor').value = state.fxColor || (/^#[0-9a-f]{6}$/i.test(th.accent) ? th.accent : '#ff6b4a');
+  $('inputOverlay').value = state.overlayText; $('overlayCount').textContent = state.overlayText.length;
+  $('ovColor').value = state.overlayColor; $('ovAccent').value = state.overlayAccent; $('ovFont').value = state.overlayFont;
+}
+buildTextFxControls();
+const fxChange = fn => e => { if (READONLY) return; fn(e); syncTextFxUI(); render(); markDirty(); };
+$('txtFx').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-fx]'); if (c) state.textFx = c.dataset.fx; }));
+$('ovFx').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-fx]'); if (c) state.overlayFx = c.dataset.fx; }));
+$('ovSize').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-v]'); if (c) state.overlaySize = c.dataset.v; }));
+$('ovAlign').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-v]'); if (c) state.overlayAlign = c.dataset.v; }));
+$('txtColor').addEventListener('input', fxChange(e => { state.textColor = e.target.value; }));
+$('fxColor').addEventListener('input', fxChange(e => { state.fxColor = e.target.value; }));
+$('txtReset').addEventListener('click', fxChange(() => { state.textColor = ''; state.fxColor = ''; }));
+$('ovColor').addEventListener('input', fxChange(e => { state.overlayColor = e.target.value; }));
+$('ovAccent').addEventListener('input', fxChange(e => { state.overlayAccent = e.target.value; }));
+$('ovFont').addEventListener('change', async e => { state.overlayFont = e.target.value; await ensureFonts([state.overlayFont]); render(); markDirty(); });
+$('ovStyles').addEventListener('click', async e => {
+  const c = e.target.closest('[data-style]'); if (!c || READONLY) return;
+  const t = TEXT_STYLES[c.dataset.style];
+  state.overlayFont = t.font; state.overlayFx = t.fx;
+  if (t.fx === 'neon') { state.overlayAccent = '#ff3da5'; state.overlayColor = '#ffffff'; }
+  else if (t.fx === 'highlight') { state.overlayAccent = '#ffffff'; }
+  else if (t.fx === 'retro') { state.overlayAccent = '#ff6b4a'; state.overlayColor = '#ffffff'; }
+  if (!state.overlayText.trim()) state.overlayText = state.headline || 'Your text here';
+  await ensureFonts([t.font]); syncTextFxUI(); render(); markDirty();
+});
+$('inputOverlay').addEventListener('input', e => {
+  state.overlayText = e.target.value; $('overlayCount').textContent = e.target.value.length; render(); refreshFontOptionsSoon();
+});
+/* AI: a short punchy line for the overlay, from the same caption writer */
+$('ovAi').addEventListener('click', async () => {
+  if (READONLY) return;
+  const b = $('ovAi'); b.disabled = true; b.textContent = '✨ Writing…';
+  try {
+    const r = await PF.api('/ai/captions', { method: 'POST', body: { product: state.headline || state.mediaName || 'our product', details: state.subheadline || '',
+      price: state.price || '', brand: (ME && ME.workspace && ME.workspace.name) || '', tone: 'fun', platforms: ['tiktok'] } });
+    const t = (r.captions.tiktok.text || '').split(/(?<=[.!?])\s+|\n+/).map(x => x.trim()).filter(Boolean).slice(0, 2).join('\n').slice(0, 120);
+    if (t) { state.overlayText = t; syncTextFxUI(); render(); markDirty(); }
+  } catch (e) { showToast(e.message); }
+  b.disabled = false; b.textContent = '✨ Write it for me';
+});
+
+/* ---------------------------------------------------------------
    LAYOUT PRESETS — arrange the text block in one click
    (classic = bottom-left, centred, text on top, middle of the design)
    --------------------------------------------------------------- */
@@ -2039,8 +2213,8 @@ $('btnGenerateAll').addEventListener('click', () => {
    FREE POSITIONING — drag on the canvas, nudge, align, resize
    =============================================================== */
 let selKey = null;
-const PROMO_KEYS = ['badge', 'headline', 'sub', 'price', 'cta', 'contact', 'logo', 'product'];
-const REVIEW_KEYS = ['rv_mark', 'rv_stars', 'rv_quote', 'rv_name', 'rv_verified', 'logo', 'product'];
+const PROMO_KEYS = ['badge', 'headline', 'sub', 'price', 'cta', 'contact', 'logo', 'overlay', 'product'];
+const REVIEW_KEYS = ['rv_mark', 'rv_stars', 'rv_quote', 'rv_name', 'rv_verified', 'logo', 'overlay', 'product'];
 const keysForType = () => state.contentType === 'review' ? REVIEW_KEYS : PROMO_KEYS;
 const hitFor = key => lastHits.find(h => h.key === key);
 const INPUT_FOR = { headline:'inputHeadline', sub:'inputSubheadline', price:'inputPrice', cta:'inputCTA', contact:'inputContact',
@@ -2352,6 +2526,9 @@ function serialize(){
     reviewName: state.reviewName, reviewStars: state.reviewStars, reviewQuote: state.reviewQuote,
     theme: state.theme, brandColor: state.brandColor, contact: state.contact,
     headingFont: state.headingFont, bodyFont: state.bodyFont, layout: state.layout,
+    textFx: state.textFx, textColor: state.textColor, fxColor: state.fxColor,
+    overlayText: state.overlayText, overlaySize: state.overlaySize, overlayAlign: state.overlayAlign, overlayFx: state.overlayFx,
+    overlayFont: state.overlayFont, overlayColor: state.overlayColor, overlayAccent: state.overlayAccent,
     layerVis: { ...state.layerVis },
     pos: JSON.parse(JSON.stringify(state.pos))
   };
@@ -2376,6 +2553,18 @@ async function restore(d){
   state.layout      = LAYOUTS.some(l => l.key === d.layout) || d.layout === 'custom' ? d.layout : 'classic';
   state.brandColor  = /^#[0-9a-f]{6}$/i.test(d.brandColor || '') ? d.brandColor : '';
   state.contact     = str(d.contact, 60, '');
+  const hex = (v, def) => /^#[0-9a-f]{6}$/i.test(v || '') ? v : def;
+  const FX = TEXT_FX.map(f => f[0]);
+  state.textFx      = FX.includes(d.textFx) ? d.textFx : 'auto';
+  state.textColor   = hex(d.textColor, '');
+  state.fxColor     = hex(d.fxColor, '');
+  state.overlayText = str(d.overlayText, 300, '');
+  state.overlaySize = ['s','m','l'].includes(d.overlaySize) ? d.overlaySize : 'm';
+  state.overlayAlign = ['left','center','right'].includes(d.overlayAlign) ? d.overlayAlign : 'center';
+  state.overlayFx   = FX.includes(d.overlayFx) && d.overlayFx !== 'auto' ? d.overlayFx : 'highlight';
+  state.overlayFont = fontOk(d.overlayFont) ? d.overlayFont : '';
+  state.overlayColor = hex(d.overlayColor, '#ffffff');
+  state.overlayAccent = hex(d.overlayAccent, '#1a1a2e');
   state.cutoutBg    = ['theme','gradient','spotlight','blur'].includes(d.cutoutBg) ? d.cutoutBg : 'theme';
   state.cutoutShadow = d.cutoutShadow !== false;
   state.mediaFit    = ['auto','fill','fit'].includes(d.mediaFit) ? d.mediaFit : 'auto';
@@ -2404,7 +2593,7 @@ async function restore(d){
     tasks.push(loadMediaFromUrl(`/media/${d.mediaId}`, d.mediaKind === 'video' ? 'video' : 'image', state.mediaName, { restoreCutout: d.bgRemoved ? { maskId: /^[0-9a-f-]{36}$/.test(d.bgMaskId || '') ? d.bgMaskId : null } : null }));
   }
   if (d.logoMediaId && /^[0-9a-f-]{36}$/.test(d.logoMediaId)) tasks.push(loadLogo(d.logoMediaId, str(d.logoName, 120, 'Logo')));
-  tasks.push(ensureFonts(themeFontsInUse()));
+  tasks.push(ensureFonts([...themeFontsInUse(), state.overlayFont]));
   await Promise.all(tasks);
   syncStyleControls();
   render();
@@ -2434,6 +2623,7 @@ function syncUI(){
     btn.textContent = on ? '👁' : '🙈'; btn.style.opacity = on ? '1' : '0.35';
   });
   selectSwatch(state.brandColor);
+  syncTextFxUI();
 }
 
 /* ---- saving ---- */

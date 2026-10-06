@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
-    "test": "node --disable-warning=ExperimentalWarning --test tests/api.test.js tests/email.test.js tests/gif.test.js tests/social.test.js tests/bgremove.test.js tests/ai.test.js tests/b2b.test.js tests/phase2.test.js tests/phase3.test.js",
+    "test": "node --disable-warning=ExperimentalWarning --test tests/api.test.js tests/email.test.js tests/gif.test.js tests/social.test.js tests/bgremove.test.js tests/ai.test.js tests/b2b.test.js tests/phase2.test.js tests/phase3.test.js tests/creative.test.js",
     "backup": "node --disable-warning=ExperimentalWarning scripts/backup.js",
     "backup:verify": "node --disable-warning=ExperimentalWarning scripts/backup.js --verify",
     "restore": "node --disable-warning=ExperimentalWarning scripts/restore.js"
@@ -24,6 +24,7 @@
     "@fontsource/cairo": "^5.3.0",
     "@fontsource/catamaran": "^5.3.0",
     "@fontsource/caveat": "^5.3.0",
+    "@fontsource/courier-prime": "^5.3.0",
     "@fontsource/dancing-script": "^5.3.0",
     "@fontsource/dm-serif-display": "^5.3.0",
     "@fontsource/hind": "^5.3.0",

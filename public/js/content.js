@@ -32,7 +32,7 @@
     { name:'Oswald', kind:'Condensed' }, { name:'Bebas Neue', kind:'Headline' }, { name:'Anton', kind:'Impact' },
     { name:'Archivo Black', kind:'Heavy' }, { name:'Playfair Display', kind:'Serif' }, { name:'DM Serif Display', kind:'Serif' },
     { name:'Merriweather', kind:'Serif' }, { name:'Lobster', kind:'Retro script' }, { name:'Pacifico', kind:'Casual script' },
-    { name:'Dancing Script', kind:'Script' }, { name:'Caveat', kind:'Handwritten' },
+    { name:'Dancing Script', kind:'Script' }, { name:'Caveat', kind:'Handwritten' }, { name:'Courier Prime', kind:'Typewriter' },
     // local languages
     { name:'Mukta', kind:'Clean', lang:'Nepali / Hindi' }, { name:'Hind', kind:'Simple', lang:'Nepali / Hindi' },
     { name:'Baloo 2', kind:'Rounded', lang:'Nepali / Hindi' }, { name:'Yatra One', kind:'Headline', lang:'Nepali / Hindi' },

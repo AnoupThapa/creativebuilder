@@ -206,6 +206,24 @@
       </div>
     </div>
 
+    <!-- 4c. TEXT OVERLAY -->
+    <div class="section" id="secOverlay">
+      <div class="sec-label"><span class="n">✍</span>Text on photo / video <span class="grow-sp"></span><button type="button" class="mv-btn" data-move="overlay" title="Move / resize the text on the design">✥ Move</button></div>
+      <div class="field">
+        <textarea id="inputOverlay" rows="3" maxlength="300" placeholder="Add your post text here — it sits on top of the photo or video, like Instagram text."></textarea>
+        <div class="char"><button type="button" class="ov-ai" id="ovAi">✨ Write it for me</button><span class="grow-sp"></span><span id="overlayCount">0</span>/300</div>
+      </div>
+      <div class="field"><label>Look</label><div class="chips" id="ovStyles"></div></div>
+      <div class="field"><label>Effect</label><div class="chips" id="ovFx"></div></div>
+      <div class="ov-row">
+        <div class="seg ov-seg" id="ovSize"><button class="seg-b" data-v="s">S</button><button class="seg-b active" data-v="m">M</button><button class="seg-b" data-v="l">L</button></div>
+        <div class="seg ov-seg" id="ovAlign"><button class="seg-b" data-v="left" title="Align left">⟸</button><button class="seg-b active" data-v="center" title="Centre">≡</button><button class="seg-b" data-v="right" title="Align right">⟹</button></div>
+        <label class="ov-col" title="Text colour">Text <input type="color" id="ovColor" value="#ffffff"></label>
+        <label class="ov-col" title="Highlight / glow colour">Effect <input type="color" id="ovAccent" value="#1a1a2e"></label>
+      </div>
+      <div class="field" style="margin-top:8px"><label for="ovFont">Font</label><select id="ovFont"></select></div>
+    </div>
+
     <!-- 5. BADGE -->
     <div class="section" id="secBadge">
       <div class="sec-label"><span class="n">5</span>Badge <span class="grow-sp"></span><button type="button" class="mv-btn" data-move="badge" title="Move / resize the badge on the design">✥ Move</button></div>
@@ -234,6 +252,15 @@
       <div class="field">
         <label for="bodyFont">Text font</label>
         <select id="bodyFont"></select>
+      </div>
+      <div class="field">
+        <label>Text effect <span class="muted-s">(headline, subheadline &amp; price)</span></label>
+        <div class="chips" id="txtFx"></div>
+        <div class="ov-row" style="margin-top:8px">
+          <label class="ov-col">Text colour <input type="color" id="txtColor" value="#ffffff"></label>
+          <label class="ov-col">Effect colour <input type="color" id="fxColor" value="#ff6b4a"></label>
+          <button type="button" class="mv-btn" id="txtReset">Reset colours</button>
+        </div>
       </div>
       <div class="field">
         <label>Layout</label>
@@ -321,6 +348,7 @@
       <div class="layer-r" data-sel="cta" data-ct="promo"><div class="li">🔘</div><div class="ln">CTA button</div><button class="lv-toggle" data-layer="cta" title="Toggle visibility">👁</button></div>
       <div class="layer-r" data-sel="badge" data-ct="promo"><div class="li">🏆</div><div class="ln">Badge</div><button class="lv-toggle" data-layer="badge" title="Toggle visibility">👁</button></div>
       <div class="layer-r" data-sel="contact" data-ct="promo"><div class="li">📞</div><div class="ln">Contact line</div><button class="lv-toggle" data-layer="contact" title="Toggle visibility">👁</button></div>
+      <div class="layer-r" data-sel="overlay" data-ct="both"><div class="li">✍</div><div class="ln">Text overlay</div><button class="lv-toggle" data-layer="overlay" title="Toggle visibility">👁</button></div>
       <div class="layer-r" data-sel="rv_mark" data-ct="review"><div class="li">“</div><div class="ln">Quote mark</div><button class="lv-toggle" data-layer="rv_mark" title="Toggle visibility">👁</button></div>
       <div class="layer-r" data-sel="rv_stars" data-ct="review"><div class="li">★</div><div class="ln">Star rating</div><button class="lv-toggle" data-layer="rv_stars" title="Toggle visibility">👁</button></div>
       <div class="layer-r" data-sel="rv_quote" data-ct="review"><div class="li">💬</div><div class="ln">Review text</div><button class="lv-toggle" data-layer="rv_quote" title="Toggle visibility">👁</button></div>

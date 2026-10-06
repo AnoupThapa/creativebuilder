@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slideshow video — PostForge</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/gif.css">
+<link rel="stylesheet" href="/css/slideshow.css">
+<link rel="stylesheet" href="/css/mobile.css">
+</head>
+<body class="gif-page ss-page">
+<header class="g-top">
+  <a class="g-back" href="/app" title="Back to dashboard">←</a>
+  <a class="brand" href="/app"><span class="brand-mark">P</span><span class="hide-xs">PostForge</span></a>
+  <h1>🎬 Slideshow video</h1>
+  <span class="grow"></span>
+  <span class="g-usage" id="usage">…</span>
+</header>
+
+<main class="g-main" id="main">
+  <section class="g-panel">
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Your photos <span class="small muted">(3 photos — up to 5)</span></div>
+      <div class="ss-slots" id="slots"></div>
+      <p class="small muted" style="margin-top:6px">Tip: tap a photo slot on your phone to take a picture. Drag a photo onto another to swap the order.</p>
+    </div>
+
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Template <span class="small muted" id="tplName"></span></div>
+      <div class="ss-tpls" id="tpls"></div>
+    </div>
+
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Words</div>
+      <div class="field"><label for="kit">Brand kit</label><select class="input" id="kit"></select></div>
+      <div class="field"><label for="title">Opening title <span class="muted small">(on the first photo)</span></label><input class="input" id="title" maxlength="50" placeholder="e.g. New Winter Collection"></div>
+      <div id="caps"></div>
+      <div class="field"><label for="closing">Closing line <span class="muted small">(last screen)</span></label><input class="input" id="closing" maxlength="40" placeholder="e.g. Order now · 20% OFF this week"></div>
+      <div class="field"><label for="contact">Contact line</label><input class="input" id="contact" maxlength="60" placeholder="e.g. 98XXXXXXXX · @yourshop"></div>
+      <label class="check"><input type="checkbox" id="showLogo" checked> Show my logo</label>
+    </div>
+
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Music</div>
+      <div class="ss-music" id="music"></div>
+      <label class="ss-up" id="musicUpBox"><input type="file" id="musicUp" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/ogg,.mp3,.m4a,.wav,.ogg">⬆ Use my own music <span class="small muted">(MP3/M4A, up to 15 MB — only music you have the rights to)</span></label>
+      <div class="g-row"><label>Music volume <span id="volVal">80%</span></label><input type="range" id="vol" min="0" max="100" value="80"></div>
+      <p class="small muted">All built-in tracks are PostForge originals — free to use in your posts, no copyright claims.</p>
+    </div>
+
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Size &amp; length</div>
+      <div class="g-seg" id="sizes"></div>
+      <div class="g-row" style="margin-top:12px"><label>Video length <span id="lenVal">12 s</span></label><input type="range" id="len" min="10" max="15" step="1" value="12"></div>
+    </div>
+
+    <button class="btn btn-primary btn-block g-go" id="go" type="button" disabled>🎬 Make my video</button>
+    <p class="small muted center" id="goNote">Add 3 photos to start.</p>
+  </section>
+
+  <section class="g-results">
+    <div class="ss-stage-wrap">
+      <div class="ss-stage" id="stage"><canvas id="pv" width="540" height="960"></canvas>
+        <div class="ss-rec hidden" id="rec"><div class="spin"></div><b id="recTitle">Recording your video…</b><span class="small" id="recNote">Keep this tab open — it takes as long as the video.</span><div class="b-bar"><span id="bar"></span></div></div>
+      </div>
+      <div class="ss-ctrl">
+        <button class="btn btn-dark btn-sm" id="play" type="button">▶ Play</button>
+        <div class="ss-time"><span id="tbar"></span></div>
+        <span class="small muted" id="tlabel">0.0 / 12 s</span>
+      </div>
+      <div class="ss-done hidden" id="done"></div>
+    </div>
+  </section>
+</main>
+<canvas id="out" width="1080" height="1920" style="position:fixed;left:-99999px;top:0" aria-hidden="true"></canvas>
+
+<script src="/js/api.js"></script>
+<script src="/js/font-scripts.js"></script>
+<script src="/js/slideshow.js"></script>
+<script src="/js/telemetry.js"></script>
+</body>
+</html>
