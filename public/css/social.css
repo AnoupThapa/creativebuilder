@@ -52,3 +52,4 @@
 #modalPost .pm-seg label{text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:#1d1b2e;margin:0}
 #modalPost input[type=checkbox],#modalPost input[type=radio]{width:auto;height:auto;margin:0;padding:0}
 #modalPost .soc-acct input[type=checkbox]{width:18px;height:18px;margin-right:10px}
+.pm-ai-sel{border:1px solid #dcd9e6;border-radius:8px;padding:4px 6px;font-size:12px;background:#fff}

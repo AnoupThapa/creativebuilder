@@ -21,6 +21,7 @@
       <a href="#designs" data-view="designs"><span>🖼</span>Designs</a>
       <a href="#social" data-view="social"><span>📣</span>Social posts</a>
       <a href="/ai"><span>✨</span>AI Studio</a>
+      <a href="/bulk"><span>📦</span>Bulk studio</a>
       <a href="/gif"><span>🎞</span>GIF maker</a>
       <a href="#brand" data-view="brand" id="navBrand"><span>🎨</span>Brand kits</a>
       <a href="#team" data-view="team"><span>👥</span>Team</a>
@@ -259,6 +260,17 @@
       <div class="field"><label for="delConfirm">Type <b>DELETE</b> to confirm</label><input id="delConfirm" autocomplete="off" required></div>
       <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-danger" type="submit">Delete permanently</button></div>
     </form>
+  </div>
+</div>
+
+<!-- Variations -->
+<div class="modal-wrap" id="varModal">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal">
+    <h3>✨ Make variations</h3>
+    <p class="muted small" id="varText">Turn this design into themed versions in one click — same photo, logo and brand, new headline, badge and style. Each one is saved as a new design you can tweak.</p>
+    <div class="var-grid" id="varGrid" style="margin-top:12px"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" type="button" id="varGo">Make variations</button></div>
   </div>
 </div>
 

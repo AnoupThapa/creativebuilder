@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulk studio — PostForge</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/gif.css">
+<link rel="stylesheet" href="/css/bulk.css">
+<link rel="stylesheet" href="/css/mobile.css">
+</head>
+<body class="gif-page bulk-page">
+<header class="g-top">
+  <a class="g-back" href="/app" title="Back to dashboard">←</a>
+  <a class="brand" href="/app"><span class="brand-mark">P</span><span class="hide-xs">PostForge</span></a>
+  <h1>📦 Bulk studio</h1>
+  <span class="grow"></span>
+  <span class="g-usage" id="usage">…</span>
+</header>
+
+<div class="b-lock hidden" id="lock">
+  <div class="g-empty-ic">📦</div>
+  <h3>Make posts for your whole catalogue at once</h3>
+  <p class="muted">Upload up to 50 product photos (or paste product links) and get branded posts in every size, ready in one ZIP — with captions. Included from the Starter plan.</p>
+  <a class="btn btn-primary" href="/app#billing">See plans</a>
+</div>
+
+<main class="g-main" id="main">
+  <section class="g-panel">
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Your products <span class="small muted" id="count">(0 / 50)</span></div>
+      <label class="g-drop" id="drop">
+        <input type="file" id="files" multiple accept="image/jpeg,image/png,image/webp">
+        <div class="g-drop-ic">🖼</div>
+        <div class="g-drop-t">Drop up to 50 product photos</div>
+        <div class="g-drop-s">JPG · PNG · WEBP — the file name becomes the product name (you can change it)</div>
+      </label>
+      <details class="b-links">
+        <summary>🔗 …or paste product links</summary>
+        <textarea class="input" id="links" rows="4" placeholder="One product page per line, e.g.&#10;https://yourshop.com/products/rose-serum&#10;https://yourshop.com/products/green-tea"></textarea>
+        <div class="row" style="margin-top:6px;gap:8px"><button class="btn btn-dark btn-sm" id="linksGo" type="button">Read links</button><span class="small muted" id="linksNote">We copy each product's name, price and main photo.</span></div>
+      </details>
+    </div>
+
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Brand &amp; style</div>
+      <div class="field"><label for="kit">Brand kit</label><select class="input" id="kit"></select></div>
+      <div class="field"><label>Background</label>
+        <div class="g-seg" id="bg"><button data-v="blur" class="on">Soft blur</button><button data-v="brand">Brand colour</button><button data-v="light">Clean white</button><button data-v="cutout">✂️ Cut-out</button></div>
+        <p class="small muted" id="bgNote" style="margin-top:5px">Your photo, softly blurred behind the product.</p></div>
+      <div class="field"><label for="offer">Offer line for every post <span class="muted small">(optional)</span></label><input class="input" id="offer" maxlength="40" placeholder="e.g. 20% OFF this week · Free delivery"></div>
+      <div class="row wrap" style="gap:14px">
+        <label class="check"><input type="checkbox" id="showPrice" checked> Show price</label>
+        <label class="check"><input type="checkbox" id="showContact" checked> Contact line</label>
+        <label class="check"><input type="checkbox" id="showLogo" checked> Logo</label>
+      </div>
+    </div>
+
+    <div class="g-step">
+      <div class="g-lbl"><span class="n"></span>Sizes</div>
+      <div class="b-sizes" id="sizes"></div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="captions"> ✨ Add AI captions for each product <span class="small muted">(captions.txt in each folder)</span></label>
+      <div class="row wrap hidden" id="capOpts" style="gap:8px;margin-top:8px">
+        <select class="input" id="capLang" style="width:auto"><option>English</option><option>Nepali</option><option>Hindi</option><option>Bengali</option><option>Urdu</option><option>Tamil</option><option>Sinhala</option><option>Thai</option><option>Arabic</option><option>Spanish</option><option>French</option></select>
+        <select class="input" id="capTone" style="width:auto"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="fun">Fun</option><option value="luxury">Luxury</option><option value="urgent">Urgent sale</option></select>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block g-go" id="go" type="button" disabled>📦 Make all posts</button>
+    <p class="small muted center" id="goNote">Add some product photos to start.</p>
+  </section>
+
+  <section class="g-results">
+    <div class="b-preview-wrap">
+      <div class="g-out-head"><h3>Preview</h3><span class="grow"></span><select class="input" id="pvSize" style="width:auto"></select></div>
+      <div class="b-preview" id="preview"><div class="muted small center" style="padding:60px 10px">Your first product will appear here.</div></div>
+    </div>
+    <div class="b-busy hidden" id="busy"><div class="spin"></div><b id="busyTitle">Making your posts…</b>
+      <div class="b-bar"><span id="bar"></span></div><span class="small muted" id="busyNote"></span></div>
+    <div class="g-out-head" style="margin-top:18px"><h3>Products</h3><span class="grow"></span><button class="btn btn-ghost btn-sm hidden" id="clearAll" type="button">Remove all</button></div>
+    <div class="b-rows" id="rows"><p class="muted small">No products yet.</p></div>
+  </section>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/font-scripts.js"></script>
+<script src="/vendor/jszip.min.js"></script>
+<script src="/js/bulk.js"></script>
+<script src="/js/telemetry.js"></script>
+</body>
+</html>

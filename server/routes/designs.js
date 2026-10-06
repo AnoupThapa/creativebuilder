@@ -102,6 +102,44 @@ router.post('/designs', S.requireRole('designer'), (req, res) => {
   res.status(201).json(summary(q.get('SELECT * FROM designs WHERE id = ?', id), u));
 });
 
+/* One design → themed versions (Flash sale, New arrival, Customer review, Hiring, Festival…) in one click */
+const VARIATIONS = {
+  flash_sale: { label: 'Flash sale', name: 'Flash sale', set: { contentType: 'promo', headline: 'Flash Sale', subheadline: 'Today only — while stocks last', badge: '24 HOURS ONLY', cta: 'Shop Now', theme: 'bold', layout: 'centered' } },
+  new_arrival: { label: 'New arrival', name: 'New arrival', set: { contentType: 'promo', headline: 'Just Arrived', subheadline: 'Be the first to try it', badge: 'NEW', cta: 'Explore Now', theme: 'minimal', layout: 'top' } },
+  best_seller: { label: 'Best seller', name: 'Best seller', set: { contentType: 'promo', headline: 'Customer Favourite', subheadline: 'Our best seller this month', badge: 'BEST SELLER', cta: 'Order Now', theme: 'premium' } },
+  review: { label: 'Customer review', name: 'Customer review', set: { contentType: 'review', reviewQuote: 'Absolutely love it — great quality and fast service. Highly recommend!', reviewName: 'Happy customer', reviewStars: 5, theme: 'pastel' } },
+  hiring: { label: 'Hiring notice', name: "We're hiring", set: { contentType: 'promo', headline: "We're Hiring", subheadline: 'Join our friendly team', price: '', badge: 'JOIN US', cta: 'Apply Now', theme: 'modern', layout: 'centered' } },
+  festival: { label: 'Festival greeting', name: 'Festival greeting', set: { contentType: 'promo', headline: 'Happy Festival Season', subheadline: 'Special offers for you and your family', badge: 'FESTIVE OFFER', cta: 'Visit Us', theme: 'festive', layout: 'centered' } },
+  weekend: { label: 'Weekend offer', name: 'Weekend offer', set: { contentType: 'promo', headline: 'Weekend Special', subheadline: 'Saturday & Sunday only', badge: 'LIMITED OFFER', cta: 'Book Today', theme: 'sunset' } },
+};
+router.get('/design-variations', (req, res) => res.json(Object.entries(VARIATIONS).map(([key, v]) => ({ key, label: v.label }))));
+router.post('/designs/:id/variations', S.requireRole('designer'), (req, res) => {
+  const u = req.user;
+  const src = load(req);
+  const kinds = [...new Set((Array.isArray(req.body.kinds) ? req.body.kinds : []).filter(k => VARIATIONS[k]))].slice(0, 7);
+  if (!kinds.length) throw new S.HttpError(400, 'Pick at least one variation.');
+  const ws = q.get('SELECT * FROM workspaces WHERE id = ?', u.workspace_id);
+  const plan = effectivePlan(ws);
+  if (plan.max_designs >= 0) {
+    const n = q.get('SELECT COUNT(*) n FROM designs WHERE workspace_id = ? AND deleted_at IS NULL', ws.id).n;
+    if (n + kinds.length > plan.max_designs)
+      throw new S.HttpError(402, `Your ${plan.name} plan can keep ${plan.max_designs} saved designs — you have room for ${Math.max(0, plan.max_designs - n)} more.`, { code: 'upgrade' });
+  }
+  let base = {}; try { base = JSON.parse(src.data || '{}'); } catch {}
+  const now = Date.now();
+  const made = kinds.map((k, i) => {
+    const v = VARIATIONS[k];
+    const data = { ...base, ...v.set, v: 1 };
+    if (data.contentType === 'promo' && base.price && k !== 'hiring') data.price = base.price; // keep the real price on offers
+    const id = crypto.randomUUID();
+    q.run(`INSERT INTO designs (id, workspace_id, owner_id, name, data, thumbnail, visibility, brand_kit_id, created_at, updated_at)
+           VALUES (?,?,?,?,?,NULL,'private',?,?,?)`, id, u.workspace_id, u.id, `${src.name} · ${v.name}`.slice(0, 100), JSON.stringify(data), src.brand_kit_id ?? null, now + i, now + i);
+    return summary(q.get('SELECT * FROM designs WHERE id = ?', id), u);
+  });
+  S.audit(req, 'design.variations', { from: src.id, kinds });
+  res.status(201).json({ designs: made });
+});
+
 router.get('/designs/:id', (req, res) => {
   const d = load(req);
   res.json({ ...summary(d, req.user), data: JSON.parse(d.data || '{}') });

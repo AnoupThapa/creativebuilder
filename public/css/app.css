@@ -112,3 +112,5 @@ body.acct-business .biz-only{display:revert}
 #kColors input[type=color]{width:38px;height:34px;padding:2px}
 @media(max-width:760px){.quick{grid-template-columns:1fr}.acct-types{grid-template-columns:1fr}}
 @media(max-width:760px){.quick{grid-template-columns:repeat(3,1fr)!important;gap:8px}.quick-card{padding:12px 6px;text-align:center;justify-items:center;border-radius:14px}.quick-card small{display:none}.quick-card b{font-size:12.5px;line-height:1.25}.quick-card .qi{font-size:24px}}
+.var-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.var-grid{grid-template-columns:1fr}}

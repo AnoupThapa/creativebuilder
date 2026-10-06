@@ -92,7 +92,10 @@
             ${!status.instagramReady ? '<div class="pm-warn">Instagram can only receive posts when PostForge is online (e.g. on Fly.io), not on localhost. Facebook works from here.</div>' : ''}
           </div>
           <div class="pm-sec" id="pmCapSec">
-            <label for="pmCap">Caption</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><label for="pmCap" style="margin-right:auto">Caption</label>
+              <select id="pmAiLang" class="pm-ai-sel" aria-label="Caption language"><option>English</option><option>Nepali</option><option>Hindi</option><option>Bengali</option><option>Urdu</option><option>Tamil</option><option>Sinhala</option><option>Thai</option><option>Arabic</option><option>Spanish</option><option>French</option></select>
+              <select id="pmAiTone" class="pm-ai-sel" aria-label="Tone"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="fun">Fun</option><option value="luxury">Luxury</option><option value="urgent">Urgent sale</option></select>
+              <button class="pill" type="button" id="pmAi">✨ Write with AI</button></div>
             <textarea class="pm-cap" id="pmCap" maxlength="2200" placeholder="Write a caption… #hashtags work too">${esc(defaultCaption())}</textarea>
             <div class="pm-count" id="pmCount"></div>
           </div>
@@ -127,6 +130,23 @@
     };
     $('pmBody').addEventListener('change', sync);
     $('pmCap').addEventListener('input', sync);
+    /* AI captions: written for the platform being posted to (Instagram style when Instagram is ticked) */
+    $('pmAi').addEventListener('click', async () => {
+      const b = $('pmAi'); b.disabled = true; b.textContent = '✨ Writing…';
+      const chosen = [...document.querySelectorAll('.pm-acct:checked')].map(c => c.dataset.platform);
+      const platform = chosen.includes('instagram') ? 'instagram' : 'facebook';
+      try {
+        const r = await api('/ai/captions', { method: 'POST', body: {
+          product: state.contentType === 'review' ? `Customer review: ${state.reviewQuote || ''}` : (state.headline || ''),
+          details: state.subheadline || '', price: state.price || '', contact: (state.contact || '').replace(/📞\s*/, ''),
+          brand: (typeof ME !== 'undefined' && ME && ME.workspace && ME.workspace.name) || '', language: $('pmAiLang').value, tone: $('pmAiTone').value, platforms: [platform] } });
+        const c = r.captions[platform];
+        $('pmCap').value = (c.text + (c.hashtags.length ? '\n\n' + c.hashtags.join(' ') : '')).slice(0, 2200);
+        sync();
+        showToast(r.source === 'template' ? (r.note || 'Caption written — edit it as you like') : `Caption written ✓ (${r.left} left today)`);
+      } catch (e) { showToast(e.message); }
+      b.disabled = false; b.textContent = '✨ Write with AI';
+    });
     const first = document.querySelector('.pm-acct:not(:disabled)');
     if (accounts.filter(a => a.status === 'active').length === 1 && first) first.checked = true;
     sync();

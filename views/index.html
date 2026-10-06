@@ -53,6 +53,16 @@ section.wrap{padding-top:64px;padding-bottom:64px}
 section h2{font-size:clamp(26px,3.4vw,38px);font-weight:800;text-align:center}
 section .sub{text-align:center;color:var(--muted);font-size:16px;margin:10px auto 36px;max-width:620px}
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.who-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:10px}
+.who-card.biz{background:var(--ink);color:#d9d8e6;border-color:var(--ink)}
+.who-card.biz h3{color:#fff}.who-card.biz .muted{color:#b9b7cc}
+.who-ic{font-size:30px}
+.who-card h3{font-size:20px}
+.who-card ul{list-style:none;padding:0;margin:4px 0 10px;display:grid;gap:8px;font-size:14px;flex:1}
+.who-card li{padding-left:24px;position:relative}
+.who-card li::before{content:'✓';position:absolute;left:0;color:var(--coral);font-weight:800}
+.who-card .btn{align-self:flex-start}
 .feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
 .feat .i{width:40px;height:40px;border-radius:11px;background:var(--coral-soft);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px}
 .feat h3{font-size:16px;margin-bottom:6px}
@@ -110,6 +120,7 @@ section .sub{text-align:center;color:var(--muted);font-size:16px;margin:10px aut
 footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 @media(max-width:900px){
+  .who{grid-template-columns:1fr}
   .hero{grid-template-columns:1fr;padding-top:24px;gap:28px}
   .mock{height:380px;max-width:420px}
   .features,.steps{grid-template-columns:1fr}
@@ -126,6 +137,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <a class="brand" href="/"><span class="brand-mark">P</span>PostForge</a>
     <div class="links" id="navLinks">
       <a class="l hide-m" href="#features">Features</a>
+      <a class="l hide-m" href="#who">For agencies</a>
       <a class="l hide-m" href="#examples">Examples</a>
       <a class="l hide-m" href="#pricing">Pricing</a>
       <a class="l hide-m" href="/help">Help</a>
@@ -138,9 +150,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 <main>
   <div class="wrap hero">
     <div>
-      <span class="eyebrow">✨ Made for cafés, shops, salons &amp; services</span>
+      <span class="eyebrow">✨ For shops, cafés, salons, wholesalers &amp; agencies</span>
       <h1>One photo in.<br><em>Every social post</em> out.</h1>
-      <p class="lead">Upload a product photo or customer video, add your offer, and PostForge sizes it perfectly for Instagram, Facebook, TikTok, LinkedIn, Pinterest, YouTube and WhatsApp — in one click.</p>
+      <p class="lead">Snap a product with your phone — or paste its web link. PostForge turns it into pro-looking posts, AI product photos and short videos with captions in your language, sized for Instagram, Facebook, TikTok, LinkedIn, Pinterest, YouTube and WhatsApp.</p>
       <div class="cta">
         <a class="btn btn-primary" href="/signup" data-cta>Create your first post — free</a>
         <a class="btn btn-ghost" href="#demo">▶ Watch the 30-second demo</a>
@@ -152,7 +164,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       <div class="post p2"><span class="b">NEW</span><h4>Fresh Arrivals</h4><span class="c">Shop Now →</span></div>
       <div class="post p3"><h4>Happy Hour · 2–5 PM</h4><span class="c">Visit Store →</span></div>
       <div class="chip-float" style="left:10px;top:12px">📐 14 platform sizes</div>
-      <div class="chip-float" style="left:10px;bottom:30px">⚡ 1-click ZIP export</div>
+      <div class="chip-float" style="right:10px;top:46%">✨ AI photos, videos &amp; captions</div>
+      <div class="chip-float" style="left:10px;bottom:30px">📦 50 products → 1 ZIP</div>
     </div>
   </div>
 
@@ -171,19 +184,54 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   </section>
 
   <section id="features" class="wrap">
-    <h2>Everything a small business needs to post daily</h2>
+    <h2>Everything you need to post every day</h2>
     <p class="sub">Simple enough for anyone, polished enough to look like you hired a designer.</p>
     <div class="features">
-      <div class="feat"><div class="i">📐</div><h3>Auto-resize for every platform</h3><p>Instagram posts, stories and reels, Facebook, TikTok, LinkedIn, Pinterest, X, YouTube and WhatsApp — all from one design.</p></div>
-      <div class="feat"><div class="i">✂️</div><h3>Background removal</h3><p>Turn product shots on plain backgrounds into clean cut-outs on your brand colour — instantly, in the browser.</p></div>
-      <div class="feat"><div class="i">🎨</div><h3>Brand kits</h3><p>Save your logo, colours, phone and website once. Colours are picked straight from your logo.</p></div>
-      <div class="feat"><div class="i">💬</div><h3>Customer review posts</h3><p>Turn a 5-star review or a customer video into a testimonial post that builds trust.</p></div>
-      <div class="feat"><div class="i">🗂</div><h3>Ready-made templates</h3><p>Specials, flash sales, new arrivals, festivals and more for restaurants, cafés, retail, salons and services.</p></div>
-      <div class="feat"><div class="i">📣</div><h3>Post &amp; schedule</h3><p>Publish straight to your Facebook Page and Instagram — now or at the time you pick. No more switching apps.</p></div>
-      <div class="feat"><div class="i">✨</div><h3>AI product photos &amp; videos</h3><p>Upload a product photo or paste its web link and get professional ad pictures — or short product videos for Reels — for your industry. Then add your text and logo in the editor. 3 free to try.</p></div>
-      <div class="feat"><div class="i">🎞</div><h3>GIF maker for online shops</h3><p>Turn a product video or a few photos into looping GIFs (and light MP4s) for your store, emails and ads — every size at once.</p></div>
-      <div class="feat"><div class="i">📱</div><h3>Works on your phone</h3><p>Create, download and post from your phone’s browser — nothing to install.</p></div>
-      <div class="feat"><div class="i">👥</div><h3>Team access</h3><p>Invite staff as designers or viewers, share designs with the team, and keep private drafts private.</p></div>
+      <div class="feat"><div class="i">📸</div><h3>Snap &amp; post from your phone</h3><p>Take a product photo, add your offer and post — the photo is fitted perfectly to every size. Nothing to install.</p></div>
+      <div class="feat"><div class="i">✨</div><h3>AI product photos</h3><p>Pick your business type and a style — your real product gets a professional scene. Every image is checked so no stray writing, misspelled labels or changed products reach you.</p></div>
+      <div class="feat"><div class="i">🎬</div><h3>AI product videos</h3><p>Turn a product photo into a smooth 4–8 second video for Reels and Stories. The camera and light move; your product stays exactly the same.</p></div>
+      <div class="feat"><div class="i">💬</div><h3>AI captions in your language</h3><p>Ready-to-post captions and hashtags tuned for each platform — in English, नेपाली, हिन्दी, বাংলা, Arabic, Thai and more.</p></div>
+      <div class="feat"><div class="i">📦</div><h3>Bulk studio</h3><p>Upload up to 50 product photos or paste product links — get branded posts in every size, plus captions, in one ZIP.</p></div>
+      <div class="feat"><div class="i">🔁</div><h3>One-click variations</h3><p>Turn one design into a flash sale, new arrival, customer review, festival greeting or hiring post in a click.</p></div>
+      <div class="feat"><div class="i">📐</div><h3>Every platform size</h3><p>Instagram posts, stories and reels, Facebook, TikTok, LinkedIn, Pinterest, X, YouTube and WhatsApp — from one design.</p></div>
+      <div class="feat"><div class="i">✂️</div><h3>Background removal</h3><p>Turn product shots into clean cut-outs on your brand colour — instantly, in the browser.</p></div>
+      <div class="feat"><div class="i">🎨</div><h3>Brand kits</h3><p>Logo, colours, fonts, contact details and social accounts saved once and applied in one click.</p></div>
+      <div class="feat"><div class="i">📣</div><h3>Post &amp; schedule</h3><p>Publish straight to your Facebook Page and Instagram — now or at the time you pick.</p></div>
+      <div class="feat"><div class="i">🎞</div><h3>GIF maker &amp; your own videos</h3><p>Looping GIFs under 1 MB for your online store, and your own videos turned into branded MP4 posts.</p></div>
+      <div class="feat"><div class="i">🌏</div><h3>Local languages</h3><p>Write posts in Nepali, Hindi, Bengali, Tamil, Thai, Arabic, Urdu and more — with fonts that display them correctly.</p></div>
+    </div>
+  </section>
+
+  <section id="who" class="wrap">
+    <h2>Built for shops — and for the people who run many brands</h2>
+    <p class="sub">Choose your account type when you sign up. Switch any time.</p>
+    <div class="who">
+      <div class="who-card">
+        <div class="who-ic">🛍️</div>
+        <h3>Shops &amp; small businesses</h3>
+        <p class="muted">Cafés, restaurants, salons, clothing and mobile shops that post for themselves.</p>
+        <ul>
+          <li>Snap → edit → post, right from your phone</li>
+          <li>AI product photos, videos and captions</li>
+          <li>Festival, sale and new-arrival templates</li>
+          <li>Post and schedule to Facebook &amp; Instagram</li>
+          <li>Plans from Free, then US$12 a month</li>
+        </ul>
+        <a class="btn btn-dark" href="/signup" data-cta>Start free as a shop</a>
+      </div>
+      <div class="who-card biz">
+        <div class="who-ic">🏢</div>
+        <h3>Agencies, wholesalers &amp; multi-store brands</h3>
+        <p class="muted">Marketing agencies, distributors and brands that manage many products or clients.</p>
+        <ul>
+          <li>Up to 50 brands, each with its own logo, colours, fonts and socials</li>
+          <li>Brand switcher — new designs start in the right brand</li>
+          <li>Free client logins: each client reviews and downloads only their own designs</li>
+          <li>Bulk studio: 50 products or product links → every size + captions in one ZIP</li>
+          <li>Team roles, 2-step login and a downloadable, tamper-evident activity log</li>
+        </ul>
+        <a class="btn btn-primary" href="/signup?type=business">Start as an agency</a>
+      </div>
     </div>
   </section>
 
@@ -191,9 +239,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <h2>Three steps. Under a minute.</h2>
     <p class="sub">Most posts are done before your coffee cools.</p>
     <div class="steps">
-      <div class="step"><span class="n">01</span><h3>Upload a photo or video</h3><p>Use what you already have on your phone.</p></div>
-      <div class="step"><span class="n">02</span><h3>Add your offer</h3><p>Headline, price and a call-to-action — or start from a template.</p></div>
-      <div class="step"><span class="n">03</span><h3>Download every size</h3><p>One image, or every platform in a single ZIP.</p></div>
+      <div class="step"><span class="n">01</span><h3>Snap, upload or paste a link</h3><p>A phone photo, a video, or your product page — we pick up the name, price and photo.</p></div>
+      <div class="step"><span class="n">02</span><h3>Add your offer — or let AI help</h3><p>Headline, price and logo in one click, plus AI scenes, videos and captions when you want them.</p></div>
+      <div class="step"><span class="n">03</span><h3>Post or download every size</h3><p>Publish to Facebook &amp; Instagram, or get every platform in one ZIP.</p></div>
     </div>
   </section>
 
@@ -235,9 +283,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <div class="faq" style="margin-top:28px">
       <details><summary>What counts as one image?</summary><p>Each downloaded file counts once. Generating 5 platform sizes in one ZIP uses 5 images. Editing and previewing are always free and unlimited.</p></details>
       <details><summary>Does it work on my phone?</summary><p>Yes. PostForge runs in the browser on iPhone, Android, tablets and computers — nothing to install. Downloads save straight to your phone so you can post from the Instagram or Facebook app.</p></details>
-      <details><summary>Which plan should I pick?</summary><p>Starter gives each user up to 5 images a day (100 a month) — enough for most single-location businesses posting daily. Pro gives 15 a day (300 a month), video posts and every template, for busier businesses or agencies.</p></details>
+      <details><summary>Which plan should I pick?</summary><p><b>Starter</b> (5 images a day, 40 AI photos a month, your own videos up to 30 s) suits most single-location shops. <b>Pro</b> adds 15 a day, AI product videos, longer videos and print quality. <b>Business</b> and <b>Agency</b> are for multi-store brands, wholesalers and agencies — up to 50 brands, client logins and bulk posting.</p></details>
+      <details><summary>Will the AI put spelling mistakes on my pictures?</summary><p>No. AI pictures and videos are made with <b>no writing at all</b> — your headline, price and logo are added afterwards by PostForge, sharp and correctly spelled, in any language. Every AI image is checked automatically; anything with stray writing or a changed product is redone or refunded.</p></details>
+      <details><summary>Can agencies give clients their own login?</summary><p>Yes. On a Business account, invite a client for their brand — the login is free (no seat), and they only see and download their own brand's designs.</p></details>
       <details><summary>What does "per user" mean?</summary><p>Your subscription is priced per seat. Each team member you add gets their own allowance on your plan.</p></details>
-      <details><summary>Can I post videos?</summary><p>Yes — the Pro plan lets you add your branding and offer to short customer videos and download them as MP4, the format Instagram, Facebook and TikTok expect.</p></details>
+      <details><summary>Can I post videos?</summary><p>Yes. From Starter you can turn your own videos (up to 30 seconds) into branded MP4 posts; Pro and above allow longer videos and AI product videos made from a photo.</p></details>
+      <details><summary>Which languages can I use?</summary><p>Type your posts in any language — PostForge picks fonts that display Nepali, Hindi, Bengali, Tamil, Sinhala, Thai, Arabic, Urdu and more correctly. AI captions can be written in your language too.</p></details>
       <details><summary>What happens to my data?</summary><p>Your photos and designs are private to your team. You can download everything or delete your account yourself at any time from Account &amp; security. We use cookie-free analytics and never sell data.</p></details>
       <details><summary>Can I change or cancel my plan?</summary><p>Any time from Billing. Cancelling keeps your plan active until the end of the period you've paid for.</p></details>
     </div>

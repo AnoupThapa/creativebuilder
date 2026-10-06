@@ -24,6 +24,21 @@ router.get('/ai/options', (req, res) => {
     topup: { credits: config.ai.topupCredits, price_cents: config.ai.topupPriceCents } });
 });
 
+/* AI captions for each platform — no credits used; fair-use daily limit */
+router.post('/ai/captions', S.requireRole('designer'), async (req, res) => {
+  const { q } = require('../db');
+  const plan = require('../plans').effectivePlan(q.get('SELECT * FROM workspaces WHERE id = ?', req.user.workspace_id));
+  const limit = plan.code === 'free' ? 5 : 100;
+  const start = new Date(); start.setUTCHours(0, 0, 0, 0);
+  const used = q.get("SELECT COUNT(*) n FROM audit_log WHERE user_id = ? AND action = 'ai.captions' AND created_at >= ?", req.user.id, start.getTime()).n;
+  if (used >= limit) throw new S.HttpError(429, plan.code === 'free'
+    ? `You've written ${limit} sets of captions today — upgrade for up to 100 a day.` : 'That’s a lot of captions today — please try again tomorrow.', { code: 'captions_limit' });
+  let r;
+  try { r = await require('../ai/captions').write(req.body || {}); } catch (e) { throw new S.HttpError(e.status || 400, e.message); }
+  S.audit(req, 'ai.captions', { platforms: Object.keys(r.captions), source: r.source });
+  res.json({ ...r, left: limit - used - 1 });
+});
+
 router.get('/ai/credits', (req, res) => res.json(ai.creditStatus(req.user)));
 
 /* Paste a product link → name, details, price and the main photo */

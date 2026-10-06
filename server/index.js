@@ -156,6 +156,7 @@ app.get('/app', S.pageAuth(), page('app.html'));
 app.get('/editor', S.pageAuth(), page('editor.html'));
 app.get('/gif', S.pageAuth({ noClient: true }), page('gif.html'));
 app.get('/ai', S.pageAuth({ noClient: true }), page('ai.html'));
+app.get('/bulk', S.pageAuth({ noClient: true }), page('bulk.html'));
 app.get('/admin', S.pageAuth({ superadmin: true }), page('admin.html'));
 /* Health check for uptime monitors (UptimeRobot, Better Stack…): checks the database and disk */
 app.get('/health', (req, res) => {

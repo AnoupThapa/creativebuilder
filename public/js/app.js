@@ -174,7 +174,7 @@
             : isClient() ? '' : `<span class="badge">${VIS_LABEL[d.visibility]}</span>`}</div>
           <div class="dactions">
             <button data-open>${d.can_edit ? 'Edit' : isClient() ? 'Open & download' : 'View'}</button>
-            ${me.user.role !== 'viewer' ? '<button data-dup>Duplicate</button>' : ''}
+            ${me.user.role !== 'viewer' ? '<button data-dup>Duplicate</button><button data-var>✨ Variations</button>' : ''}
             ${d.can_edit ? '<button data-rename>Rename</button>' : ''}
             ${d.can_manage ? '<button class="del" data-del>Delete</button>' : ''}
           </div>
@@ -182,11 +182,33 @@
       </div>`).join('');
   }
 
+  /* one design → themed versions */
+  let varFrom = null, varKinds = null;
+  async function openVariations(d) {
+    varFrom = d;
+    if (!varKinds) { try { varKinds = await api('/design-variations'); } catch (e) { toast(e.message, { error: true }); return; } }
+    $('varGrid').innerHTML = varKinds.map((k, i) => `<label class="check"><input type="checkbox" value="${esc(k.key)}" ${i < 3 ? 'checked' : ''}> ${esc(k.label)}</label>`).join('');
+    $('varModal').classList.add('open');
+  }
+  $('varGo').addEventListener('click', async () => {
+    const kinds = [...$('varGrid').querySelectorAll('input:checked')].map(i => i.value);
+    if (!kinds.length) { toast('Tick at least one.', { error: true }); return; }
+    $('varGo').disabled = true;
+    try {
+      const r = await api(`/designs/${varFrom.id}/variations`, { method: 'POST', body: { kinds } });
+      $('varModal').classList.remove('open');
+      toast(`${r.designs.length} new design${r.designs.length === 1 ? '' : 's'} ✓ — open each to see it and save`);
+      loadDesigns();
+    } catch (err) { toast(err.message, { error: true, ms: 5000 }); }
+    $('varGo').disabled = false;
+  });
+
   let renaming = null;
   $('designGrid').addEventListener('click', async e => {
     const card = e.target.closest('.dcard'); if (!card) return;
     const d = designs.find(x => x.id === card.dataset.id);
     if (e.target.closest('[data-open]')) location.href = '/editor?id=' + encodeURIComponent(d.id);
+    else if (e.target.closest('[data-var]')) openVariations(d);
     else if (e.target.closest('[data-dup]')) {
       try { await api('/designs', { method: 'POST', body: { duplicateOf: d.id } }); toast('Duplicated ✓'); loadDesigns(); }
       catch (err) { toast(err.message, { error: true, ms: 4500 }); }
