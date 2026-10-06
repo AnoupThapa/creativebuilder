@@ -90,12 +90,12 @@ test('prompts never ask for text and keep the real product', () => {
   assert.equal(providers.active(), 'demo');
 });
 
-test('free plan: 3 AI images for life, failures refunded, results open in the editor', { timeout: 120000 }, async () => {
+test('free plan: 5 AI images for life, failures refunded, results open in the editor', { timeout: 120000 }, async () => {
   const c = await signup('Fay', 'fay@example.com');
   let r = await c.get('/api/ai/options');
   assert.equal(r.status, 200);
   assert.ok(r.data.templates.length >= 15);
-  assert.equal(r.data.credits.left, 3);
+  assert.equal(r.data.credits.left, 5);
   assert.equal(r.data.demo, true);
 
   // checks
@@ -114,7 +114,7 @@ test('free plan: 3 AI images for life, failures refunded, results open in the ed
   let done = await waitJob(c, r.data.job.id);
   assert.equal(done.job.status, 'failed');
   assert.ok(!done.job.error.includes('429'), 'technical details are hidden from customers');
-  assert.equal(done.credits.left, 3, 'failed image is refunded');
+  assert.equal(done.credits.left, 5, 'failed image is refunded');
   providers.generate = real;
 
   // two images with a photo upload
@@ -126,7 +126,7 @@ test('free plan: 3 AI images for life, failures refunded, results open in the ed
   done = await waitJob(c, r.data.job.id);
   assert.equal(done.job.status, 'done', done.job.error);
   assert.equal(done.job.outputs.length, 2);
-  assert.equal(done.credits.left, 1);
+  assert.equal(done.credits.left, 3);
   const img = await c.get(done.job.outputs[0].url);
   assert.equal(img.status, 200);
   assert.ok(img.data.length > 1000);
@@ -150,7 +150,10 @@ test('free plan: 3 AI images for life, failures refunded, results open in the ed
   assert.equal(data.platformKey, 'ig_portrait');
   assert.equal(data.headline, 'Ceramic mug');
 
-  // last free image, then the limit
+  // use two more, then the last free image, then the limit
+  r = await c.post('/api/ai/jobs', { template: 'festive_lights', product: 'Gift box', count: 2 });
+  assert.equal(r.status, 201);
+  await waitJob(c, r.data.job.id);
   r = await c.post('/api/ai/jobs', { template: 'festive_lights', product: 'Gift box', count: 2 });
   assert.equal(r.status, 402, 'only 1 left, 2 asked');
   r = await c.post('/api/ai/jobs', { template: 'festive_lights', product: 'Gift box' });
@@ -159,7 +162,7 @@ test('free plan: 3 AI images for life, failures refunded, results open in the ed
   r = await c.post('/api/ai/jobs', { template: 'festive_lights', product: 'Gift box' });
   assert.equal(r.status, 402);
   assert.equal(r.data.code, 'ai_credits');
-  assert.match(r.data.error, /3 free/);
+  assert.match(r.data.error, /5 free/);
 
   // credit pack (demo billing adds the credits straight away)
   r = await c.post('/api/billing/ai-topup', {});
@@ -382,8 +385,8 @@ test('paid plan: monthly credits per seat', async () => {
   const plans = await c.get('/api/billing/plans');
   const biz = plans.data.plans.find(p => p.code === 'business');
   assert.ok(biz, 'business plan exists');
-  assert.equal(biz.ai_credits_monthly, 500);
-  assert.equal(plans.data.plans.find(p => p.code === 'free').ai_credits_lifetime, 3);
+  assert.equal(biz.ai_credits_monthly, 400);
+  assert.equal(plans.data.plans.find(p => p.code === 'free').ai_credits_lifetime, 5);
 });
 
 test('product link: reads the shop page, blocks private addresses', async () => {
@@ -456,7 +459,7 @@ test('admin: kill switch, budget, styles, test, credits', { timeout: 60000 }, as
   assert.equal(r.status, 200);
   assert.equal(r.data.balance, 7);
   r = await u.get('/api/ai/credits');
-  assert.equal(r.data.left, 10);
+  assert.equal(r.data.left, 12);
 
   // connection test (demo)
   r = await a.post('/api/admin/ai/test', {});

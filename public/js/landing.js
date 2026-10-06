@@ -10,7 +10,7 @@
     const f = [
       [true, quotaLabel(p) + (p.code === 'free' ? '' : ' per user')],
       [true, 'All 14 platform sizes'],
-      [true, p.ai_credits_monthly ? `${p.ai_credits_monthly} AI product photos a month` : `${p.ai_credits_lifetime || 0} free AI product photos`],
+      [true, p.ai_credits_monthly ? `${p.ai_credits_monthly} AI credits a month (1 per AI photo)` : `${p.ai_credits_lifetime || 0} free AI product photos`],
       [p.ai_video, 'AI product videos for Reels & ads'],
       [p.batch_export, 'One-click multi-platform ZIP'],
       [true, `Up to ${p.max_quality}× export quality${p.max_quality >= 3 ? ' (print)' : p.max_quality === 2 ? ' (HD)' : ''}`],

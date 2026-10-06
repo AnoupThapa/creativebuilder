@@ -86,7 +86,7 @@ test('owner signs up on free trial; quota + verification enforced', async () => 
   assert.equal(r.status, 201);
   r = await owner.me();
   assert.equal(r.data.plan.code, 'free');
-  assert.equal(r.data.usage.limit, 3);
+  assert.equal(r.data.usage.limit, 5);
   assert.equal(r.data.user.role, 'owner');
 
   // CSRF: request without token is rejected
@@ -118,7 +118,7 @@ test('owner signs up on free trial; quota + verification enforced', async () => 
   assert.equal(r.status, 402);
   r = await owner.post('/api/exports', { items: [{ platform: 'ig_post', kind: 'image' }], quality: 2 });
   assert.equal(r.status, 402);
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     r = await owner.post('/api/exports', { designId: ownerDesign, items: [{ platform: 'ig_post', kind: 'image' }], quality: 1 });
     assert.equal(r.status, 200);
     assert.equal(r.data.watermark, true);
@@ -172,7 +172,7 @@ test('Pro plan: 15 a day, up to 300 a month, yearly billing', async () => {
   const plans = await owner.get('/api/billing/plans');
   const pro = plans.data.plans.find(p => p.code === 'pro');
   assert.equal(pro.currency, 'usd');
-  assert.equal(pro.price_cents_annual, 29000, 'yearly = 10 x monthly');
+  assert.equal(pro.price_cents_annual, 24000, 'yearly = 10 x monthly');
   r = await owner.post('/api/billing/checkout', { plan: 'pro', seats: 2, interval: 'month' });
   assert.equal((await owner.me()).data.workspace.billing_interval, 'month');
 });

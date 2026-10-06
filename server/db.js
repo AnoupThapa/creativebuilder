@@ -453,26 +453,26 @@ const metaSet = (k, v) => q.run('INSERT INTO meta (key, value) VALUES (?, ?) ON 
 
 /* ---------- seed plans (only inserted if missing; admins edit them later) ---------- */
 const SEED_PLANS = [
-  { code: 'free', name: 'Free trial', description: 'Try every basic tool. 3 watermarked downloads to test the app.',
-    price_cents: 0, price_cents_annual: 0, currency: 'usd', quota_limit: 3, quota_period: 'lifetime', daily_limit: 0, max_quality: 1, video_export: 0, batch_export: 0,
+  { code: 'free', name: 'Free trial', description: 'Try every tool: 5 watermarked downloads and 5 AI photos to test the app.',
+    price_cents: 0, price_cents_annual: 0, currency: 'usd', quota_limit: 5, quota_period: 'lifetime', daily_limit: 0, max_quality: 1, video_export: 0, batch_export: 0,
     premium_templates: 0, watermark: 1, max_designs: 5, max_brand_kits: 1, max_upload_mb: 10, storage_mb: 100, public: 1, sort: 0,
-    ai_credits_monthly: 0, ai_credits_lifetime: 3 },
+    ai_credits_monthly: 0, ai_credits_lifetime: 5 },
   { code: 'starter', name: 'Starter', description: 'Post every day: 5 a day, up to 100 a month, your own videos up to 30 s, plus 40 AI images.',
-    price_cents: 1200, price_cents_annual: 12000, currency: 'usd', quota_limit: 100, quota_period: 'month', daily_limit: 5, max_quality: 2, video_export: 1, batch_export: 1,
+    price_cents: 900, price_cents_annual: 9000, currency: 'usd', quota_limit: 100, quota_period: 'month', daily_limit: 5, max_quality: 2, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: 200, max_brand_kits: 1, max_upload_mb: 15, storage_mb: 1024, public: 1, sort: 1,
     ai_credits_monthly: 40, ai_credits_lifetime: 0, max_video_seconds: 30, max_video_mb: 50 },
-  { code: 'pro', name: 'Pro', description: 'For busy businesses: 15 images a day, up to 300 a month, 150 AI images, video and print quality.',
-    price_cents: 2900, price_cents_annual: 29000, currency: 'usd', quota_limit: 300, quota_period: 'month', daily_limit: 15, max_quality: 3, video_export: 1, batch_export: 1,
+  { code: 'pro', name: 'Pro', description: 'For busy businesses: 15 a day, up to 300 a month, 150 AI credits, AI videos and AI model presenters.',
+    price_cents: 2400, price_cents_annual: 24000, currency: 'usd', quota_limit: 300, quota_period: 'month', daily_limit: 15, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 5, max_upload_mb: 100, storage_mb: 5120, public: 1, sort: 2,
     ai_credits_monthly: 150, ai_credits_lifetime: 0, ai_video: 1 },
-  { code: 'business', name: 'Business', description: 'For agencies and multi-store brands: 50 images a day, up to 1,000 a month, 500 AI images and priority AI.',
-    price_cents: 7900, price_cents_annual: 79000, currency: 'usd', quota_limit: 1000, quota_period: 'month', daily_limit: 50, max_quality: 3, video_export: 1, batch_export: 1,
+  { code: 'business', name: 'Business', description: 'For multi-store brands and wholesalers: 50 a day, up to 1,000 a month, 400 AI credits, developer API and website widget.',
+    price_cents: 5900, price_cents_annual: 59000, currency: 'usd', quota_limit: 1000, quota_period: 'month', daily_limit: 50, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 20, max_upload_mb: 200, storage_mb: 20480, public: 1, sort: 3,
-    ai_credits_monthly: 500, ai_credits_lifetime: 0, ai_video: 1, api_access: 1 },
-  { code: 'agency', name: 'Agency', description: 'For agencies and wholesalers managing many brands: up to 50 client brands, client review logins, 1,000 AI images.',
-    price_cents: 14900, price_cents_annual: 149000, currency: 'usd', quota_limit: 2000, quota_period: 'month', daily_limit: 100, max_quality: 3, video_export: 1, batch_export: 1,
+    ai_credits_monthly: 400, ai_credits_lifetime: 0, ai_video: 1, api_access: 1 },
+  { code: 'agency', name: 'Agency', description: 'For agencies managing many brands: up to 50 client brands, white-label client review portal, 800 AI credits.',
+    price_cents: 11900, price_cents_annual: 119000, currency: 'usd', quota_limit: 2000, quota_period: 'month', daily_limit: 100, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 50, max_upload_mb: 500, storage_mb: 51200, public: 1, sort: 4,
-    ai_credits_monthly: 1000, ai_credits_lifetime: 0, ai_video: 1, audience: 'business', api_access: 1 },
+    ai_credits_monthly: 800, ai_credits_lifetime: 0, ai_video: 1, audience: 'business', api_access: 1 },
 ];
 for (const p of SEED_PLANS) {
   const exists = q.get('SELECT code FROM plans WHERE code = ?', p.code);
@@ -508,6 +508,15 @@ if (!metaGet('starter_video_v1')) {
 if (!metaGet('api_access_v1')) {
   q.run("UPDATE plans SET api_access = 1 WHERE code IN ('business', 'agency')");
   metaSet('api_access_v1', Date.now());
+}
+/* One-time pricing v4 (Oct 2026): lower prices after a competitor review, more generous free trial,
+   AI credits sized so every plan stays profitable even when all credits are used */
+if (!metaGet('pricing_v4')) {
+  for (const p of SEED_PLANS) {
+    q.run(`UPDATE plans SET description = ?, price_cents = ?, price_cents_annual = ?, quota_limit = ?, ai_credits_monthly = ?, ai_credits_lifetime = ? WHERE code = ?`,
+      p.description, p.price_cents, p.price_cents_annual, p.quota_limit, p.ai_credits_monthly, p.ai_credits_lifetime, p.code);
+  }
+  metaSet('pricing_v4', Date.now());
 }
 /* One-time: which pricing page each plan appears on */
 if (!metaGet('audience_v1')) {

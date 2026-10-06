@@ -112,7 +112,7 @@ module.exports = {
     dailyBudgetUsd: parseFloat(env.AI_DAILY_BUDGET_USD || '20'),      // stop all AI for the day after this much estimated spend
     jobs: Math.max(1, parseInt(env.AI_JOBS || '2', 10) || 2),         // AI jobs at the same time
     topupCredits: parseInt(env.AI_TOPUP_CREDITS || '100', 10),
-    topupPriceCents: parseInt(env.AI_TOPUP_PRICE_CENTS || '1000', 10),
+    topupPriceCents: parseInt(env.AI_TOPUP_PRICE_CENTS || '1200', 10),
     veoModel: env.VEO_MODEL || 'veo-3.1-fast-generate-preview',      // or veo-3.1-lite-generate-preview (cheaper) / veo-3.1-generate-preview (best)
     videoResolution: env.AI_VIDEO_RESOLUTION || '720p',
     videoCostPerSec: parseFloat(env.AI_VIDEO_COST_PER_SEC || '0.10'), // estimate for the budget cap (Veo 3.1 Fast 720p)

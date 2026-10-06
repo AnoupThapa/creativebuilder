@@ -279,7 +279,7 @@ test('allowance is enforced and deleting the workspace removes social data', asy
   const ws = q.get("SELECT workspace_id FROM users WHERE email = 'maya@example.com'").workspace_id;
   q.run("UPDATE workspaces SET plan_code = 'free', sub_status = 'none', billing_mode = 'none' WHERE id = ?", ws);
   let last;
-  for (let i = 0; i < 5; i++) { last = await owner.post('/api/social/posts', postForm([accts[0].id], { scheduledAt: Date.now() + 3600e3 })); if (last.status !== 201) break; }
+  for (let i = 0; i < 8; i++) { last = await owner.post('/api/social/posts', postForm([accts[0].id], { scheduledAt: Date.now() + 3600e3 })); if (last.status !== 201) break; }
   assert.equal(last.status, 402, 'free trial allowance runs out');
   const files = fs.readdirSync(path.join(tmp, 'social')).length;
   assert.ok(files > 0);
