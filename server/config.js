@@ -41,7 +41,8 @@ module.exports = {
   isProd,
   port,
   appUrl: (env.APP_URL || `http://localhost:${port}`).replace(/\/$/, ''),
-  appName: env.APP_NAME || 'PostGenX',
+  // the product was renamed from PostForge — an old APP_NAME / MAIL_FROM left on the server must not bring it back
+  appName: env.APP_NAME && !/postforge/i.test(env.APP_NAME) ? env.APP_NAME : 'PostGenX',
   appSecret: loadSecret(),
   trustProxy: env.TRUST_PROXY ? (isNaN(+env.TRUST_PROXY) ? env.TRUST_PROXY : +env.TRUST_PROXY) : false,
 
@@ -130,6 +131,6 @@ module.exports = {
     port: parseInt(env.SMTP_PORT || '587', 10),
     user: env.SMTP_USER || '',
     pass: env.SMTP_PASS || '',
-    from: env.MAIL_FROM || 'PostGenX <no-reply@postgenx.local>',
+    from: (env.MAIL_FROM || 'PostGenX <no-reply@postgenx.local>').replace(/PostForge/gi, 'PostGenX'),
   },
 };
