@@ -78,3 +78,12 @@ test('editor: text overlay and text effects are saved with the design', async ()
   const css = await (await fetch(base + '/css/fonts.css')).text();
   assert.match(css, /Courier Prime/, 'typewriter font is served');
 });
+
+test('pages link scripts and styles with a version, so an update never runs old scripts', async () => {
+  for (const u of ['/', '/login', '/help']) {
+    const html = await (await fetch(base + u)).text();
+    const refs = html.match(/(?:src|href)="\/(?:js|css)\/[^"]+"/g) || [];
+    assert.ok(refs.length > 0, u);
+    for (const r of refs) assert.match(r, /\?v=[0-9a-f]{10}"$/, `${u}: ${r}`);
+  }
+});

@@ -130,7 +130,23 @@ app.use('/vendor/jszip.min.js', (req, res) => res.sendFile(require.resolve('jszi
 app.use(express.static(PUB, { index: false, maxAge: config.isProd ? '1h' : 0 }));
 
 /* ---------------- Pages ---------------- */
-const page = f => (req, res) => res.sendFile(path.join(VIEWS, f), { headers: { 'Cache-Control': 'no-store' } });
+/* Every page links its scripts and styles as /js/x.js?v=<version>, where the version changes whenever any
+   script or style changes. Browsers keep files for an hour, so without this a fresh page could run with
+   yesterday's script after an update (new buttons that do nothing). */
+const ASSET_V = (() => {
+  const h = require('node:crypto').createHash('sha1');
+  const walk = d => { for (const f of require('node:fs').readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else if (/\.(js|css)$/.test(f.name)) h.update(f.name).update(require('node:fs').readFileSync(p)); } };
+  try { walk(path.join(PUB, 'js')); walk(path.join(PUB, 'css')); } catch { h.update(String(Date.now())); }
+  return h.digest('hex').slice(0, 10);
+})();
+const versioned = html => html.replace(/((?:src|href)=")(\/(?:js|css)\/[\w.-]+\.(?:js|css))(")/g, `$1$2?v=${ASSET_V}$3`);
+const pageCache = new Map();
+const page = f => (req, res) => {
+  let html = config.isProd ? pageCache.get(f) : null;
+  if (!html) { html = versioned(require('node:fs').readFileSync(path.join(VIEWS, f), 'utf8')); if (config.isProd) pageCache.set(f, html); }
+  res.set('Cache-Control', 'no-store').type('html').send(html);
+};
 /* Home page with SEO tags filled in (canonical URL, social previews, structured data) */
 const fsx = require('node:fs');
 let homeCache = null;
@@ -145,7 +161,7 @@ app.get('/', (req, res) => {
       url: config.appUrl,
       offers: paid.map(p => ({ '@type': 'Offer', name: p.name, price: (p.price_cents / 100).toFixed(2), priceCurrency: (p.currency || 'usd').toUpperCase() })),
     };
-    homeCache = fsx.readFileSync(path.join(VIEWS, 'index.html'), 'utf8')
+    homeCache = versioned(fsx.readFileSync(path.join(VIEWS, 'index.html'), 'utf8'))
       .replaceAll('{{APP_URL}}', config.appUrl.replace(/\/$/, ''))
       .replaceAll('{{APP_NAME}}', config.appName)
       .replace('{{JSON_LD}}', JSON.stringify(ld).replace(/</g, '\\u003c'));

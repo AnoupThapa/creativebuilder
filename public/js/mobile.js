@@ -89,7 +89,7 @@
     const GROUP = { 1: 'photo', 2: 'photo', 3: 'photo', 4: 'text', 5: 'text', 6: 'style' };
     $$('.rail-left > .section').forEach(sec => {
       const n = parseInt(sec.querySelector('.sec-label .n')?.textContent, 10);
-      sec.dataset.m = GROUP[n] || 'style';
+      sec.dataset.m = sec.id === 'secOverlay' ? 'text' : (GROUP[n] || 'style');
     });
     const TITLES = { photo: 'Photo & logo', text: 'Words on your post', style: 'Style & position', brand: 'Brand kit', export: 'Download' };
     const rl = $('.rail-left'), rr = $('.rail-right');

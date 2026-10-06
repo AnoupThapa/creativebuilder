@@ -1689,6 +1689,10 @@ function buildTextFxControls(){
   const o = f => `<option value="${PF.esc(f.name)}">${PF.esc(f.name)} — ${PF.esc(f.kind)}${f.lang ? ' · ' + PF.esc(f.lang) : ''}</option>`;
   $('ovFont').innerHTML = '<option value="">Same as headline</option>' + FONTS.map(o).join('');
 }
+function syncOverlayEye(){
+  const b = document.querySelector('.lv-toggle[data-layer="overlay"]'); if (!b) return;
+  b.textContent = state.layerVis.overlay !== false ? '👁' : '🙈'; b.style.opacity = state.layerVis.overlay !== false ? '1' : '0.35';
+}
 function syncTextFxUI(){
   if (!$('txtFx')) return;
   document.querySelectorAll('#txtFx .chip').forEach(c => c.classList.toggle('selected', c.dataset.fx === state.textFx));
@@ -1704,9 +1708,11 @@ function syncTextFxUI(){
 buildTextFxControls();
 const fxChange = fn => e => { if (READONLY) return; fn(e); syncTextFxUI(); render(); markDirty(); };
 $('txtFx').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-fx]'); if (c) state.textFx = c.dataset.fx; }));
-$('ovFx').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-fx]'); if (c) state.overlayFx = c.dataset.fx; }));
-$('ovSize').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-v]'); if (c) state.overlaySize = c.dataset.v; }));
-$('ovAlign').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-v]'); if (c) state.overlayAlign = c.dataset.v; }));
+/* picking a look before typing anything shows sample text, so the change is visible straight away */
+const ovSample = () => { if (!state.overlayText.trim()) { state.overlayText = state.headline || 'Your text here'; showToast('Type your own text in the box — this is a sample'); } state.layerVis.overlay = true; };
+$('ovFx').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-fx]'); if (c) { state.overlayFx = c.dataset.fx; ovSample(); } }));
+$('ovSize').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-v]'); if (c) { state.overlaySize = c.dataset.v; ovSample(); } }));
+$('ovAlign').addEventListener('click', fxChange(e => { const c = e.target.closest('[data-v]'); if (c) { state.overlayAlign = c.dataset.v; ovSample(); } }));
 $('txtColor').addEventListener('input', fxChange(e => { state.textColor = e.target.value; }));
 $('fxColor').addEventListener('input', fxChange(e => { state.fxColor = e.target.value; }));
 $('txtReset').addEventListener('click', fxChange(() => { state.textColor = ''; state.fxColor = ''; }));
@@ -1720,11 +1726,11 @@ $('ovStyles').addEventListener('click', async e => {
   if (t.fx === 'neon') { state.overlayAccent = '#ff3da5'; state.overlayColor = '#ffffff'; }
   else if (t.fx === 'highlight') { state.overlayAccent = '#ffffff'; }
   else if (t.fx === 'retro') { state.overlayAccent = '#ff6b4a'; state.overlayColor = '#ffffff'; }
-  if (!state.overlayText.trim()) state.overlayText = state.headline || 'Your text here';
+  ovSample();
   await ensureFonts([t.font]); syncTextFxUI(); render(); markDirty();
 });
 $('inputOverlay').addEventListener('input', e => {
-  state.overlayText = e.target.value; $('overlayCount').textContent = e.target.value.length; render(); refreshFontOptionsSoon();
+  state.overlayText = e.target.value; state.layerVis.overlay = true; syncOverlayEye(); $('overlayCount').textContent = e.target.value.length; render(); refreshFontOptionsSoon();
 });
 /* AI: a short punchy line for the overlay, from the same caption writer */
 $('ovAi').addEventListener('click', async () => {
