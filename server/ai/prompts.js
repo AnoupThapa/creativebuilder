@@ -61,4 +61,48 @@ ${NO_TEXT.replace('the image must', 'the video must')} The only exception: print
 Motion: one continuous ${seconds}-second shot, smooth, slow and steady, professional commercial quality, no cuts, no transitions, no people or hands entering the frame. Keep the product centred and fully in frame for the whole clip. Silent (no voice, no music).`;
 }
 
-module.exports = { buildPrompt, buildVideoPrompt, clean, NO_TEXT, VIDEO_NEGATIVE };
+/* ---------- AI models (made-up presenters) ---------- */
+const FICTIONAL = 'The person is an entirely fictional adult created for this advert — not a real person, celebrity or public figure.';
+
+/* one photoreal reference portrait per character, reused so the same face appears every time */
+function buildPortraitPrompt(c) {
+  return `Photorealistic head-and-shoulders portrait photograph of ${c.desc}, looking straight at the camera with a natural, friendly expression.
+Soft even studio light, plain light-grey seamless background, sharp focus, natural skin texture, true colours, vertical 4:5.
+${FICTIONAL}
+${NO_TEXT}`;
+}
+
+/* the presenter with the customer's product in one advertising photo */
+function buildModelPrompt(c, action, look, input, { aspect, hasPortrait }) {
+  const product = clean(input.product, 120) || 'the product';
+  const details = clean(input.details, 400);
+  const setting = clean(input.setting, 120);
+  return `Advertising photograph. ${c.desc[0].toUpperCase() + c.desc.slice(1)} ${action.text.replaceAll('{product}', product)}.
+${look.text}${setting ? ` Scene: ${setting}.` : ''}
+${details ? `About the product (never write this in the image): ${details}.` : ''}
+ATTACHED IMAGES: the FIRST attached image is the real PRODUCT.${hasPortrait ? ' The SECOND attached image shows the PERSON to feature — keep exactly the same face, hairstyle, skin tone, age and build.' : ''}
+${FICTIONAL}
+
+Format: ${RATIO_WORDS[aspect] || aspect} photograph, high resolution, photorealistic, sRGB.
+PRODUCT ACCURACY: use the first attached photo as the exact product. Keep its shape, proportions, size relative to a human hand, colours, material, packaging and any print that is physically on it exactly as photographed — do not redraw, re-letter, translate, add, remove or "fix" anything on it, and do not invent a different product. The product is clearly visible, in sharp focus, facing the camera and not hidden by fingers.
+PEOPLE QUALITY: natural relaxed pose, realistic hands with five fingers, natural eyes and teeth, the product does not cover the face. Exactly one person.
+${NO_TEXT} The only exception: print that is physically on the real product in the attached photo stays exactly as photographed — never add any new lettering, and no captions, subtitles or social-media interface.`;
+}
+
+/* image-to-video: the presenter speaks the script about the product */
+const PRESENTER_NEGATIVE = 'subtitles, captions, on-screen text, titles, words, letters, logos, watermark, lettering, music, background music, singing, product morphing, product changing shape, label changing, extra products, extra people, second person, face changing, identity change, distorted hands, extra fingers, scene cuts, jump cuts, transitions, fast camera shake, low quality, blurry';
+function buildPresenterPrompt(c, look, line, { seconds, language, tone, continuing }) {
+  const voice = c.a && c.a.g === 'f' ? 'a natural female voice' : 'a natural male voice';
+  const camera = look === 'selfie'
+    ? 'Camera: handheld smartphone selfie framing at arm’s length with very slight natural movement, like creator content.'
+    : 'Camera: steady medium shot at eye level with a very slow gentle push-in, professional advert look.';
+  return `${continuing ? 'Continue the same shot seamlessly from the provided first frame — same person, same place, same light.' : 'Start exactly from the provided image (it is the first frame) and keep the same person, product, place, lighting and colours.'}
+The presenter (${c.desc}) keeps the product visible and talks directly to the camera in ${language}, with accurate lip-sync, natural expressions and small relaxed hand gestures, and says: "${line.replace(/"/g, "'")}"
+Voice: ${voice} that matches their age (${c.age}), clear and ${tone || 'friendly'}, spoken at a natural pace. Audio: only the voice and quiet natural room tone — no music, no sound effects.
+${camera}
+PRODUCT IS RIGID: the product is a solid real object — its shape, size, colours, label and any print stay exactly identical in every frame; it never morphs, melts or changes.
+${FICTIONAL} The face and identity stay exactly the same for the whole clip.
+No on-screen text, titles, captions or subtitles of any kind. One continuous ${seconds}-second shot, no cuts.`;
+}
+
+module.exports = { buildPrompt, buildVideoPrompt, buildPortraitPrompt, buildModelPrompt, buildPresenterPrompt, clean, NO_TEXT, VIDEO_NEGATIVE, PRESENTER_NEGATIVE };

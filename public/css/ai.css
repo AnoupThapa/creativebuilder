@@ -53,3 +53,19 @@
   .btn-snap{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:12px;border-radius:12px;background:var(--ink,#1a1a2e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;position:relative}
   .btn-snap input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
 }
+
+/* AI models */
+.a-mgroups{margin-bottom:10px}
+.a-mgroups button{font-size:12px;padding:6px 10px}
+.a-chars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:330px;overflow:auto;padding:2px}
+.a-char{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px 8px;border:1.5px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;text-align:center}
+.a-char img{width:100%;aspect-ratio:1;border-radius:10px;object-fit:cover;background:#f1efea}
+.a-char b{font-size:12.5px;color:var(--ink);line-height:1.15}
+.a-char small{font-size:10.5px;color:var(--muted);line-height:1.2}
+.a-char.on{border-color:var(--coral);background:var(--coral-soft)}
+.a-msub{margin:4px 0 2px}
+.a-prow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.a-prow select{width:auto;flex:1;min-width:110px}
+.a-pnote{background:#f6f3ff;border:1px solid #e3dcff;border-radius:10px;padding:8px 10px;color:#4a4270;margin-top:6px}
+.a-model-tag{display:inline-block;font-size:11px;font-weight:700;background:#efe9ff;color:#5b3fc2;border-radius:50px;padding:2px 8px;margin-bottom:4px}
+@media (max-width:600px){.a-chars{grid-template-columns:repeat(3,1fr)}}

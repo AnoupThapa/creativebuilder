@@ -117,6 +117,8 @@ module.exports = {
     videoResolution: env.AI_VIDEO_RESOLUTION || '720p',
     videoCostPerSec: parseFloat(env.AI_VIDEO_COST_PER_SEC || '0.10'), // estimate for the budget cap (Veo 3.1 Fast 720p)
     videoCredits: parseInt(env.AI_VIDEO_CREDITS || '10', 10),        // credits per video
+    presenterCredits: parseInt(env.AI_PRESENTER_CREDITS || '15', 10),     // AI model presenter video, 8 s (with voice)
+    presenterCredits15: parseInt(env.AI_PRESENTER_CREDITS_15 || '28', 10), // ~15 s (two parts)
     videoJobs: Math.max(1, parseInt(env.AI_VIDEO_JOBS || '1', 10) || 1),
     videoTimeoutMin: parseInt(env.AI_VIDEO_TIMEOUT_MIN || '12', 10),
     qualityCheck: env.AI_QUALITY_CHECK !== 'false',                 // inspect every AI image for lettering / damaged product

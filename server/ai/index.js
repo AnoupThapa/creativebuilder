@@ -8,7 +8,9 @@ const { q, tx, metaGet, metaSet } = require('../db');
 const { effectivePlan, localParts, storageUsed } = require('../plans');
 require('./keys'); // keys saved by the admin take effect before anything else
 const providers = require('./providers');
-const { buildPrompt, buildVideoPrompt, VIDEO_NEGATIVE } = require('./prompts');
+const { buildPrompt, buildVideoPrompt, VIDEO_NEGATIVE, buildPortraitPrompt, buildModelPrompt, buildPresenterPrompt, PRESENTER_NEGATIVE } = require('./prompts');
+const characters = require('./characters');
+const script = require('./script');
 const videogen = require('./videogen');
 const { INDUSTRIES, TEMPLATES } = require('./templates');
 
@@ -82,7 +84,7 @@ function publicJob(j) {
     outputs: JSON.parse(j.outputs || '[]').map((f, i) => ({ n: i, url: `/api/ai/out/${j.id}/${i}`,
       ...(j.kind === 'video' ? { poster: `/api/ai/out/${j.id}/${i}?poster=1` } : {}) })),
     error: j.error ? j.error.split(' || ')[0] : '', created_at: j.created_at, finished_at: j.finished_at,
-    inputs: (() => { try { const x = JSON.parse(j.inputs); return { product: x.product, price: x.price }; } catch { return {}; } })(),
+    inputs: (() => { try { const x = JSON.parse(j.inputs); return { product: x.product, price: x.price, character: x.character, look: x.look, parts: x.parts, language: x.language }; } catch { return {}; } })(),
     demo: j.provider === 'demo', kind: j.kind,
     seconds: (() => { try { return JSON.parse(j.inputs).seconds || 0; } catch { return 0; } })(),
   };
@@ -161,23 +163,32 @@ async function run(id) {
   try {
     let photo = null;
     if (fs.existsSync(path.join(dir, 'input'))) photo = { buffer: fs.readFileSync(path.join(dir, 'input')), mime: fs.readFileSync(path.join(dir, 'input.mime'), 'utf8') };
-    const r = await providers.generate({ prompt: job.prompt, photo, aspect: job.aspect, n: job.count, tmpDir: dir, provider: job.provider });
-    let cost = r.costUsd, redone = 0, rejected = 0;
+    // AI model photos: the character's reference portrait goes along so the same face appears every time
+    const isModel = job.template_key.startsWith('model:');
+    let refs = [], cost = 0;
+    if (isModel) {
+      const ch = characters.byKey(job.template_key.split(':')[1]);
+      if (!ch) throw new providers.AiError('That AI model is no longer available. Please pick another one.', 'failed');
+      const pr = await portrait(ch, job.provider, dir);
+      cost += pr.cost; refs = [pr.ref];
+    }
+    const r = await providers.generate({ prompt: job.prompt, photo, refs, aspect: job.aspect, n: job.count, tmpDir: dir, provider: job.provider });
+    cost += r.costUsd; let redone = 0, rejected = 0;
     // quality check: no lettering, product sharp & unchanged — redo a failing image once, then drop it (refunded)
     const images = [];
     const checking = qualityCheck() && job.provider !== 'demo';
     for (let img of r.images) {
       if (checking) {
         cost += providers.CHECK_COST[job.provider] || 0;
-        let v = await providers.checkImage({ image: img, photo, provider: job.provider });
+        let v = await providers.checkImage({ image: img, photo, provider: job.provider, person: isModel });
         if (v && !v.ok) {
           console.warn('[ai-check]', id, 'rejected:', v.problems.join(', '), v.notes);
           redone++;
           try {
-            const again = await providers.generate({ prompt: job.prompt, photo, aspect: job.aspect, n: 1, tmpDir: dir, provider: job.provider });
+            const again = await providers.generate({ prompt: job.prompt, photo, refs, aspect: job.aspect, n: 1, tmpDir: dir, provider: job.provider });
             cost += again.costUsd + (providers.CHECK_COST[job.provider] || 0);
             img = again.images[0];
-            v = await providers.checkImage({ image: img, photo, provider: job.provider });
+            v = await providers.checkImage({ image: img, photo, provider: job.provider, person: isModel });
           } catch (e) { v = { ok: false, problems: ['retry failed'] }; }
           if (v && !v.ok) { rejected++; console.warn('[ai-check]', id, 'still rejected:', v.problems.join(', ')); continue; }
         }
@@ -207,6 +218,172 @@ async function run(id) {
     fail(job, e.reason ? e : new providers.AiError('The AI could not make this image. Please try again.', 'failed', e.message), e.spent || 0);
   } finally {
     fs.rm(path.join(dir, 'input'), { force: true }, () => {});
+  }
+}
+
+/* ---------- AI models: reference portraits + jobs ---------- */
+const CHAR_DIR = path.join(AI_DIR, 'characters');
+const portraitBusy = new Map();
+/* One photoreal portrait per character and AI service, made the first time it's needed and then reused.
+   Demo mode uses the drawing from the picker. */
+async function portrait(ch, provider, tmpDir) {
+  if (provider === 'demo') return { ref: { buffer: fs.readFileSync(path.join(config.ROOT, 'public', 'img', 'characters', `${ch.key}.png`)), mime: 'image/png' }, cost: 0 };
+  const file = path.join(CHAR_DIR, `${ch.key}-${provider}.png`);
+  if (fs.existsSync(file)) return { ref: { buffer: fs.readFileSync(file), mime: 'image/png' }, cost: 0 };
+  if (!portraitBusy.has(file)) {
+    portraitBusy.set(file, (async () => {
+      const r = await providers.generate({ prompt: buildPortraitPrompt(ch), aspect: '4:5', n: 1, tmpDir, provider });
+      fs.mkdirSync(CHAR_DIR, { recursive: true });
+      fs.writeFileSync(file, r.images[0]);
+      return r.costUsd;
+    })().finally(() => setTimeout(() => portraitBusy.delete(file), 1000)));
+    const cost = await portraitBusy.get(file);
+    return { ref: { buffer: fs.readFileSync(file), mime: 'image/png' }, cost };
+  }
+  await portraitBusy.get(file);
+  return { ref: { buffer: fs.readFileSync(file), mime: 'image/png' }, cost: 0 };
+}
+function characterPortraitUrl(key) {
+  const p = providers.active();
+  return p !== 'demo' && fs.existsSync(path.join(CHAR_DIR, `${key}-${p}.png`)) ? `/api/ai/characters/${key}/portrait` : null;
+}
+
+/* photo of an AI model with the customer's product (needs a real product photo) */
+function createModelJob(user, { character, action, look, input, photo, aspect, count }) {
+  if (!enabled()) throw new HttpErr(503, 'AI studio is paused for maintenance. Please try again later.');
+  if (user.role === 'viewer') throw new HttpErr(403, 'Viewers can look at designs but not create AI images.');
+  const ch = characters.byKey(String(character || ''));
+  if (!ch) throw new HttpErr(400, 'Pick an AI model first.');
+  const act = characters.ACTIONS[action] || characters.ACTIONS.hold;
+  const lk = characters.LOOKS[look] || characters.LOOKS.studio;
+  if (!photo) throw new HttpErr(400, 'Add a photo of your product — the AI model shows your real product, so it needs a picture of it.');
+  aspect = ASPECTS.includes(aspect) ? aspect : '4:5';
+  count = Math.min(2, Math.max(1, parseInt(count, 10) || 1));
+  fairUse(user);
+  const provider = providers.active();
+  const estimate = providers.COST[provider] * (count + 1);
+  if (spentToday() + estimate > dailyBudget()) throw new HttpErr(503, 'AI studio has reached today’s limit. Please try again tomorrow.', { code: 'ai_budget' });
+  const prompt = buildModelPrompt(ch, act, lk, input, { aspect, hasPortrait: true });
+  const id = crypto.randomBytes(12).toString('hex');
+  tx(() => {
+    const fromTopup = charge(user, count);
+    q.run(`INSERT INTO ai_jobs (id, user_id, workspace_id, template_key, kind, status, provider, model, inputs, prompt, aspect, count, credits, credits_topup, local_month, cost_usd, created_at)
+           VALUES (?,?,?,?,?,'queued',?,?,?,?,?,?,?,?,?,?,?)`,
+      id, user.id, user.workspace_id, `model:${ch.key}`, 'image', provider, '', JSON.stringify({ ...input, character: ch.key, action: action in characters.ACTIONS ? action : 'hold', look: look in characters.LOOKS ? look : 'studio' }),
+      prompt, aspect, count, count, fromTopup, localParts(user.timezone).month, estimate, Date.now());
+  });
+  fs.mkdirSync(jobDir(id), { recursive: true });
+  fs.writeFileSync(path.join(jobDir(id), 'input'), photo.buffer, { mode: 0o600 });
+  fs.writeFileSync(path.join(jobDir(id), 'input.mime'), photo.mime);
+  queue.push(id);
+  pump();
+  return q.get('SELECT * FROM ai_jobs WHERE id = ?', id);
+}
+
+/* presenter video: an AI model photo (the first frame) + what the presenter says → 8 s or ~15 s video with voice */
+const presenterCredits = sec => sec === 15 ? config.ai.presenterCredits15 : config.ai.presenterCredits;
+function createPresenterJob(user, { from, parts, language, tone, look, seconds, aspect, label, product }) {
+  if (!enabled()) throw new HttpErr(503, 'AI studio is paused for maintenance. Please try again later.');
+  if (user.role === 'viewer') throw new HttpErr(403, 'Viewers can look at designs but not create AI videos.');
+  const ws = q.get('SELECT * FROM workspaces WHERE id = ?', user.workspace_id);
+  if (!effectivePlan(ws).ai_video) throw new HttpErr(402, 'Presenter videos are included in the Pro, Business and Agency plans.', { code: 'ai_video_plan' });
+  seconds = +seconds === 15 ? 15 : 8;
+  const out = from && from.id ? outputFile(user, from.id, from.n || 0) : null;
+  if (!out || out.job.kind !== 'image' || !out.job.template_key.startsWith('model:') || !fs.existsSync(out.path))
+    throw new HttpErr(400, 'Pick one of your AI model photos to start the video from (make one in “Photo with product” first).');
+  const ch = characters.byKey(out.job.template_key.split(':')[1]);
+  if (!ch) throw new HttpErr(400, 'That AI model is no longer available.');
+  const lang = String(language || 'English').slice(0, 30).replace(/[^\p{L} ()-]/gu, '') || 'English';
+  const chk = script.check(parts, seconds, lang);
+  if (chk.problem) throw new HttpErr(400, chk.problem, { code: 'script' });
+  aspect = ['9:16', '4:5', '1:1', '16:9'].includes(aspect) ? aspect : '9:16';
+  const lookKey = look in characters.LOOKS ? look : (() => { try { return JSON.parse(out.job.inputs).look || 'studio'; } catch { return 'studio'; } })();
+  fairUse(user);
+  const provider = videogen.active();
+  const estimate = provider === 'veo' ? config.ai.videoCostPerSec * (seconds === 15 ? 16 : 8) : 0;
+  if (spentToday() + estimate > dailyBudget()) throw new HttpErr(503, 'AI studio has reached today’s limit. Please try again tomorrow.', { code: 'ai_budget' });
+  const credits = presenterCredits(seconds);
+  let prodName = String(product || '').slice(0, 120);
+  if (!prodName) { try { prodName = JSON.parse(out.job.inputs).product || ''; } catch {} }
+  const input = { product: prodName, character: ch.key, parts: chk.parts, language: lang, tone: script.TONES[tone] ? tone : 'friendly', look: lookKey, seconds, label: label !== false, presenter: true };
+  const id = crypto.randomBytes(12).toString('hex');
+  tx(() => {
+    const fromTopup = charge(user, credits);
+    q.run(`INSERT INTO ai_jobs (id, user_id, workspace_id, template_key, kind, status, provider, model, inputs, prompt, aspect, count, credits, credits_topup, local_month, cost_usd, created_at)
+           VALUES (?,?,?,?,'video','queued',?,?,?,?,?,1,?,?,?,?,?)`,
+      id, user.id, user.workspace_id, `presenter:${ch.key}`, provider, provider === 'veo' ? config.ai.veoModel : 'demo', JSON.stringify(input),
+      chk.parts.join(' / '), aspect, credits, fromTopup, localParts(user.timezone).month, estimate, Date.now());
+  });
+  fs.mkdirSync(jobDir(id), { recursive: true });
+  fs.writeFileSync(path.join(jobDir(id), 'input'), fs.readFileSync(out.path), { mode: 0o600 });
+  fs.writeFileSync(path.join(jobDir(id), 'input.mime'), out.file.endsWith('.jpg') ? 'image/jpeg' : out.file.endsWith('.webp') ? 'image/webp' : 'image/png');
+  vqueue.push(id);
+  vpump();
+  return q.get('SELECT * FROM ai_jobs WHERE id = ?', id);
+}
+
+async function runPresenter(job) {
+  const id = job.id, dir = jobDir(id);
+  const inp = JSON.parse(job.inputs);
+  const ch = characters.byKey(inp.character);
+  const sec1 = 8;
+  let cost = 0;
+  try {
+    if (!ch) throw new providers.AiError('That AI model is no longer available. Your credits were returned.', 'failed');
+    if (!fs.existsSync(path.join(dir, 'input'))) throw new providers.AiError('The start picture was lost (server restart). Your credits were returned — please try again.', 'failed');
+    const start = { buffer: fs.readFileSync(path.join(dir, 'input')), mime: fs.readFileSync(path.join(dir, 'input.mime'), 'utf8') };
+    const prep = await videogen.prepareStart(start.buffer, job.aspect, dir);
+    const opts = { language: inp.language, tone: script.TONES[inp.tone], seconds: sec1 };
+    let raw;
+    if (job.provider === 'veo') {
+      let op = job.remote_op;
+      if (!op) {
+        op = await videogen.veoStart({ prompt: buildPresenterPrompt(ch, inp.look, inp.parts[0], opts), negative: PRESENTER_NEGATIVE, png: prep.png, gen: prep.gen, seconds: sec1, audio: true });
+        q.run('UPDATE ai_jobs SET remote_op = ? WHERE id = ?', op, id);
+      }
+      cost += config.ai.videoCostPerSec * sec1;
+      raw = await videogen.veoWait(op, { deadline: Date.now() + config.ai.videoTimeoutMin * 60000 });
+      if (inp.seconds === 15 && inp.parts[1]) {
+        const p2 = buildPresenterPrompt(ch, inp.look, inp.parts[1], { ...opts, seconds: 7, continuing: true });
+        const ext = await videogen.veoExtend({ prompt: p2, mp4: raw });
+        if (ext) {
+          cost += config.ai.videoCostPerSec * 7;
+          raw = await videogen.veoWait(ext, { deadline: Date.now() + config.ai.videoTimeoutMin * 60000 });
+        } else {
+          // this model can't extend: film part 2 from the last frame of part 1 and join them
+          const png2 = await videogen.lastFrame(raw, dir);
+          const op2 = await videogen.veoStart({ prompt: buildPresenterPrompt(ch, inp.look, inp.parts[1], { ...opts, continuing: true }), negative: PRESENTER_NEGATIVE, png: png2, gen: prep.gen, seconds: sec1, audio: true });
+          cost += config.ai.videoCostPerSec * sec1;
+          const raw2 = await videogen.veoWait(op2, { deadline: Date.now() + config.ai.videoTimeoutMin * 60000 });
+          raw = await videogen.joinParts(raw, raw2, dir);
+        }
+      }
+    } else {
+      raw = await videogen.demoPresenter({ png: prep.png, gen: prep.gen, seconds: inp.seconds, dir });
+    }
+    const fin = await videogen.finish(raw, job.aspect, dir, 0, { audio: true, label: inp.label !== false });
+    // quality check on 3 frames: no added lettering/subtitles, the same product, one natural-looking person
+    const checker = config.ai.geminiKey ? 'gemini' : config.ai.openaiKey ? 'openai' : null;
+    if (qualityCheck() && job.provider !== 'demo' && checker) {
+      const frames = await videogen.sampleFrames(path.join(dir, fin.file), inp.seconds, dir);
+      for (const fr of frames) {
+        cost += providers.CHECK_COST[checker] || 0;
+        const v = await providers.checkImage({ image: fr, photo: start, provider: checker, person: true });
+        if (v && !v.ok) {
+          q.run('UPDATE ai_jobs SET rejected = 1 WHERE id = ?', id);
+          fs.rmSync(path.join(dir, fin.file), { force: true }); fs.rmSync(path.join(dir, fin.poster), { force: true });
+          throw new providers.AiError('We couldn’t get a clean video this time (the AI added writing or changed the product or person), so your credits were returned. Try again or start from another model photo.', 'quality', v.problems.join(', '));
+        }
+      }
+    }
+    q.run("UPDATE ai_jobs SET status = 'done', outputs = ?, cost_usd = ?, remote_op = '', finished_at = ? WHERE id = ?", JSON.stringify([fin.file]), cost, Date.now(), id);
+  } catch (e) {
+    console.error('[ai-presenter]', id, e.reason || '', e.message, e.detail || '');
+    const j = q.get('SELECT * FROM ai_jobs WHERE id = ?', id);
+    const spent = e.reason === 'auth' || e.reason === 'busy' || (e.reason === 'blocked' && !cost) ? 0 : cost;
+    fail(j, e.reason ? e : new providers.AiError('The AI could not make this video. Please try again.', 'failed', e.message), spent);
+  } finally {
+    for (const f of ['input', 'start.png']) fs.rm(path.join(dir, f), { force: true }, () => {});
   }
 }
 
@@ -267,6 +444,7 @@ async function runVideo(id) {
   let job = q.get('SELECT * FROM ai_jobs WHERE id = ?', id);
   if (!job || job.status !== 'queued') return;
   q.run("UPDATE ai_jobs SET status = 'running' WHERE id = ?", id);
+  if (job.template_key.startsWith('presenter:')) return runPresenter(job);
   const dir = jobDir(id);
   const seconds = (() => { try { return JSON.parse(job.inputs).seconds || 6; } catch { return 6; } })();
   let cost = 0, redone = 0;
@@ -373,7 +551,8 @@ function toDesign(user, id, n) {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, mediaId), buf, { mode: 0o600 });
   let input = {}; try { input = JSON.parse(out.job.inputs); } catch {}
-  const name = `AI · ${(input.product || 'Product').slice(0, 60)}`;
+  const who = input.character && characters.byKey(input.character);
+  const name = `AI${who ? ' ' + who.name : ''} · ${(input.product || 'Product').slice(0, 60)}`;
   const now = Date.now();
   q.run('INSERT INTO media (id, workspace_id, owner_id, filename, mime, kind, size, created_at) VALUES (?,?,?,?,?,?,?,?)',
     mediaId, ws.id, user.id, `ai-${out.job.id.slice(0, 8)}-${n}.${out.file.split('.').pop()}`, mime, isVideo ? 'video' : 'image', buf.length, now);
@@ -407,7 +586,8 @@ function stats() {
 }
 
 module.exports = {
-  INDUSTRIES, ASPECTS, templates, creditStatus, addTopup, createJob, createVideoJob, publicJob, outputFile, toDesign, stats,
+  INDUSTRIES, ASPECTS, templates, creditStatus, addTopup, createJob, createVideoJob, createModelJob, createPresenterJob, presenterCredits, characterPortraitUrl, CHAR_DIR,
+  publicJob, outputFile, toDesign, stats,
   enabled, qualityCheck, setQualityCheck: v => metaSet('ai_quality_check', v ? '1' : '0'), setEnabled: v => metaSet('ai_enabled', v ? '1' : '0'), setDailyBudget: v => metaSet('ai_daily_budget', String(v)),
   HttpErr, _queueIdle: () => running === 0 && queue.length === 0 && vrunning === 0 && vqueue.length === 0,
 };

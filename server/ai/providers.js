@@ -70,18 +70,20 @@ function providerError(status, json, text) {
 }
 
 /* ---------------- Google Gemini ---------------- */
-async function geminiOnce({ prompt, photo, aspect }) {
+async function geminiOnce({ prompt, photo, refs = [], aspect }) {
   const a = config.ai, key = a.geminiKey, model = a.geminiImageModel;
   const headers = { 'x-goog-api-key': key };
   // Current Gemini API (Interactions)
   const input = [{ type: 'text', text: prompt }];
   if (photo) input.push({ type: 'image', mime_type: photo.mime, data: photo.buffer.toString('base64') });
+  for (const r of refs) input.push({ type: 'image', mime_type: r.mime, data: r.buffer.toString('base64') });
   let r = await postJson(`${a.geminiBase}/v1beta/interactions`, { model, input, response_format: { type: 'image', aspect_ratio: aspect, image_size: '1K' } }, headers);
   let imgs = r.status < 300 ? findImages(r.json) : [];
   // Older generateContent endpoint as a fallback
   if (!imgs.length && (r.status === 404 || r.status === 400 || r.status < 300)) {
     const parts = [{ text: prompt }];
     if (photo) parts.push({ inline_data: { mime_type: photo.mime, data: photo.buffer.toString('base64') } });
+    for (const x of refs) parts.push({ inline_data: { mime_type: x.mime, data: x.buffer.toString('base64') } });
     const r2 = await postJson(`${a.geminiBase}/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       { contents: [{ parts }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: aspect } } }, headers);
     if (r2.status < 300) imgs = findImages(r2.json); else if (r.status >= 300 || r2.status !== 404) r = r2;
@@ -95,7 +97,7 @@ async function geminiOnce({ prompt, photo, aspect }) {
 }
 
 /* ---------------- OpenAI ---------------- */
-async function openaiOnce({ prompt, photo, aspect }) {
+async function openaiOnce({ prompt, photo, refs = [], aspect }) {
   const a = config.ai;
   const size = aspect === '1:1' ? '1024x1024' : aspect === '16:9' ? '1536x1024' : '1024x1536';
   const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 180000);
@@ -105,6 +107,7 @@ async function openaiOnce({ prompt, photo, aspect }) {
       const fd = new FormData();
       fd.append('model', a.openaiImageModel); fd.append('prompt', prompt); fd.append('size', size); fd.append('quality', a.openaiQuality); fd.append('n', '1');
       fd.append('image[]', new Blob([photo.buffer], { type: photo.mime }), 'product.' + (photo.mime.split('/')[1] || 'png'));
+      refs.forEach((x, i) => fd.append('image[]', new Blob([x.buffer], { type: x.mime }), `reference-${i}.` + (x.mime.split('/')[1] || 'png')));
       r = await fetch(`${a.openaiBase}/v1/images/edits`, { method: 'POST', headers: { Authorization: `Bearer ${a.openaiKey}` }, body: fd, signal: ctl.signal });
     } else {
       r = await fetch(`${a.openaiBase}/v1/images/generations`, { method: 'POST', signal: ctl.signal,
@@ -127,16 +130,17 @@ async function openaiOnce({ prompt, photo, aspect }) {
    A vision model inspects every AI image before the customer sees it:
    any added lettering, garbled/misspelled label, wrong or damaged product → rejected.
    Returns { ok, problems, raw } — or null if the check itself could not run (then the image is kept). */
-function checkQuestion(hasRef) {
-  return `You are a very strict quality inspector for product advertising photos.
+function checkQuestion(hasRef, person) {
+  return `You are a very strict quality inspector for product advertising photos.${person ? ' The photo is meant to show one presenter with the product.' : ''}
 Image 1 is an AI-generated advertising photo.${hasRef ? ' Image 2 is a real photo of the product.' : ''}
 Answer ONLY with JSON: {"text_added": boolean, "label_changed": boolean, "same_product": boolean, "product_ok": boolean, "notes": "max 15 words"}
 - text_added: true if Image 1 contains ANY words, letters, numbers, logos, watermarks or letter-like squiggles${hasRef ? ' that are NOT part of the product\'s own printed label as seen in Image 2' : ', anywhere, including on the product or its packaging'}.
 - label_changed: ${hasRef ? 'true if the product\'s own printed text/logo in Image 1 looks different, misspelled, garbled or blurred compared with Image 2' : 'always false'}.
 - same_product: ${hasRef ? 'true if Image 1 shows the same product as Image 2 (same shape, colours and packaging)' : 'always true'}.
-- product_ok: true only if the product is fully visible, sharp, not cropped, not warped/melted/duplicated, and clearly the main subject.`;
+- product_ok: true only if the product is fully visible, sharp, not cropped, not warped/melted/duplicated, and clearly the main subject${person ? ' together with the person' : ''}.${person ? `
+Also add "person_ok": boolean — true only if there is exactly one person with a natural face, natural eyes, and realistic hands with five fingers.` : ''}`;
 }
-function parseVerdict(txt, hasRef) {
+function parseVerdict(txt, hasRef, person) {
   const m = String(txt || '').match(/\{[\s\S]*\}/);
   if (!m) return null;
   let v; try { v = JSON.parse(m[0]); } catch { return null; }
@@ -145,31 +149,32 @@ function parseVerdict(txt, hasRef) {
   if (hasRef && v.label_changed) problems.push('label changed');
   if (hasRef && v.same_product === false) problems.push('different product');
   if (v.product_ok === false) problems.push('product unclear');
+  if (person && v.person_ok === false) problems.push('person looks wrong');
   return { ok: problems.length === 0, problems, notes: String(v.notes || '').slice(0, 120) };
 }
 const mimeOf = b => (b[0] === 0xff ? 'image/jpeg' : b.toString('ascii', 8, 12) === 'WEBP' ? 'image/webp' : 'image/png');
 
-async function checkImage({ image, photo, provider = active() }) {
+async function checkImage({ image, photo, provider = active(), person = false }) {
   const a = config.ai;
   const hasRef = !!photo;
   try {
     if (provider === 'gemini') {
-      const parts = [{ text: checkQuestion(hasRef) }, { inline_data: { mime_type: mimeOf(image), data: image.toString('base64') } }];
+      const parts = [{ text: checkQuestion(hasRef, person) }, { inline_data: { mime_type: mimeOf(image), data: image.toString('base64') } }];
       if (hasRef) parts.push({ inline_data: { mime_type: photo.mime, data: photo.buffer.toString('base64') } });
       const r = await postJson(`${a.geminiBase}/v1beta/models/${encodeURIComponent(a.geminiCheckModel)}:generateContent`,
         { contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } }, { 'x-goog-api-key': a.geminiKey }, 60000);
       if (r.status >= 300) { console.warn('[ai-check] gemini', r.status, (r.text || '').slice(0, 200)); return null; }
-      return parseVerdict(findText(r.json).join(' '), hasRef);
+      return parseVerdict(findText(r.json).join(' '), hasRef, person);
     }
     if (provider === 'openai') {
-      const content = [{ type: 'text', text: checkQuestion(hasRef) },
+      const content = [{ type: 'text', text: checkQuestion(hasRef, person) },
         { type: 'image_url', image_url: { url: `data:${mimeOf(image)};base64,${image.toString('base64')}` } }];
       if (hasRef) content.push({ type: 'image_url', image_url: { url: `data:${photo.mime};base64,${photo.buffer.toString('base64')}` } });
       const r = await postJson(`${a.openaiBase}/v1/chat/completions`,
         { model: a.openaiCheckModel, messages: [{ role: 'user', content }], response_format: { type: 'json_object' } },
         { Authorization: `Bearer ${a.openaiKey}` }, 60000);
       if (r.status >= 300) { console.warn('[ai-check] openai', r.status, (r.text || '').slice(0, 200)); return null; }
-      return parseVerdict(r.json?.choices?.[0]?.message?.content, hasRef);
+      return parseVerdict(r.json?.choices?.[0]?.message?.content, hasRef, person);
     }
     return null; // demo: nothing to check
   } catch (e) { console.warn('[ai-check]', e.message); return null; }
@@ -177,14 +182,20 @@ async function checkImage({ image, photo, provider = active() }) {
 
 /* ---------------- Demo (free placeholder) ---------------- */
 const PALETTES = [['0xf6d365', '0xfda085'], ['0x84fab0', '0x8fd3f4'], ['0xa18cd1', '0xfbc2eb'], ['0x2b5876', '0x4e4376'], ['0xfccb90', '0xd57eeb'], ['0x0f2027', '0x2c5364']];
-async function demoOnce({ photo, aspect, seed = 0, tmpDir }) {
+async function demoOnce({ photo, refs = [], aspect, seed = 0, tmpDir }) {
   const [W, H] = SIZE[aspect] || SIZE['4:5'];
   const id = crypto.randomBytes(6).toString('hex');
   const out = path.join(tmpDir, `demo-${id}.png`);
   const [c0, c1] = PALETTES[seed % PALETTES.length];
   const args = ['-f', 'lavfi', '-i', `gradients=s=${W}x${H}:c0=${c0}:c1=${c1}:x0=0:y0=0:x1=${W}:y1=${H}:d=1`];
   let graph = '[0:v]vignette=PI/5[bg]';
-  if (photo) {
+  if (photo && refs[0]) {
+    // demo AI-model photo: the character drawing on the left, the product on the right
+    const inFile = path.join(tmpDir, `demo-${id}-in`), refFile = path.join(tmpDir, `demo-${id}-ref`);
+    fs.writeFileSync(inFile, photo.buffer); fs.writeFileSync(refFile, refs[0].buffer);
+    args.push('-i', inFile, '-i', refFile);
+    graph += `;[2:v]scale=${Math.round(W * 0.6)}:-2[r];[bg][r]overlay=W*0.04:H-h-H*0.04[bg2];[1:v]scale=${Math.round(W * 0.42)}:${Math.round(H * 0.42)}:force_original_aspect_ratio=decrease[p];[bg2][p]overlay=W-w-W*0.05:H*0.55-h/2`;
+  } else if (photo) {
     const inFile = path.join(tmpDir, `demo-${id}-in`);
     fs.writeFileSync(inFile, photo.buffer);
     args.push('-i', inFile);
@@ -199,10 +210,10 @@ async function demoOnce({ photo, aspect, seed = 0, tmpDir }) {
   return buf;
 }
 
-async function generate({ prompt, photo, aspect, n = 1, tmpDir, provider = active() }) {
-  const one = i => provider === 'gemini' ? geminiOnce({ prompt, photo, aspect })
-    : provider === 'openai' ? openaiOnce({ prompt, photo, aspect })
-    : demoOnce({ photo, aspect, seed: Date.now() % 7 + i, tmpDir });
+async function generate({ prompt, photo, refs = [], aspect, n = 1, tmpDir, provider = active() }) {
+  const one = i => provider === 'gemini' ? geminiOnce({ prompt, photo, refs, aspect })
+    : provider === 'openai' ? openaiOnce({ prompt, photo, refs, aspect })
+    : demoOnce({ photo, refs, aspect, seed: Date.now() % 7 + i, tmpDir });
   const images = [];
   for (let i = 0; i < n; i++) images.push(await one(i)); // one after another: kinder to rate limits & memory
   return { images, provider, model: provider === 'gemini' ? config.ai.geminiImageModel : provider === 'openai' ? config.ai.openaiImageModel : 'demo', costUsd: COST[provider] * images.length };

@@ -26,7 +26,7 @@
 
 <main class="g-main">
   <section class="g-panel">
-    <div class="g-seg a-mode" id="mode"><button data-v="image" class="on">📷 Photo ad</button><button data-v="video">🎬 Video ad</button></div>
+    <div class="g-seg a-mode" id="mode"><button data-v="image" class="on">📷 Photo ad</button><button data-v="video">🎬 Video ad</button><button data-v="model">🧑 AI model</button></div>
     <div id="imgPanel">
     <div class="g-step">
       <div class="g-lbl"><span class="n"></span>Your business</div>
@@ -117,6 +117,82 @@
         </div>
         <button class="btn btn-primary btn-block g-go" id="vgo" type="button" disabled>🎬 Create video</button>
         <p class="small muted center" id="vgoNote">Pick a start picture.</p>
+      </div>
+    </div>
+
+    <div id="modelPanel" class="hidden">
+      <div class="g-step">
+        <div class="g-lbl"><span class="n"></span>Pick your AI model <span class="small muted" id="mName"></span></div>
+        <div class="g-seg a-mgroups" id="mGroups"></div>
+        <div class="a-chars" id="mChars"></div>
+        <p class="small muted" style="margin-top:6px">All models are made-up people created by AI — never real people. The same model keeps the same face in every photo and video.</p>
+      </div>
+      <div class="g-seg a-mode a-msub" id="mSub"><button data-v="photo" class="on">📷 Photo with product</button><button data-v="video">🎙 Presenter video</button></div>
+
+      <div id="mPhoto">
+        <div class="g-step">
+          <div class="g-lbl"><span class="n"></span>Your product</div>
+          <label class="g-drop a-drop" id="mdrop">
+            <input type="file" id="mphoto" accept="image/jpeg,image/png,image/webp">
+            <div class="g-drop-ic">📷</div>
+            <div class="g-drop-t">Add a photo of your product</div>
+            <div class="g-drop-s">The model holds or shows your real product — a clear photo with a plain background works best</div>
+          </label>
+          <label class="btn-snap" id="msnap"><input type="file" id="mphotoSnap" accept="image/*" capture="environment">📸 Take a photo of your product</label>
+          <div class="a-photo hidden" id="mphotoBox"><img id="mphotoImg" alt=""><button class="btn btn-ghost btn-sm" type="button" id="mphotoClear">Change</button></div>
+          <div class="field"><label for="mproduct">Product name</label><input class="input" id="mproduct" maxlength="120" placeholder="e.g. Vitamin C face serum"></div>
+          <div class="field"><label for="mdetails">Key features <span class="muted small">(used for the presenter script)</span></label><textarea class="input" id="mdetails" rows="2" maxlength="400" placeholder="e.g. 30 ml · vitamin C + hyaluronic acid · light, non-sticky · for all skin types"></textarea></div>
+        </div>
+        <div class="g-step">
+          <div class="g-lbl"><span class="n"></span>What the model does</div>
+          <div class="g-seg" id="mAction"></div>
+          <div class="g-row"><label>Look</label><div class="g-seg" id="mLook"></div></div>
+          <div class="field" style="margin-top:8px"><label for="msetting">Scene <span class="muted small">(optional)</span></label><input class="input" id="msetting" maxlength="120" placeholder="e.g. bright modern bathroom · office in Kathmandu · café counter"></div>
+        </div>
+        <div class="g-step">
+          <div class="g-lbl"><span class="n"></span>Shape</div>
+          <div class="g-seg" id="mAspect"><button data-v="9:16" class="on">Reel / Story 9:16</button><button data-v="4:5">Feed 4:5</button><button data-v="1:1">Square 1:1</button></div>
+          <p class="small muted" style="margin-top:6px">Tip: 9:16 photos make the best presenter videos.</p>
+          <div class="g-row"><label>How many options</label><div class="g-seg" id="mCount"><button data-v="1" class="on">1 photo · 1 credit</button><button data-v="2">2 options · 2 credits</button></div></div>
+        </div>
+        <button class="btn btn-primary btn-block g-go" id="mgo" type="button" disabled>🧑 Create model photo</button>
+        <p class="small muted center" id="mgoNote">Pick a model and add your product photo.</p>
+      </div>
+
+      <div id="mVideo" class="hidden">
+        <div class="a-lock hidden" id="plock">
+          <div class="g-empty-ic">🎙</div>
+          <b>Presenter videos come with Pro, Business and Agency</b>
+          <p class="small muted">Your AI model talks to the camera about your product’s features — with a natural voice, in 8 or 15 seconds.</p>
+          <a class="btn btn-primary btn-sm" href="/app#billing">See plans</a>
+        </div>
+        <div id="pform">
+          <div class="g-step">
+            <div class="g-lbl"><span class="n"></span>Start picture <span class="small muted">(one of your model photos)</span></div>
+            <div class="a-pick" id="ppick"></div>
+            <p class="small muted hidden" id="ppickEmpty">No model photos yet — make one in <b>📷 Photo with product</b> first (9:16 works best).</p>
+          </div>
+          <div class="g-step">
+            <div class="g-lbl"><span class="n"></span>What the presenter says</div>
+            <div class="g-row a-prow">
+              <select class="input" id="pLang"><option>English</option><option>Nepali</option><option>Hindi</option><option>Bengali</option><option>Urdu</option><option>Tamil</option><option>Thai</option><option>Arabic</option><option>Spanish</option><option>French</option></select>
+              <select class="input" id="pTone"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="energetic">Energetic</option><option value="calm">Calm</option><option value="luxury">Luxury</option></select>
+              <div class="g-seg" id="pSec"><button data-v="8" class="on">8 s</button><button data-v="15">15 s</button></div>
+            </div>
+            <button type="button" class="btn btn-dark btn-sm" id="pWrite">✨ Write it for me</button>
+            <div class="field" style="margin-top:8px"><label for="pPart1" id="pPart1Lbl">Script</label><textarea class="input" id="pPart1" rows="3" maxlength="400" placeholder="e.g. Meet our Vitamin C serum — light, non-sticky and made for every skin type. Just Rs. 1,250 — order yours today!"></textarea></div>
+            <div class="field hidden" id="pPart2Box"><label for="pPart2">Part 2</label><textarea class="input" id="pPart2" rows="3" maxlength="400"></textarea></div>
+            <p class="small muted" id="pWords"></p>
+            <p class="small a-pnote">🛈 The presenter is an AI character: they describe your product and its features — they don’t pretend to be a customer or give a review.</p>
+          </div>
+          <div class="g-step">
+            <div class="g-lbl"><span class="n"></span>Shape</div>
+            <div class="g-seg" id="pAspect"><button data-v="9:16" class="on">Reel / Story 9:16</button><button data-v="4:5">Feed 4:5</button><button data-v="1:1">Square 1:1</button><button data-v="16:9">Wide 16:9</button></div>
+            <label class="check" style="margin-top:10px"><input type="checkbox" id="pLabel" checked> Add a small “AI-generated” label <span class="muted small">(recommended — Instagram, Facebook and TikTok ask for AI videos to be labelled)</span></label>
+          </div>
+          <button class="btn btn-primary btn-block g-go" id="pgo" type="button" disabled>🎙 Create presenter video</button>
+          <p class="small muted center" id="pgoNote">Pick a start picture.</p>
+        </div>
       </div>
     </div>
   </section>

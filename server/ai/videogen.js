@@ -61,11 +61,12 @@ function veoError(r) {
 
 /* Start a Veo job → operation name. Parameter names have changed between Veo versions,
    so on "bad request" we retry with fewer / older-style fields. */
-async function veoStart({ prompt, negative, png, gen, seconds }) {
+async function veoStart({ prompt, negative, png, gen, seconds, audio = false }) {
   const a = config.ai;
   const url = `${a.geminiBase}/v1beta/models/${encodeURIComponent(a.veoModel)}:predictLongRunning`;
   const b64 = png.toString('base64');
-  const full = { aspectRatio: gen, durationSeconds: seconds, resolution: a.videoResolution, negativePrompt: negative, personGeneration: 'allow_adult', generateAudio: false };
+  // Veo 3.1 always makes sound; older versions accept generateAudio. Presenter videos keep the voice.
+  const full = { aspectRatio: gen, durationSeconds: seconds, resolution: a.videoResolution, negativePrompt: negative, personGeneration: 'allow_adult', ...(audio ? {} : { generateAudio: false }) };
   const attempts = [
     { image: { inlineData: { mimeType: 'image/png', data: b64 } }, parameters: full },
     { image: { inlineData: { mimeType: 'image/png', data: b64 } }, parameters: { aspectRatio: gen, durationSeconds: seconds, negativePrompt: negative } },
@@ -78,6 +79,19 @@ async function veoStart({ prompt, negative, png, gen, seconds }) {
     if (r.status < 300 && r.json?.name) return r.json.name;
     if (r.status !== 400) break;
   }
+  throw veoError(r);
+}
+
+/* Continue a finished Veo clip by ~7 s (same person, voice and place). Returns the operation name,
+   or null when this model/version can't extend — the caller then starts a new clip from the last frame. */
+async function veoExtend({ prompt, mp4 }) {
+  const a = config.ai;
+  const url = `${a.geminiBase}/v1beta/models/${encodeURIComponent(a.veoModel)}:predictLongRunning`;
+  const r = await call(url, { method: 'POST', timeoutMs: 120000, body: {
+    instances: [{ prompt, video: { inlineData: { mimeType: 'video/mp4', data: mp4.toString('base64') } } }],
+    parameters: { numberOfVideos: 1, resolution: '720p', personGeneration: 'allow_adult' } } });
+  if (r.status < 300 && r.json?.name) return r.json.name;
+  if (r.status === 400 || r.status === 404) { console.warn('[veo] extend not available:', (r.json?.error?.message || r.text || '').slice(0, 200)); return null; }
   throw veoError(r);
 }
 
@@ -143,17 +157,59 @@ async function demoClip({ png, gen, seconds, dir }) {
   return buf;
 }
 
+/* ---------------- presenter helpers ---------------- */
+function hasAudio(file) {
+  const ff = require('ffmpeg-static');
+  return new Promise(resolve => {
+    const p = require('node:child_process').spawn(ff, ['-hide_banner', '-i', file], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let err = ''; p.stderr.on('data', d => { err += d; });
+    p.on('close', () => resolve(/Stream #.*Audio:/.test(err))); p.on('error', () => resolve(false));
+  });
+}
+/* last frame of a clip as PNG → start picture for the next part */
+async function lastFrame(mp4, dir) {
+  const inF = path.join(dir, 'lf-in.mp4'), out = path.join(dir, 'lf.png');
+  fs.writeFileSync(inF, mp4);
+  await video.runFfmpeg(['-sseof', '-0.15', '-i', inF, '-frames:v', '1', '-update', '1', out], 60000);
+  const png = fs.readFileSync(out); fs.rm(inF, { force: true }, () => {}); fs.rm(out, { force: true }, () => {});
+  return png;
+}
+/* join two parts (each with or without sound) into one clip with sound */
+async function joinParts(a, b, dir) {
+  const fa = path.join(dir, 'part-a.mp4'), fb = path.join(dir, 'part-b.mp4'), out = path.join(dir, 'joined.mp4');
+  fs.writeFileSync(fa, a); fs.writeFileSync(fb, b);
+  const [sa, sb] = [await hasAudio(fa), await hasAudio(fb)];
+  const [da, db] = [await video.probeDuration(fa) || 8, await video.probeDuration(fb) || 8];
+  // normalise both videos to the same size/fps, and add silence where a part has no sound
+  const fc = `[0:v]scale=720:-2,setsar=1,fps=30,format=yuv420p[v0];[1:v]scale=720:-2,setsar=1,fps=30,format=yuv420p[v1];` +
+    (sa ? '[0:a]aresample=48000,aformat=channel_layouts=stereo[a0];' : `anullsrc=r=48000:cl=stereo,atrim=0:${da}[a0];`) +
+    (sb ? '[1:a]aresample=48000,aformat=channel_layouts=stereo[a1];' : `anullsrc=r=48000:cl=stereo,atrim=0:${db}[a1];`) +
+    '[v0][a0][v1][a1]concat=n=2:v=1:a=1[v][a]';
+  await video.runFfmpeg(['-i', fa, '-i', fb, '-filter_complex', fc, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-c:a', 'aac', '-shortest', out], 240000);
+  const buf = fs.readFileSync(out);
+  for (const f of [fa, fb, out]) fs.rm(f, { force: true }, () => {});
+  return buf;
+}
+/* demo presenter: slow zoom on the start picture (no voice without a real AI key) */
+async function demoPresenter({ png, gen, seconds, dir }) { return demoClip({ png, gen, seconds, dir }); }
+
 /* ---------------- finishing ---------------- */
 /* Crop the middle to the post shape, 1080 wide, silent, web-friendly MP4 + a poster frame. */
-async function finish(raw, aspect, dir, n = 0) {
+async function finish(raw, aspect, dir, n = 0, { audio = false, label = false } = {}) {
   const [W, H] = OUT[aspect] || OUT['9:16'];
   const R = (W / H).toFixed(5);
   const inF = path.join(dir, `raw-${n}.mp4`), out = path.join(dir, `video-${n}.mp4`), poster = path.join(dir, `poster-${n}.jpg`);
   fs.writeFileSync(inF, raw);
   try {
-    await video.runFfmpeg(['-i', inF, '-an', '-vf',
-      `crop='min(iw,ih*${R})':'min(ih,iw/${R})',scale=${W}:${H}:flags=lanczos,setsar=1,fps=30,format=yuv420p`,
-      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-movflags', '+faststart', out], 180000);
+    const crop = `crop='min(iw,ih*${R})':'min(ih,iw/${R})',scale=${W}:${H}:flags=lanczos,setsar=1,fps=30,format=yuv420p`;
+    const keepSound = audio && await hasAudio(inF);
+    const labelFile = path.join(config.ROOT, 'public', 'img', 'ai-label.png');
+    const useLabel = label && fs.existsSync(labelFile);
+    const args = ['-i', inF];
+    if (useLabel) args.push('-i', labelFile, '-filter_complex', `[0:v]${crop}[v];[1:v]scale=${Math.round(W * 0.26)}:-1[l];[v][l]overlay=W-w-${Math.round(W * 0.035)}:${Math.round(H * 0.03)}[o]`, '-map', '[o]');
+    else args.push('-vf', crop);
+    if (keepSound) args.push(...(useLabel ? ['-map', '0:a'] : []), '-c:a', 'aac', '-b:a', '160k'); else args.push('-an');
+    await video.runFfmpeg([...args, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-movflags', '+faststart', out], 180000);
     await video.runFfmpeg(['-ss', '0.4', '-i', out, '-frames:v', '1', '-q:v', '4', poster], 30000);
   } catch (e) {
     throw new AiError('The finished video could not be prepared. Your credits were returned — please try again.', e.reason || 'failed', e.message);
@@ -174,4 +230,4 @@ async function sampleFrames(mp4Path, seconds, dir) {
   return out;
 }
 
-module.exports = { active, prepareStart, veoStart, veoWait, demoClip, finish, sampleFrames, GEN, OUT, SECONDS };
+module.exports = { active, prepareStart, veoStart, veoExtend, veoWait, demoClip, demoPresenter, lastFrame, joinParts, hasAudio, finish, sampleFrames, GEN, OUT, SECONDS };
