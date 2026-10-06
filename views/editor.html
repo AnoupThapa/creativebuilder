@@ -29,6 +29,7 @@
       <button class="pill" id="btnTemplates">🗂 <span class="hide-s">Templates</span></button>
       <button class="pill hide-s" id="btnBrandKit">🎨 Brand Kit</button>
       <span class="pill usage-pill" id="usagePill" title="Downloads left">⬇ <span id="usageText">…</span></span>
+      <button class="pill hidden" id="btnReview" type="button" title="Send to your client for review">📤 <span class="hide-s">Send for review</span></button>
       <button class="pill pill-dark" id="btnSave">💾 <span class="hide-s">Save</span></button>
     </div>
   </div>
@@ -429,6 +430,22 @@
   <div class="modal">
     <div class="modal-head">🗂 Template Library <input class="tmpl-search" id="tmplSearch" placeholder="Search e.g. bakery, sale, Diwali…" aria-label="Search templates"><button class="modal-close" aria-label="Close">✕</button></div>
     <div class="modal-body" id="tmplCategories"></div>
+  </div>
+</div>
+
+<!-- SEND FOR REVIEW (business accounts) -->
+<div class="modal-wrap" id="modalReview">
+  <div class="modal-backdrop" data-rclose></div>
+  <div class="modal modal-sm">
+    <div class="modal-head">📤 Send to client for review<button class="modal-close" data-rclose aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <p class="rv-hint">Your client sees these sizes in your review portal (your name, logo and colours — no PostForge branding), then approves or asks for changes. Each size counts as one download.</p>
+      <div class="rv-field" id="rvBrandRow"><label for="rvBrand">Client / brand</label><select id="rvBrand"></select></div>
+      <div class="rv-field"><label>Sizes to send</label><div class="rv-sizes" id="rvSizes"></div></div>
+      <div class="rv-field"><label for="rvNote">Message to the client <span style="font-weight:500">(optional)</span></label><textarea id="rvNote" rows="3" maxlength="1000" placeholder="e.g. Here's the Friday offer post — happy to tweak the price colour."></textarea></div>
+      <div class="rv-status" id="rvStatus"></div>
+      <div class="notice-actions"><button class="pill" data-rclose>Cancel</button><button class="btn-export" id="rvGo" type="button">Send for review</button></div>
+    </div>
   </div>
 </div>
 

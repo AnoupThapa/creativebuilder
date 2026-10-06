@@ -105,7 +105,7 @@ const PLAN_FIELDS = {
   max_quality: 'int', video_export: 'bool', batch_export: 'bool', premium_templates: 'bool', watermark: 'bool',
   max_designs: 'int', max_brand_kits: 'int', max_upload_mb: 'int', storage_mb: 'int', public: 'bool', active: 'bool',
   sort: 'int', stripe_price_id: 'str', stripe_price_id_annual: 'str',
-  ai_credits_monthly: 'int', ai_credits_lifetime: 'int', ai_video: 'bool', max_video_seconds: 'int', max_video_mb: 'int', audience: 'audience',
+  ai_credits_monthly: 'int', ai_credits_lifetime: 'int', ai_video: 'bool', max_video_seconds: 'int', max_video_mb: 'int', audience: 'audience', api_access: 'bool',
 };
 function planValues(body) {
   const out = {};

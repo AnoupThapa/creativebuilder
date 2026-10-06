@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developer API &amp; website widget — PostForge</title>
+<meta name="description" content="PostForge developer API: resize product photos for every social platform, remove backgrounds, write captions and create AI product photos from your own systems. Plus an embeddable website widget.">
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/developers.css">
+</head>
+<body>
+<header class="dv-top"><div class="dv-wrap row"><a class="brand" href="/"><span class="brand-mark">P</span>PostForge</a><span class="grow"></span>
+  <a class="btn btn-ghost btn-sm" href="/help">Help</a><a class="btn btn-primary btn-sm" href="/app#account">Get your keys</a></div></header>
+<main class="dv-wrap dv">
+  <h1>Developer API &amp; website widget</h1>
+  <p class="lead">Use PostForge from your own website, shop or software. Included in the <b>Business</b> and <b>Agency</b> plans. Create keys in <b>Dashboard → Account &amp; security → Developer API &amp; widget</b>.</p>
+
+  <nav class="dv-toc"><a href="#auth">Keys</a><a href="#resize">Resize</a><a href="#cutout">Remove background</a><a href="#captions">Captions</a><a href="#ai">AI photos</a><a href="#other">Other</a><a href="#errors">Errors &amp; limits</a><a href="#widget">Website widget</a></nav>
+
+  <section id="auth"><h2>Keys &amp; authentication</h2>
+    <p><b>Secret keys</b> (<code>pf_live_…</code>) are for your servers only — never put them in a web page or app. Send them in the <code>Authorization</code> header. They act as the team member who created them: every image you get back counts as one download from that person's allowance, exactly like in the app.</p>
+    <p><b>Publishable keys</b> (<code>pf_pub_…</code>) only power the website widget, and only on the websites you list.</p>
+    <pre><code>curl <span class="o"></span>/api/v1/me -H "Authorization: Bearer pf_live_YOUR_KEY"</code></pre>
+  </section>
+
+  <section id="resize"><h2>POST /api/v1/resize</h2>
+    <p>Fit one photo into one or more platform sizes. One size returns the image; several return a ZIP.</p>
+    <table class="dv-t"><tr><th>Field</th><th>Values</th></tr>
+      <tr><td><code>image</code></td><td>The photo (multipart file, JPG/PNG/WEBP, up to 15 MB)</td></tr>
+      <tr><td><code>sizes</code></td><td>Comma list, e.g. <code>ig_post,ig_story,fb_post</code> — see <code>GET /api/v1/sizes</code></td></tr>
+      <tr><td><code>fit</code></td><td><code>contain</code> (whole product visible, default) or <code>cover</code> (fill &amp; crop)</td></tr>
+      <tr><td><code>background</code></td><td><code>blur</code> (default), <code>white</code>, <code>color</code> + <code>color=#hex</code>, <code>brand</code> + <code>brand_id</code>, <code>transparent</code> (PNG only)</td></tr>
+      <tr><td><code>format</code></td><td><code>jpg</code> (default) or <code>png</code></td></tr></table>
+    <pre><code>curl <span class="o"></span>/api/v1/resize -H "Authorization: Bearer pf_live_YOUR_KEY" \
+  -F image=@candle.jpg -F sizes=ig_post,ig_story,fb_post -F background=blur -o sizes.zip</code></pre>
+  </section>
+
+  <section id="cutout"><h2>POST /api/v1/remove-background</h2>
+    <p>Removes the background and returns a transparent PNG (up to 1200 px). Works best on plain or studio backgrounds. Counts as one download.</p>
+    <pre><code>curl <span class="o"></span>/api/v1/remove-background -H "Authorization: Bearer pf_live_YOUR_KEY" -F image=@product.jpg -o cutout.png</code></pre>
+  </section>
+
+  <section id="captions"><h2>POST /api/v1/captions</h2>
+    <p>Captions with hashtags written for each platform, in your language. JSON body: <code>product</code>, <code>details</code>, <code>price</code>, <code>offer</code>, <code>brand</code>, <code>contact</code>, <code>language</code> (e.g. <code>Nepali</code>), <code>tone</code> (<code>friendly | professional | fun | luxury | urgent</code>), <code>platforms</code> (any of <code>instagram, facebook, tiktok, linkedin, x, whatsapp, pinterest, youtube</code>). Up to 100 a day per person.</p>
+    <pre><code>curl <span class="o"></span>/api/v1/captions -H "Authorization: Bearer pf_live_YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"product":"Rose face serum","price":"Rs. 1,250","language":"Nepali","platforms":["instagram","facebook"]}'</code></pre>
+  </section>
+
+  <section id="ai"><h2>AI product photos</h2>
+    <p><code>GET /api/v1/ai/styles</code> lists the styles. <code>POST /api/v1/ai/images</code> (multipart: <code>style</code>, <code>image</code>, <code>product</code>, <code>details</code>, <code>aspect</code> = <code>4:5 | 1:1 | 9:16 | 16:9</code>, <code>count</code> 1–2) starts a job and returns its <code>id</code> — images never contain any text. Poll <code>GET /api/v1/ai/jobs/{id}</code> every few seconds until <code>status</code> is <code>done</code>, then download each URL in <code>images</code> with your key. Uses your AI credits; failed images are refunded.</p>
+  </section>
+
+  <section id="other"><h2>Other endpoints</h2>
+    <p><code>GET /api/v1/me</code> — workspace, plan and downloads left · <code>GET /api/v1/sizes</code> — all platform sizes · <code>GET /api/v1/brands</code> — your brand kits (colours, fonts, contact details).</p>
+  </section>
+
+  <section id="errors"><h2>Errors &amp; limits</h2>
+    <p>Errors are JSON: <code>{"error": "plain-English message", "code": "…"}</code>. Common codes: <code>auth</code> (401), <code>quota</code> / <code>upgrade</code> (402), <code>rate_limit</code> (429, 120 requests a minute per key), <code>bad_request</code> (400). The header <code>X-PostForge-Downloads-Left</code> tells you what's left.</p>
+  </section>
+
+  <section id="widget"><h2>Website widget</h2>
+    <p>Add a free “resize your photo for every social platform” tool to your website, in your name and colour (set in <b>White-label review portal</b>). Create a <b>publishable key</b> with your website address, then paste:</p>
+    <pre><code>&lt;script src="<span class="o"></span>/widget.js" data-key="pf_pub_YOUR_KEY" async&gt;&lt;/script&gt;</code></pre>
+    <p>The photo is processed in the visitor's browser. Each image they download counts as one download from your allowance; when it runs out the tool asks visitors to come back tomorrow. It only appears on the websites listed on the key.</p>
+  </section>
+</main>
+<script src="/js/developers.js"></script>
+</body>
+</html>

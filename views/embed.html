@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Photo resizer</title>
+<link rel="stylesheet" href="/css/embed.css">
+</head>
+<body>
+<div class="w" id="w">
+  <div class="w-head"><b id="wName">Photo resizer</b><span>Make your photo fit every social platform</span></div>
+  <div class="w-msg hidden" id="msg"></div>
+  <label class="w-drop" id="drop"><input type="file" id="file" accept="image/jpeg,image/png,image/webp">
+    <span class="w-ic">🖼</span><b>Choose a photo</b><small>JPG, PNG or WEBP — it never leaves your device until you download</small></label>
+  <div class="w-body hidden" id="body">
+    <div class="w-prev"><canvas id="pv"></canvas></div>
+    <div class="w-opts">
+      <div class="w-lbl">Background</div>
+      <div class="w-seg" id="bg"><button data-v="blur" class="on">Soft blur</button><button data-v="white">White</button><button data-v="fill">Fill &amp; crop</button></div>
+      <div class="w-lbl">Sizes</div>
+      <div class="w-sizes" id="sizes"></div>
+      <button class="w-go" id="go" type="button">⬇ Download</button>
+      <button class="w-link" id="again" type="button">Use another photo</button>
+    </div>
+  </div>
+</div>
+<script src="/vendor/jszip.min.js"></script>
+<script src="/js/embed.js"></script>
+</body>
+</html>

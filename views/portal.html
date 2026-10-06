@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Design review</title>
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+<header class="pt-top" id="top">
+  <div class="pt-wrap pt-head">
+    <img id="pLogo" class="pt-logo hidden" alt="">
+    <div class="pt-grow"><div class="pt-agency" id="pName">Design review</div><div class="pt-sub" id="pSub"></div></div>
+    <button class="pt-btn pt-light hidden" id="dlApproved" type="button">⬇ Download approved</button>
+  </div>
+</header>
+<main class="pt-wrap">
+  <div class="pt-msg hidden" id="msg"></div>
+  <div class="pt-tabs hidden" id="tabs">
+    <button class="on" data-f="all">All</button><button data-f="in_review">Waiting for you</button><button data-f="changes">Changes asked</button><button data-f="approved">Approved</button>
+  </div>
+  <div class="pt-grid" id="grid"></div>
+</main>
+
+<div class="pt-modal hidden" id="modal" role="dialog" aria-modal="true">
+  <div class="pt-backdrop" data-close></div>
+  <div class="pt-sheet">
+    <button class="pt-x" data-close aria-label="Close">✕</button>
+    <div class="pt-detail">
+      <div class="pt-view">
+        <div class="pt-sizes" id="dSizes"></div>
+        <div class="pt-img"><img id="dImg" alt=""></div>
+        <div class="pt-row"><a class="pt-btn pt-ghost" id="dDl" href="#">⬇ Download this size</a><button class="pt-btn pt-ghost" id="dDlAll" type="button">⬇ All sizes (ZIP)</button></div>
+      </div>
+      <aside class="pt-side">
+        <h2 id="dName"></h2>
+        <div id="dStatus"></div>
+        <div class="pt-field"><label for="who">Your name</label><input id="who" maxlength="60" placeholder="e.g. Sita from Momo House"></div>
+        <div class="pt-actions">
+          <button class="pt-btn pt-main" id="approve" type="button">✓ Approve</button>
+          <button class="pt-btn pt-ghost" id="changesBtn" type="button">✏️ Ask for changes</button>
+        </div>
+        <div class="pt-field"><label for="note" id="noteLbl">Comment</label><textarea id="note" rows="3" maxlength="2000" placeholder="Write a comment or what you'd like changed…"></textarea>
+          <button class="pt-btn pt-ghost pt-small" id="send" type="button">Send comment</button></div>
+        <div class="pt-thread" id="thread"></div>
+      </aside>
+    </div>
+  </div>
+</div>
+<script src="/vendor/jszip.min.js"></script>
+<script src="/js/portal.js"></script>
+</body>
+</html>

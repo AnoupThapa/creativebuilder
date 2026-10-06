@@ -114,3 +114,24 @@ body.acct-business .biz-only{display:revert}
 @media(max-width:760px){.quick{grid-template-columns:repeat(3,1fr)!important;gap:8px}.quick-card{padding:12px 6px;text-align:center;justify-items:center;border-radius:14px}.quick-card small{display:none}.quick-card b{font-size:12.5px;line-height:1.25}.quick-card .qi{font-size:24px}}
 .var-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.var-grid{grid-template-columns:1fr}}
+
+/* client review */
+.rv-badge{font-size:11px;font-weight:800;border-radius:50px;padding:2px 8px}
+.rv-in_review{background:#fff4d6;color:#7a5d0c}.rv-approved{background:#dff5e7;color:#13663a}.rv-changes{background:#fde4e1;color:#9b2c1d}
+.rev-snaps{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.rev-snaps figure{margin:0;flex:0 0 auto;text-align:center;font-size:11px;color:var(--muted)}
+.rev-snaps img{height:120px;border-radius:8px;border:1px solid var(--line);display:block;margin-bottom:3px}
+.rev-thread{display:grid;gap:8px;max-height:280px;overflow:auto;margin-top:10px}
+.rev-c{border-radius:12px;padding:9px 12px;font-size:13.5px;background:#f5f3ee}
+.rev-c.client{background:#eef3ff}
+.rev-c .who{font-weight:700;font-size:12.5px}
+.rev-c p{margin:3px 0 0;white-space:pre-wrap}
+.link-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.link-row code{flex:1;min-width:200px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.dev-forms{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.dev-form{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.dev-new{margin-top:12px;padding:12px;border-radius:12px;background:#fff8e6;border:1px solid #f1d58a}
+.dev-code{display:flex;gap:8px;align-items:center;margin:8px 0}
+.dev-code code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;background:#1a1a2e;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px}
+@media (max-width:720px){.dev-forms{grid-template-columns:1fr}}

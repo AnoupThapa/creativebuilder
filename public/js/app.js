@@ -169,11 +169,13 @@
           <div class="dname" title="${esc(d.name)}">${esc(d.name)}</div>
           <div class="dmeta"><span>${esc(d.owner_id === me.user.id ? 'You' : d.owner_name)}</span>·<span>${ago(d.updated_at)}</span></div>
           ${brandCell(d)}
+          ${d.review_status ? `<div class="dmeta"><span class="rv-badge rv-${esc(d.review_status)}">${{ in_review: '⏳ With client', approved: '✓ Client approved', changes: '✏️ Changes asked' }[d.review_status] || ''}</span>${d.review_comments ? `<span class="small muted">💬 ${d.review_comments}</span>` : ''}</div>` : ''}
           <div class="dmeta">${d.can_manage
             ? `<select data-vis aria-label="Sharing">${Object.entries(VIS_LABEL).map(([k, v]) => `<option value="${k}" ${k === d.visibility ? 'selected' : ''}>${v}</option>`).join('')}</select>`
             : isClient() ? '' : `<span class="badge">${VIS_LABEL[d.visibility]}</span>`}</div>
           <div class="dactions">
             <button data-open>${d.can_edit ? 'Edit' : isClient() ? 'Open & download' : 'View'}</button>
+            ${d.review_status && !isClient() ? '<button data-review>💬 Review</button>' : ''}
             ${me.user.role !== 'viewer' ? '<button data-dup>Duplicate</button><button data-var>✨ Variations</button>' : ''}
             ${d.can_edit ? '<button data-rename>Rename</button>' : ''}
             ${d.can_manage ? '<button class="del" data-del>Delete</button>' : ''}
@@ -181,6 +183,57 @@
         </div>
       </div>`).join('');
   }
+
+  /* client review conversation */
+  let revDesign = null;
+  const REV = { in_review: ['⏳ Waiting for the client', 'rv-in_review'], approved: ['✓ Approved by the client', 'rv-approved'], changes: ['✏️ The client asked for changes', 'rv-changes'] };
+  function renderReview(r) {
+    const [l, c] = REV[r.status] || ['Not sent yet', ''];
+    $('revStatus').innerHTML = `<span class="rv-badge ${c}">${l}</span>`;
+    $('revSnaps').innerHTML = r.snapshots.map(s => `<figure><img src="${esc(s.url)}" alt="${esc(s.label)}" loading="lazy">${esc(s.label)}</figure>`).join('') || '<p class="muted small">No sizes sent yet — open the design and click 📤 Send for review.</p>';
+    $('revThread').innerHTML = r.comments.slice().reverse().map(m => `<div class="rev-c ${m.author_type}"><div class="who">${esc(m.author_name || (m.author_type === 'client' ? 'Client' : 'You'))}
+      ${m.action === 'approved' ? ' · approved' : m.action === 'changes' ? ' · asked for changes' : m.action === 'sent' ? ' · sent for review' : ''} <span class="muted" style="font-weight:500">· ${ago(m.created_at)}</span></div>${m.body ? `<p>${esc(m.body)}</p>` : ''}</div>`).join('');
+  }
+  async function openReview(d) {
+    revDesign = d; $('revTitle').textContent = `Client review — ${d.name}`;
+    try { renderReview(await api(`/reviews/designs/${d.id}`)); $('revModal').classList.add('open'); } catch (e) { toast(e.message, { error: true }); }
+  }
+  $('revForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = $('revReply').value.trim(); if (!body) return;
+    try { await api(`/reviews/designs/${revDesign.id}/comments`, { method: 'POST', body: { body } }); $('revReply').value = ''; renderReview(await api(`/reviews/designs/${revDesign.id}`)); }
+    catch (err) { toast(err.message, { error: true }); }
+  });
+
+  /* review links per brand */
+  let linkKit = null;
+  async function openLinks(k) {
+    linkKit = k; $('linkTitle').textContent = `Client review link — ${k.name}`;
+    await renderLinks(); $('linkModal').classList.add('open');
+  }
+  async function renderLinks() {
+    try {
+      const links = await api(`/brand-kits/${linkKit.id}/review-links`);
+      $('linkList').innerHTML = links.map(l => `<div class="link-row"><code title="${esc(l.url)}">${esc(l.url)}</code>
+        <button class="btn btn-ghost btn-sm" type="button" data-copy="${esc(l.url)}">Copy</button>
+        <a class="btn btn-ghost btn-sm" href="${esc(l.url)}" target="_blank" rel="noopener">Open</a>
+        ${can('admin') ? `<button class="btn btn-danger btn-sm" type="button" data-off="${l.id}">Turn off</button>` : ''}
+        <span class="small muted" style="width:100%">${l.expires_at ? 'Expires ' + date(l.expires_at) : 'Never expires'} · ${l.last_opened_at ? 'last opened ' + ago(l.last_opened_at) : 'not opened yet'}</span></div>`).join('')
+        || '<p class="muted small">No active link yet.</p>';
+    } catch (e) { $('linkList').innerHTML = `<p class="small" style="color:#c0392b">${esc(e.message)}</p>`; }
+  }
+  $('linkList').addEventListener('click', async e => {
+    const c = e.target.closest('[data-copy]');
+    if (c) { try { await navigator.clipboard.writeText(c.dataset.copy); toast('Link copied ✓'); } catch { prompt('Copy this link:', c.dataset.copy); } return; }
+    const off = e.target.closest('[data-off]');
+    if (off && await confirmBox('Turn off this link?', 'Anyone using it will no longer see the designs.', 'Turn off', true)) {
+      try { await api('/review-links/' + off.dataset.off, { method: 'DELETE' }); renderLinks(); } catch (err) { toast(err.message, { error: true }); }
+    }
+  });
+  $('linkNew').addEventListener('click', async () => {
+    try { await api(`/brand-kits/${linkKit.id}/review-links`, { method: 'POST', body: { days: +$('linkDays').value } }); toast('Review link created ✓'); renderLinks(); }
+    catch (err) { toast(err.message, { error: true, ms: 5000 }); }
+  });
 
   /* one design → themed versions */
   let varFrom = null, varKinds = null;
@@ -209,6 +262,7 @@
     const d = designs.find(x => x.id === card.dataset.id);
     if (e.target.closest('[data-open]')) location.href = '/editor?id=' + encodeURIComponent(d.id);
     else if (e.target.closest('[data-var]')) openVariations(d);
+    else if (e.target.closest('[data-review]')) openReview(d);
     else if (e.target.closest('[data-dup]')) {
       try { await api('/designs', { method: 'POST', body: { duplicateOf: d.id } }); toast('Duplicated ✓'); loadDesigns(); }
       catch (err) { toast(err.message, { error: true, ms: 4500 }); }
@@ -262,6 +316,7 @@
         <div class="row wrap" style="gap:6px">
           ${canEditKits ? `<button class="btn btn-ghost btn-sm" data-kit="${k.id}">Edit</button>` : ''}
           ${isBiz() ? `<button class="btn btn-ghost btn-sm" data-kit-designs="${k.id}">Designs →</button>` : ''}
+          ${isBiz() && me.plan.code !== 'free' ? `<button class="btn btn-ghost btn-sm" data-kit-link="${k.id}">🔗 Review link</button>` : ''}
         </div>
       </div>`).join('') +
       (canEditKits ? (kits.length < max
@@ -269,6 +324,7 @@
         : `<div class="kit empty"><p class="small">Your ${esc(me.plan.name)} plan includes ${max} brand kit${max > 1 ? 's' : ''}.</p>${me.plan.code !== 'pro' ? '<a class="btn btn-primary btn-sm" href="#billing">Upgrade for more</a>' : ''}</div>`) : '');
     $('addKit')?.addEventListener('click', () => openKit(null));
     $('kitGrid').querySelectorAll('[data-kit]').forEach(b => b.addEventListener('click', () => openKit(kits.find(k => k.id === +b.dataset.kit))));
+    $('kitGrid').querySelectorAll('[data-kit-link]').forEach(b => b.addEventListener('click', () => openLinks(kits.find(k => k.id === +b.dataset.kitLink))));
     $('kitGrid').querySelectorAll('[data-kit-designs]').forEach(b => b.addEventListener('click', () => {
       brandFilter = b.dataset.kitDesigns; store.set('pf-brand-filter', brandFilter); location.hash = 'designs';
     }));
@@ -555,11 +611,71 @@
     $('pfBizField').classList.toggle('hidden', !can('admin'));
     fillTimezones($('pfTz'), me.user.timezone);
     $('acctTypeCard').classList.toggle('hidden', me.user.role !== 'owner');
+    $('portalCard').classList.toggle('hidden', !isBiz() || !can('admin'));
+    if (isBiz() && can('admin')) api('/workspace/portal').then(pt => {
+      $('ptName').value = pt.portal_name || ''; $('ptName').placeholder = me.workspace.name;
+      $('ptColor').value = pt.color; setPortalLogo(pt.logo_media_id, pt.logo_url);
+    }).catch(() => {});
+    loadDevKeys();
     $('acctTypes').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.type === me.workspace.account_type));
     renderTwofa();
     loadSessions();
     $('deleteHint').textContent = deleteText();
   }
+  /* ---- Developer API keys + website widget ---- */
+  const relTime = t => t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Never';
+  const snippet = k => `<script src="${location.origin}/widget.js" data-key="${k}" async></script>`;
+  async function loadDevKeys() {
+    const show = isBiz() && can('admin');
+    $('devCard').classList.toggle('hidden', !show);
+    if (!show) return;
+    let r; try { r = await api('/api-keys'); } catch { return; }
+    $('devLocked').classList.toggle('hidden', r.allowed);
+    $('devBody').classList.toggle('hidden', !r.allowed && !r.keys.length);
+    $('devSecretForm').classList.toggle('hidden', !r.allowed); $('devPubForm').classList.toggle('hidden', !r.allowed);
+    $('devRows').innerHTML = r.keys.map(k => `<tr><td>${esc(k.name)}${k.origins.length ? `<div class="small muted">${k.origins.map(esc).join(', ')}</div>` : ''}</td>
+      <td>${k.kind === 'secret' ? '🔑 Server' : '🧩 Widget'}</td><td><code>${esc(k.prefix)}…</code></td><td class="small">${relTime(k.last_used_at)}</td>
+      <td class="right" style="white-space:nowrap">${k.key ? `<button class="btn btn-ghost btn-sm" data-dev-snip="${esc(k.key)}">Copy code</button> ` : ''}<button class="btn btn-ghost btn-sm" data-dev-del="${k.id}">Delete</button></td></tr>`).join('')
+      || '<tr><td colspan="5" class="muted small">No keys yet.</td></tr>';
+  }
+  function showNewKey(k) {
+    const box = $('devNew'); box.classList.remove('hidden');
+    box.innerHTML = k.kind === 'secret'
+      ? `<b>Your new server key — copy it now, it won't be shown again:</b><div class="dev-code"><code>${esc(k.key)}</code><button type="button" class="btn btn-dark btn-sm" data-dev-copy="${esc(k.key)}">Copy</button></div><p class="small muted">Give it only to your developer. If it leaks, delete it here and make a new one.</p>`
+      : `<b>Paste this code into your website where the widget should appear:</b><div class="dev-code"><code>${esc(snippet(k.key))}</code><button type="button" class="btn btn-dark btn-sm" data-dev-copy="${esc(snippet(k.key))}">Copy</button></div>`;
+  }
+  async function copyIt(t) { try { await navigator.clipboard.writeText(t); toast('Copied ✓'); } catch { prompt('Copy this:', t); } }
+  $('devCard').addEventListener('click', async e => {
+    const c = e.target.closest('[data-dev-copy]'); if (c) return copyIt(c.dataset.devCopy);
+    const sn = e.target.closest('[data-dev-snip]'); if (sn) return copyIt(snippet(sn.dataset.devSnip));
+    const d = e.target.closest('[data-dev-del]'); if (!d) return;
+    if (!(await confirmBox('Delete this key?', 'Anything using it stops working straight away. This cannot be undone.', 'Delete', true))) return;
+    try { await api(`/api-keys/${d.dataset.devDel}`, { method: 'DELETE' }); $('devNew').classList.add('hidden'); toast('Key deleted'); loadDevKeys(); } catch (err) { toast(err.message, { error: true }); }
+  });
+  $('devSecretForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { const k = await api('/api-keys', { method: 'POST', body: { kind: 'secret', name: $('devSecretName').value } }); $('devSecretName').value = ''; showNewKey(k); loadDevKeys(); }
+    catch (err) { toast(err.message, { error: true, ms: 5000 }); }
+  });
+  $('devPubForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { const k = await api('/api-keys', { method: 'POST', body: { kind: 'publishable', name: $('devPubName').value, origins: $('devPubOrigins').value } }); $('devPubName').value = ''; $('devPubOrigins').value = ''; showNewKey(k); loadDevKeys(); }
+    catch (err) { toast(err.message, { error: true, ms: 5000 }); }
+  });
+  let ptLogoId = null;
+  function setPortalLogo(id, url) { ptLogoId = id || null; $('ptLogoPrev').innerHTML = url ? `<img src="${esc(url)}" alt="">` : 'No logo'; $('ptLogoRemove').classList.toggle('hidden', !id); }
+  $('ptLogo').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const fd = new FormData(); fd.append('file', f);
+    try { const m = await api('/media', { method: 'POST', form: fd }); setPortalLogo(m.id, m.url); } catch (err) { toast(err.message, { error: true }); }
+    e.target.value = '';
+  });
+  $('ptLogoRemove').addEventListener('click', () => setPortalLogo(null, null));
+  $('portalForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api('/workspace/portal', { method: 'PUT', body: { portal_name: $('ptName').value, portal_color: $('ptColor').value, portal_logo_media_id: ptLogoId } }); toast('Portal look saved ✓'); }
+    catch (err) { toast(err.message, { error: true }); }
+  });
   $('acctTypes').addEventListener('click', async e => {
     const b = e.target.closest('[data-type]'); if (!b || b.dataset.type === me.workspace.account_type) return;
     const biz = b.dataset.type === 'business';

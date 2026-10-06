@@ -341,6 +341,67 @@ addColumn('designs', 'brand_kit_id', 'INTEGER');                           // wh
 addColumn('users', 'client_brand_id', 'INTEGER');                          // set = client viewer who only sees this brand
 addColumn('audit_log', 'prev_hash', "TEXT NOT NULL DEFAULT ''");          // tamper-evident chain
 addColumn('audit_log', 'hash', "TEXT NOT NULL DEFAULT ''");
+/* Phase 3: white-label review portal, developer API, embeddable widget */
+addColumn('plans', 'api_access', 'INTEGER NOT NULL DEFAULT 0');            // developer API + website widget
+addColumn('workspaces', 'portal_name', "TEXT NOT NULL DEFAULT ''");         // white-label review portal
+addColumn('workspaces', 'portal_color', "TEXT NOT NULL DEFAULT ''");
+addColumn('workspaces', 'portal_logo_media_id', 'TEXT');
+addColumn('designs', 'review_status', "TEXT NOT NULL DEFAULT ''");         // '' | in_review | approved | changes
+addColumn('designs', 'review_updated_at', 'INTEGER');
+db.exec(`
+CREATE TABLE IF NOT EXISTS review_links (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id  INTEGER NOT NULL,
+  brand_kit_id  INTEGER NOT NULL,
+  token_hash    TEXT NOT NULL UNIQUE,
+  token_enc     TEXT NOT NULL,                 -- encrypted so the agency can copy the link again
+  created_by    INTEGER,
+  created_at    INTEGER NOT NULL,
+  expires_at    INTEGER,
+  revoked_at    INTEGER,
+  last_opened_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_review_links_ws ON review_links(workspace_id, brand_kit_id);
+CREATE TABLE IF NOT EXISTS review_snapshots (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  design_id    TEXT NOT NULL,
+  workspace_id INTEGER NOT NULL,
+  platform     TEXT NOT NULL,
+  file         TEXT NOT NULL,
+  width        INTEGER NOT NULL,
+  height       INTEGER NOT NULL,
+  bytes        INTEGER NOT NULL DEFAULT 0,
+  created_at   INTEGER NOT NULL,
+  UNIQUE(design_id, platform)
+);
+CREATE TABLE IF NOT EXISTS review_comments (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  design_id    TEXT NOT NULL,
+  workspace_id INTEGER NOT NULL,
+  author_type  TEXT NOT NULL,                 -- agency | client
+  author_name  TEXT NOT NULL DEFAULT '',
+  user_id      INTEGER,
+  action       TEXT NOT NULL DEFAULT '',      -- '' | sent | approved | changes
+  body         TEXT NOT NULL DEFAULT '',
+  created_at   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_review_comments ON review_comments(design_id, id);
+CREATE TABLE IF NOT EXISTS api_keys (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id  INTEGER NOT NULL,
+  user_id       INTEGER NOT NULL,             -- the API acts as this person (their download allowance)
+  kind          TEXT NOT NULL,                -- secret | publishable
+  name          TEXT NOT NULL DEFAULT '',
+  prefix        TEXT NOT NULL,
+  key_hash      TEXT NOT NULL UNIQUE,
+  key_enc       TEXT,                         -- publishable keys only (safe to show again)
+  origins       TEXT NOT NULL DEFAULT '[]',   -- websites allowed to embed the widget
+  created_at    INTEGER NOT NULL,
+  last_used_at  INTEGER,
+  revoked_at    INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_api_keys_ws ON api_keys(workspace_id);
+`);
 addColumn('workspaces', 'ai_topup_credits', 'INTEGER NOT NULL DEFAULT 0'); // bought credit packs (never expire)
 db.exec(`
 CREATE TABLE IF NOT EXISTS ai_templates (
@@ -407,11 +468,11 @@ const SEED_PLANS = [
   { code: 'business', name: 'Business', description: 'For agencies and multi-store brands: 50 images a day, up to 1,000 a month, 500 AI images and priority AI.',
     price_cents: 7900, price_cents_annual: 79000, currency: 'usd', quota_limit: 1000, quota_period: 'month', daily_limit: 50, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 20, max_upload_mb: 200, storage_mb: 20480, public: 1, sort: 3,
-    ai_credits_monthly: 500, ai_credits_lifetime: 0, ai_video: 1 },
+    ai_credits_monthly: 500, ai_credits_lifetime: 0, ai_video: 1, api_access: 1 },
   { code: 'agency', name: 'Agency', description: 'For agencies and wholesalers managing many brands: up to 50 client brands, client review logins, 1,000 AI images.',
     price_cents: 14900, price_cents_annual: 149000, currency: 'usd', quota_limit: 2000, quota_period: 'month', daily_limit: 100, max_quality: 3, video_export: 1, batch_export: 1,
     premium_templates: 1, watermark: 0, max_designs: -1, max_brand_kits: 50, max_upload_mb: 500, storage_mb: 51200, public: 1, sort: 4,
-    ai_credits_monthly: 1000, ai_credits_lifetime: 0, ai_video: 1, audience: 'business' },
+    ai_credits_monthly: 1000, ai_credits_lifetime: 0, ai_video: 1, audience: 'business', api_access: 1 },
 ];
 for (const p of SEED_PLANS) {
   const exists = q.get('SELECT code FROM plans WHERE code = ?', p.code);
@@ -442,6 +503,11 @@ if (!metaGet('starter_video_v1')) {
   q.run("UPDATE plans SET description = ? WHERE code = 'starter' AND description = ?", 'Post every day: 5 a day, up to 100 a month, your own videos up to 30 s, plus 40 AI images.', 'Post every day: 5 images a day, up to 100 a month, plus 40 AI images.');
   q.run("UPDATE plans SET ai_video = 1 WHERE code IN ('pro', 'business')");
   metaSet('starter_video_v1', Date.now());
+}
+/* One-time: developer API + widget on Business and Agency */
+if (!metaGet('api_access_v1')) {
+  q.run("UPDATE plans SET api_access = 1 WHERE code IN ('business', 'agency')");
+  metaSet('api_access_v1', Date.now());
 }
 /* One-time: which pricing page each plan appears on */
 if (!metaGet('audience_v1')) {

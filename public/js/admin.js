@@ -96,7 +96,7 @@
   const COLS = [['name', 'text'], ['price_cents', 'number'], ['price_cents_annual', 'number'], ['quota_limit', 'number'], ['quota_period', 'period'], ['daily_limit', 'number'], ['max_quality', 'number'],
     ['video_export', 'bool'], ['batch_export', 'bool'], ['premium_templates', 'bool'], ['watermark', 'bool'], ['max_designs', 'number'],
     ['max_brand_kits', 'number'], ['max_upload_mb', 'number'], ['max_video_mb', 'number'], ['max_video_seconds', 'number'], ['storage_mb', 'number'],
-    ['ai_credits_monthly', 'number'], ['ai_credits_lifetime', 'number'], ['ai_video', 'bool'], ['audience', 'audience'], ['public', 'bool'], ['active', 'bool'], ['stripe_price_id', 'text'], ['stripe_price_id_annual', 'text']];
+    ['ai_credits_monthly', 'number'], ['ai_credits_lifetime', 'number'], ['ai_video', 'bool'], ['audience', 'audience'], ['api_access', 'bool'], ['public', 'bool'], ['active', 'bool'], ['stripe_price_id', 'text'], ['stripe_price_id_annual', 'text']];
   async function loadPlans() {
     plans = await api('/admin/plans');
     $('planRows').innerHTML = plans.map(p => `<tr data-code="${esc(p.code)}"><td class="mono">${esc(p.code)}</td>${COLS.map(([k, t]) => {

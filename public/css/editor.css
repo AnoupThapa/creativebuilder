@@ -607,3 +607,12 @@ a.pill{text-decoration:none}
 .lang-hint{margin-top:12px;font-size:11.5px;line-height:1.45;color:var(--slate,#2d2d44);background:#f3f7ff;border:1px solid #dfe7fb;border-radius:8px;padding:8px 10px}
 /* agency clients: review & download only */
 body.client .btn-post,body.client #tab-brand,body.client .tab-btn[data-tab="brand"],body.client #btnTemplates,body.client #btnBrandKit,body.client #btnSave{display:none!important}
+
+/* send for review */
+.rv-hint{font-size:13px;color:var(--muted,#6e6d80);margin:0 0 12px}
+.rv-field{margin-bottom:12px}
+.rv-field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:5px}
+.rv-field select,.rv-field textarea{width:100%;border:1.5px solid var(--line,#e7e4dc);border-radius:10px;padding:9px;font:inherit;font-size:14px}
+.rv-sizes{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:210px;overflow:auto}
+.rv-sizes label{display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:600}
+.rv-status{font-size:13px;margin:4px 0 10px;min-height:18px}

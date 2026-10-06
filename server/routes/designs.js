@@ -43,6 +43,7 @@ function summary(d, u) {
   const owner = q.get('SELECT name FROM users WHERE id = ?', d.owner_id);
   return {
     id: d.id, name: d.name, visibility: d.visibility, thumbnail: d.thumbnail, brand_kit_id: d.brand_kit_id ?? null,
+    review_status: d.review_status || '', review_comments: q.get('SELECT COUNT(*) n FROM review_comments WHERE design_id = ?', d.id).n,
     owner_id: d.owner_id, owner_name: owner?.name || '', created_at: d.created_at, updated_at: d.updated_at,
     can_edit: canEdit(u, d), can_manage: canManage(u, d),
   };

@@ -1423,6 +1423,44 @@ async function loadKits(){
   renderKitSelect();
 }
 
+/* ---------------------------------------------------------------
+   SEND FOR REVIEW — renders the chosen sizes and sends them to the client review portal
+   --------------------------------------------------------------- */
+let DESIGN_BRAND = null;
+function openReview(){
+  $('rvBrandRow').classList.toggle('hidden', !!DESIGN_BRAND);
+  $('rvBrand').innerHTML = KITS.length ? KITS.map(k => `<option value="${k.id}">${PF.esc(k.name)}</option>`).join('') : '<option value="">Add a brand in Brands & clients first</option>';
+  $('rvSizes').innerHTML = Object.entries(PLATFORMS).map(([k, p]) => `<label><input type="checkbox" value="${k}" ${k === state.platformKey ? 'checked' : ''}> ${PF.esc(p.label)}</label>`).join('');
+  $('rvStatus').textContent = ''; $('rvGo').disabled = false;
+  $('modalReview').classList.add('open');
+}
+$('btnReview').addEventListener('click', async () => { if (!KITS.length) await loadKits(); openReview(); });
+document.querySelectorAll('[data-rclose]').forEach(el => el.addEventListener('click', () => $('modalReview').classList.remove('open')));
+$('rvGo').addEventListener('click', async () => {
+  const keys = [...$('rvSizes').querySelectorAll('input:checked')].map(i => i.value);
+  if (!keys.length){ $('rvStatus').textContent = 'Tick at least one size.'; return; }
+  $('rvGo').disabled = true;
+  try {
+    if (!DESIGN_BRAND){
+      if (!$('rvBrand').value) throw new Error('Add the client’s brand in Brands & clients first.');
+      await PF.api('/designs/' + encodeURIComponent(DESIGN_ID), { method:'PUT', body:{ brand_kit_id: +$('rvBrand').value } });
+      DESIGN_BRAND = +$('rvBrand').value;
+    }
+    await saveDesign();
+    for (const [i, k] of keys.entries()){
+      $('rvStatus').textContent = `Preparing ${PLATFORMS[k].label} (${i + 1}/${keys.length})…`;
+      const ec = renderPlatformToCanvas(k, 1, false);
+      const blob = await new Promise(r => ec.toBlob(r, 'image/jpeg', 0.92));
+      const fd = new FormData(); fd.append('platform', k); fd.append('image', blob, `${k}.jpg`);
+      await PF.api('/reviews/designs/' + encodeURIComponent(DESIGN_ID) + '/snapshots', { method:'POST', form: fd });
+    }
+    const r = await PF.api('/reviews/designs/' + encodeURIComponent(DESIGN_ID) + '/send', { method:'POST', body:{ note: $('rvNote').value } });
+    $('modalReview').classList.remove('open'); $('rvNote').value = '';
+    showToast(r.hasLink ? 'Sent ✓ — your client will see it in their review link' : 'Sent ✓ — create a review link for this brand in Brands & clients to share it', 5000);
+    PF.api('/usage').then(updateUsage).catch(() => {});
+  } catch (err){ $('rvStatus').textContent = err.message; $('rvGo').disabled = false; }
+});
+
 async function applyKit(k, { quiet = false } = {}){
   if (!k) return;
   state.brandColor = k.color;
@@ -2527,6 +2565,8 @@ async function init(){
   }
   $('designName').value = design.name;
   document.title = `${design.name} — PostForge`;
+  DESIGN_BRAND = design.brand_kit_id || null;
+  $('btnReview').classList.toggle('hidden', READONLY || ME.workspace.account_type !== 'business' || ME.plan.code === 'free');
   await restore(design.data);
   // a new, empty design made for a brand/client starts with that brand's logo, colour, fonts and contact line
   if (!READONLY && design.brand_kit_id && (!design.data || !Object.keys(design.data).length)){

@@ -191,6 +191,39 @@
           <button type="button" data-type="business"><span class="qi">🏢</span><b>Business / Agency (B2B)</b><small>I manage several brands or clients — wholesalers, multi-store brands, marketing agencies. Brand switcher, client logins, activity log.</small></button>
         </div>
       </div>
+      <div class="card biz-only" id="portalCard">
+        <h3>White-label review portal</h3>
+        <p class="muted small">How your client review links look. Clients see your name, logo and colour — never PostForge.</p>
+        <form class="row wrap" id="portalForm" style="margin-top:12px;gap:12px;align-items:flex-end">
+          <div class="field" style="margin:0;min-width:200px"><label for="ptName">Portal name</label><input id="ptName" maxlength="80" placeholder="e.g. Pixel Agency"></div>
+          <div class="field" style="margin:0"><label for="ptColor">Colour</label><input type="color" id="ptColor" value="#1a1a2e" style="width:52px;height:38px;padding:2px"></div>
+          <div class="field" style="margin:0"><label>Logo</label><div class="row"><div class="logo-prev" id="ptLogoPrev">No logo</div>
+            <label class="btn btn-ghost btn-sm">Upload<input type="file" id="ptLogo" accept="image/png,image/jpeg,image/webp" hidden></label>
+            <button type="button" class="btn btn-ghost btn-sm hidden" id="ptLogoRemove">Remove</button></div></div>
+          <button class="btn btn-dark" type="submit">Save portal look</button>
+        </form>
+      </div>
+      <div class="card hidden" id="devCard">
+        <div class="row wrap"><div class="grow"><h3>Developer API &amp; website widget</h3>
+          <p class="muted small">Connect PostForge to your own shop or systems. <a href="/developers" target="_blank" rel="noopener">Read the guide →</a></p></div></div>
+        <div id="devLocked" class="alert alert-warn hidden" style="margin-top:12px"><div class="grow">The developer API and website widget are included in the Business and Agency plans.</div><a class="btn btn-ghost btn-sm" href="#billing">See plans</a></div>
+        <div id="devBody" class="hidden">
+          <div id="devNew" class="dev-new hidden"></div>
+          <div class="table-wrap" style="margin-top:12px"><table class="t"><thead><tr><th>Name</th><th>Type</th><th>Key</th><th>Last used</th><th></th></tr></thead><tbody id="devRows"></tbody></table></div>
+          <div class="dev-forms">
+            <form id="devSecretForm" class="dev-form">
+              <b>🔑 Server key</b><span class="muted small">For your developer or shop system — resize photos, remove backgrounds, write captions, make AI images. Keep it private.</span>
+              <div class="row" style="gap:8px"><input class="input" id="devSecretName" maxlength="60" placeholder="Name, e.g. Shopify sync"><button class="btn btn-dark btn-sm" type="submit">Create</button></div>
+            </form>
+            <form id="devPubForm" class="dev-form">
+              <b>🧩 Website widget</b><span class="muted small">Lets visitors of your website make post sizes from a photo. Only works on the websites you list.</span>
+              <input class="input" id="devPubOrigins" placeholder="https://www.yourshop.com">
+              <div class="row" style="gap:8px"><input class="input" id="devPubName" maxlength="60" placeholder="Name, e.g. Main website"><button class="btn btn-dark btn-sm" type="submit">Create</button></div>
+            </form>
+          </div>
+          <p class="muted small" style="margin-top:10px">Every file made through the API or widget counts toward your plan's downloads.</p>
+        </div>
+      </div>
       <div class="card">
         <h3>2-step verification</h3>
         <p class="muted small">Require a code from an authenticator app (Google Authenticator, Authy, 1Password…) when logging in.</p>
@@ -260,6 +293,37 @@
       <div class="field"><label for="delConfirm">Type <b>DELETE</b> to confirm</label><input id="delConfirm" autocomplete="off" required></div>
       <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-danger" type="submit">Delete permanently</button></div>
     </form>
+  </div>
+</div>
+
+<!-- Client review conversation -->
+<div class="modal-wrap" id="revModal">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal" style="max-width:760px">
+    <h3 id="revTitle">Client review</h3>
+    <div id="revStatus" style="margin:6px 0 10px"></div>
+    <div class="rev-snaps" id="revSnaps"></div>
+    <div class="rev-thread" id="revThread"></div>
+    <form class="row wrap" id="revForm" style="margin-top:10px;gap:8px">
+      <input class="input grow" id="revReply" maxlength="2000" placeholder="Reply to your client…" style="min-width:220px">
+      <button class="btn btn-dark btn-sm" type="submit">Reply</button>
+    </form>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close>Close</button></div>
+  </div>
+</div>
+
+<!-- Review links for a brand -->
+<div class="modal-wrap" id="linkModal">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal">
+    <h3 id="linkTitle">Client review link</h3>
+    <p class="muted small">Send this secret link to your client. They see only this brand’s designs that you’ve sent for review — in your portal’s name, logo and colours, with no PostForge branding — and can approve, ask for changes, comment and download. No login needed.</p>
+    <div id="linkList" style="margin-top:12px"></div>
+    <div class="row wrap" style="gap:8px;margin-top:12px">
+      <select class="input" id="linkDays" style="width:auto"><option value="0">Never expires</option><option value="7">Expires in 7 days</option><option value="30" selected>Expires in 30 days</option><option value="90">Expires in 90 days</option></select>
+      <button class="btn btn-primary btn-sm" type="button" id="linkNew">＋ Create link</button>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close>Close</button></div>
   </div>
 </div>
 

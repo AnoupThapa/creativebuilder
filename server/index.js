@@ -19,6 +19,9 @@ const publicRoutes = require('./routes/public');
 const socialRoutes = require('./routes/social');
 const gifRoutes = require('./routes/gif');
 const aiRoutes = require('./routes/ai');
+const reviewRoutes = require('./routes/review');
+const apiV1 = require('./routes/apiv1');
+const embedRoutes = require('./routes/embed');
 
 const app = express();
 app.disable('x-powered-by');
@@ -66,6 +69,12 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json', limit: 
 app.use(express.json({ limit: '600kb' }));
 app.use(S.loadSession);
 
+/* ---------------- Developer API v1 (secret key in the Authorization header — no cookies, no CSRF) ---------------- */
+app.use('/api/v1', apiV1.v1);
+/* ---------------- Website widget ---------------- */
+app.use(embedRoutes.router);
+app.use('/embed-api', embedRoutes.api);
+
 /* ---------------- API ---------------- */
 const api = express.Router();
 api.use(apiLimiter);
@@ -102,8 +111,13 @@ api.use(account.router);
 api.use(socialRoutes.router);
 api.use(gifRoutes.router);
 api.use(aiRoutes.router);
+api.use(reviewRoutes.router);
+api.use(apiV1.manage);
 api.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use('/api', api);
+
+/* ---------------- White-label client review portal (public, secret link) ---------------- */
+app.use('/portal-api', limiter(1, 120, 'Too many requests — slow down a little.'), reviewRoutes.portal);
 
 /* ---------------- Media files (auth-checked) ---------------- */
 app.get('/media/:id', media.serveMedia);
@@ -143,7 +157,7 @@ app.get('/robots.txt', (req, res) => res.type('text/plain').send(
 app.get('/sitemap.xml', (req, res) => {
   const u = config.appUrl.replace(/\/$/, ''), d = new Date().toISOString().slice(0, 10);
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    [['/', '1.0'], ['/help', '0.6'], ['/privacy', '0.3'], ['/signup', '0.8'], ['/login', '0.3']].map(([p, pr]) => `  <url><loc>${u}${p}</loc><lastmod>${d}</lastmod><priority>${pr}</priority></url>`).join('\n') + '\n</urlset>\n');
+    [['/', '1.0'], ['/help', '0.6'], ['/developers', '0.5'], ['/privacy', '0.3'], ['/signup', '0.8'], ['/login', '0.3']].map(([p, pr]) => `  <url><loc>${u}${p}</loc><lastmod>${d}</lastmod><priority>${pr}</priority></url>`).join('\n') + '\n</urlset>\n');
 });
 app.use('/site', express.static(path.join(config.DATA_DIR, 'site'), { index: false, maxAge: '1d' }));
 for (const p of ['/login', '/signup', '/forgot', '/reset', '/invite']) app.get(p, page('auth.html'));
@@ -157,6 +171,8 @@ app.get('/editor', S.pageAuth(), page('editor.html'));
 app.get('/gif', S.pageAuth({ noClient: true }), page('gif.html'));
 app.get('/ai', S.pageAuth({ noClient: true }), page('ai.html'));
 app.get('/bulk', S.pageAuth({ noClient: true }), page('bulk.html'));
+app.get('/developers', page('developers.html'));
+app.get('/r/:token', (req, res, next) => { res.set({ 'X-Robots-Tag': 'noindex, nofollow', 'Referrer-Policy': 'no-referrer' }); next(); }, page('portal.html'));
 app.get('/admin', S.pageAuth({ superadmin: true }), page('admin.html'));
 /* Health check for uptime monitors (UptimeRobot, Better Stack…): checks the database and disk */
 app.get('/health', (req, res) => {
