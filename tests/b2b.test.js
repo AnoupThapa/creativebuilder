@@ -198,7 +198,7 @@ test('activity log: owners download CSV / JSON; tampering is detected', async ()
   assert.ok(!r.data.some(x => x.user === 'rita@example.com'), 'only this workspace');
   r = await a.get('/api/workspace/activity?format=csv&days=30');
   assert.match(r.headers.get('content-type'), /text\/csv/);
-  assert.match(r.headers.get('content-disposition'), /attachment; filename="postforge-activity-/);
+  assert.match(r.headers.get('content-disposition'), /attachment; filename="postgenx-activity-/);
   assert.match(r.data.split('\r\n')[0], /^id,time,user,name,action,ip,detail,hash$/);
   r = await a.get('/api/workspace/activity?format=json');
   assert.ok(Array.isArray(r.data.rows));

@@ -12,7 +12,7 @@ process.env.DATA_DIR = tmp;
 process.env.NODE_ENV = 'test';
 process.env.ADMIN_EMAIL = 'root@example.com';
 process.env.ADMIN_PASSWORD = 'RootPassword123';
-process.env.APP_URL = 'https://postforge.example';
+process.env.APP_URL = 'https://postgenx.example';
 process.env.SOCIAL_POSTING = 'on'; // posting is switched off by default in the beta
 
 /* ---------------- fake Meta ---------------- */
@@ -145,7 +145,7 @@ test('real mode: Facebook login pop-up connects the Page and its Instagram accou
   assert.equal(loc.host, 'www.facebook.com');
   assert.match(loc.pathname, /\/dialog\/oauth$/);
   assert.equal(loc.searchParams.get('client_id'), 'APPID');
-  assert.equal(loc.searchParams.get('redirect_uri'), 'https://postforge.example/api/social/meta/callback');
+  assert.equal(loc.searchParams.get('redirect_uri'), 'https://postgenx.example/api/social/meta/callback');
   assert.match(loc.searchParams.get('scope'), /instagram_content_publish/);
   const state = loc.searchParams.get('state');
   r = await owner.get('/api/social/meta/callback?code=CODE&state=wrong');
@@ -180,7 +180,7 @@ test('post now to Facebook + Instagram', async () => {
   assert.ok(photo.body.includes(Buffer.from('Weekend special')), 'caption sent to Facebook');
   assert.ok(photo.body.includes(Buffer.from('PAGE_TOKEN')), 'uses the Page token');
   const media = calls.find(c => c.path.endsWith('/IG1/media'));
-  assert.match(media.form.image_url, /^https:\/\/postforge\.example\/pub\/[0-9a-f]{32}\.jpg$/);
+  assert.match(media.form.image_url, /^https:\/\/postgenx\.example\/pub\/[0-9a-f]{32}\.jpg$/);
   assert.equal(media.form.caption, 'Weekend special ☕ #coffee');
   assert.ok(calls.some(c => c.path.endsWith('/IG1/media_publish') && c.form.creation_id === 'CONTAINER1'));
   // Instagram can fetch the picture from the public link

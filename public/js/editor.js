@@ -1,7 +1,7 @@
 'use strict';
 
 /* ============================================================
-   POSTFORGE — EDITOR ENGINE v4 (SaaS edition)
+   POSTGENX — EDITOR ENGINE v4 (SaaS edition)
    Canvas engine from v3 (multi-platform batch export, customer
    review layout, classical background removal, brand-colour
    extraction) plus: server-saved designs & media, brand kits,
@@ -889,7 +889,7 @@ function drawWatermark(ctx, w, h){
   ctx.lineWidth = 1;
   ctx.translate(w / 2, h / 2);
   ctx.rotate(-Math.PI / 7);
-  const label = 'PostForge · Free trial';
+  const label = 'PostGenX · Free trial';
   const step = ctx.measureText(label).width + fs * 3;
   const diag = Math.hypot(w, h);
   for (let y = -diag / 2; y < diag / 2; y += fs * 5){
@@ -905,7 +905,7 @@ function drawWatermark(ctx, w, h){
   ctx.fillStyle = '#fff';
   ctx.font = `600 ${Math.round(sh * 0.45)}px ${FF('Inter')}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('Made with PostForge — upgrade to remove this watermark', w / 2, h - sh / 2);
+  ctx.fillText('Made with PostGenX — upgrade to remove this watermark', w / 2, h - sh / 2);
 }
 
 /* ---------------------------------------------------------------
@@ -1658,7 +1658,7 @@ function buildFontOptions(){
   const hint = $('langHint');
   if (hint) hint.innerHTML = found.length
     ? `🌐 ${PF.esc(found.map(f => f.label).join(' + '))} text detected — fonts that support it are listed first.`
-    : '🌐 Type in any language (नेपाली, हिन्दी, العربية, ไทย…) — PostForge picks a matching font automatically.';
+    : '🌐 Type in any language (नेपाली, हिन्दी, العربية, ไทย…) — PostGenX picks a matching font automatically.';
 }
 let fontListTimer;
 function refreshFontOptionsSoon(){ clearTimeout(fontListTimer); fontListTimer = setTimeout(buildFontOptions, 400); }
@@ -1967,7 +1967,7 @@ function renderPlatformToCanvas(key, mult, watermark){
   return ec;
 }
 
-const fileBase = () => (($('designName').value || 'postforge').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'postforge');
+const fileBase = () => (($('designName').value || 'postgenx').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'postgenx');
 
 async function doExport(){
   if (exportFormat === 'video'){
@@ -2679,7 +2679,7 @@ async function saveDesign(){
     await PF.api('/designs/' + encodeURIComponent(DESIGN_ID), { method:'PUT', body:{ name, data, thumbnail: makeThumbnail() } });
     lastSavedJSON = JSON.stringify(data); lastSavedName = name;
     setSaveStatus('All changes saved');
-    document.title = `${name} — PostForge`;
+    document.title = `${name} — PostGenX`;
   } catch (err){
     setSaveStatus('Not saved — retrying', true);
     if (err.status === 403){ setSaveStatus('Read-only', true); READONLY = true; document.body.classList.add('readonly'); }
@@ -2760,7 +2760,7 @@ async function init(){
     }
   }
   $('designName').value = design.name;
-  document.title = `${design.name} — PostForge`;
+  document.title = `${design.name} — PostGenX`;
   DESIGN_BRAND = design.brand_kit_id || null;
   $('btnReview').classList.toggle('hidden', READONLY || ME.workspace.account_type !== 'business' || ME.plan.code === 'free');
   await restore(design.data);

@@ -1,5 +1,5 @@
 # One-click hosting on Render (https://render.com) — "New > Blueprint", pick this GitHub repo.
-# Render runs the app as an always-on server with a persistent disk, which PostForge needs
+# Render runs the app as an always-on server with a persistent disk, which PostGenX needs
 # (database, uploaded photos and backups live on that disk).
 services:
   - type: web

@@ -1,7 +1,7 @@
 ' =====================================================================
-'  PostForge launcher - double-click to open the PostForge Control Panel
+'  PostGenX launcher - double-click to open the PostGenX Control Panel
 '  (start/stop the app, open it in your browser, set the admin login).
-'  On first run it also adds a "PostForge" shortcut to your Desktop and
+'  On first run it also adds a "PostGenX" shortcut to your Desktop and
 '  Start menu. No Command Prompt needed.
 ' =====================================================================
 Option Explicit
@@ -16,13 +16,13 @@ Sub MakeShortcut(folder)
   Dim lnkPath, lnk
   If folder = "" Then Exit Sub
   If Not fso.FolderExists(folder) Then Exit Sub
-  lnkPath = folder & "\PostForge.lnk"
+  lnkPath = folder & "\PostGenX.lnk"
   Set lnk = sh.CreateShortcut(lnkPath)
   lnk.TargetPath = sh.ExpandEnvironmentStrings("%WINDIR%") & "\System32\wscript.exe"
   lnk.Arguments = """" & WScript.ScriptFullName & """"
   lnk.WorkingDirectory = root
   If fso.FileExists(icon) Then lnk.IconLocation = icon
-  lnk.Description = "PostForge - start the app and manage settings"
+  lnk.Description = "PostGenX - start the app and manage settings"
   lnk.Save
 End Sub
 
@@ -35,7 +35,7 @@ MakeShortcut programs
 On Error GoTo 0
 
 If Not fso.FileExists(panel) Then
-  MsgBox "Cannot find launcher\control-panel.ps1 next to this file." & vbCrLf & "Please keep PostForge.vbs inside the postforge-app folder.", vbExclamation, "PostForge"
+  MsgBox "Cannot find launcher\control-panel.ps1 next to this file." & vbCrLf & "Please keep PostGenX.vbs inside the postforge-app folder.", vbExclamation, "PostGenX"
   WScript.Quit 1
 End If
 

@@ -124,7 +124,7 @@ router.get('/ai/out/:id/:n', (req, res) => {
   if (req.query.download && !req.query.poster) {
     const st = ai.creditStatus(req.user);
     if (st.plan === 'free') return res.status(402).json({ error: 'Open it in the editor to download (free plan).' });
-    res.attachment(`postforge-ai-${out.job.id.slice(0, 8)}-${req.params.n}.${out.file.split('.').pop()}`);
+    res.attachment(`postgenx-ai-${out.job.id.slice(0, 8)}-${req.params.n}.${out.file.split('.').pop()}`);
   }
   res.set('Cache-Control', 'private, max-age=86400');
   res.sendFile(out.path);

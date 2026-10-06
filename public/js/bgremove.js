@@ -1,5 +1,5 @@
 /* =====================================================================
-   PostForge — background removal engine (classical, no AI / no server)
+   PostGenX — background removal engine (classical, no AI / no server)
    ---------------------------------------------------------------------
    Pipeline:
      1. light denoise → CIE-Lab colour (perceptual distances)

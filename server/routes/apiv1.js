@@ -137,17 +137,17 @@ v1.post('/resize', withImage, async (req, res) => {
     const [, W, H] = SIZES[s];
     files.push({ name: `${s}_${W}x${H}.${format}`, data: await imaging.resize(req.file.buffer, W, H, { fit, background, color, format }) });
   }
-  res.set('X-PostForge-Downloads-Left', String(usage.usage.remaining));
+  res.set('X-PostGenX-Downloads-Left', String(usage.usage.remaining));
   if (files.length === 1) return res.type(format === 'png' ? 'image/png' : 'image/jpeg').attachment(files[0].name).send(files[0].data);
   const zip = new JSZip(); files.forEach(f => zip.file(f.name, f.data));
-  res.type('application/zip').attachment('postforge-sizes.zip').send(await zip.generateAsync({ type: 'nodebuffer' }));
+  res.type('application/zip').attachment('postgenx-sizes.zip').send(await zip.generateAsync({ type: 'nodebuffer' }));
 });
 
 /* Remove the background → transparent PNG */
 v1.post('/remove-background', withImage, async (req, res) => {
   const usage = charge(req, [{ platform: 'api_cutout', kind: 'image' }]);
   const r = await imaging.removeBackground(req.file.buffer);
-  res.set('X-PostForge-Downloads-Left', String(usage.usage.remaining));
+  res.set('X-PostGenX-Downloads-Left', String(usage.usage.remaining));
   res.type('image/png').attachment('cutout.png').send(r.png);
 });
 

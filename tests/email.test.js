@@ -70,7 +70,7 @@ test.before(async () => {
   await new Promise(r => smtp.listen(0, '127.0.0.1', r));
   Object.assign(process.env, {
     DATA_DIR: tmp, NODE_ENV: 'test', ADMIN_EMAIL: 'Root@Example.com', ADMIN_PASSWORD: 'RootPassword123',
-    SMTP_HOST: '127.0.0.1', SMTP_PORT: String(smtp.address().port), MAIL_FROM: 'PostForge <hello@example.com>', BETA_MODE: 'true',
+    SMTP_HOST: '127.0.0.1', SMTP_PORT: String(smtp.address().port), MAIL_FROM: 'PostGenX <hello@example.com>', BETA_MODE: 'true',
   });
   ({ app, ensureAdmin } = require('../server/index.js'));
   ({ q } = require('../server/db.js'));

@@ -1,9 +1,9 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title PostForge - publish changes to Fly.io
+title PostGenX - publish changes to Fly.io
 set "PATH=%USERPROFILE%\.fly\bin;%PATH%"
-echo  Publishing the latest PostForge to Fly.io (about 2-4 minutes)...
+echo  Publishing the latest PostGenX to Fly.io (about 2-4 minutes)...
 fly deploy --ha=false
 if not %errorlevel%==0 (
   echo.

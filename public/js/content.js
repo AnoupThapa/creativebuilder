@@ -1,5 +1,5 @@
 /* =====================================================================
-   PostForge content library — themes, fonts, template categories.
+   PostGenX content library — themes, fonts, template categories.
    Edit this file to add templates; the editor picks them up automatically.
    Template fields (promo): name, headline, sub, price, cta, badge, theme,
      optional: font (heading font), layout ('classic' | 'centered' | 'top' | 'middle')

@@ -52,7 +52,7 @@
   function renderBanners() {
     const b = [];
     const w = me.workspace;
-    if (params.get('welcome')) b.push(`<div class="alert alert-ok"><div class="grow">🎉 Welcome to PostForge, ${esc(me.user.name)}! Create your first design to get started.</div></div>`);
+    if (params.get('welcome')) b.push(`<div class="alert alert-ok"><div class="grow">🎉 Welcome to PostGenX, ${esc(me.user.name)}! Create your first design to get started.</div></div>`);
     if (params.get('verified')) b.push('<div class="alert alert-ok"><div class="grow">Email confirmed ✓ — downloads are unlocked.</div></div>');
     if (params.get('checkout') === 'success') b.push('<div class="alert alert-ok"><div class="grow">Payment received — your plan will update in a few seconds. Refresh if it doesn\'t.</div></div>');
     if (!me.user.email_verified && me.requireVerifiedEmail)
@@ -764,7 +764,7 @@
       const blob = await r.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = (r.headers.get('content-disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'postforge-data.zip';
+      a.download = (r.headers.get('content-disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'postgenx-data.zip';
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
       toast('Your data download has started ✓');
     } catch (e) { toast(e.message, { error: true }); }

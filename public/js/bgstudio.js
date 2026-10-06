@@ -1,5 +1,5 @@
 /* =====================================================================
-   PostForge — Cut-out Studio
+   PostGenX — Cut-out Studio
    Full-screen background remover with automatic detection, a subject
    box for busy photos, Keep / Erase brushes, a magic eraser, edge
    controls, undo/redo and before/after previews.

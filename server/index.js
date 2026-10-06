@@ -246,7 +246,7 @@ async function ensureAdmin() {
   } else if (existing) {
     return;
   } else {
-    emailAddr = 'admin@postforge.local';
+    emailAddr = 'admin@postgenx.local';
     password = S.randomToken(12) + '7a';
     console.log('\n==============================================================');
     console.log(' No admin configured — created a platform admin account:');

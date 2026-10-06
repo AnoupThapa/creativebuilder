@@ -1,4 +1,4 @@
-/* PostForge — phone helpers: bottom navigation (dashboard), panel bar (editor),
+/* PostGenX — phone helpers: bottom navigation (dashboard), panel bar (editor),
    brand header (sign-in pages) and a "Start free" bar (landing page).
    Everything here only shows on small screens (see mobile.css / editor-mobile.css). */
 (function () {
@@ -33,7 +33,7 @@
   if (document.body.classList.contains('m-auth')) {
     const box = $('.box');
     if (box) {
-      const head = el('div', 'm-auth-brand', '<a class="brand" href="/"><span class="brand-mark">P</span>PostForge</a><p>Social media posts for your business in minutes.</p>');
+      const head = el('div', 'm-auth-brand', '<a class="brand" href="/"><span class="brand-mark">P</span>PostGenX</a><p>Social media posts for your business in minutes.</p>');
       box.insertBefore(head, box.firstChild);
     }
   }

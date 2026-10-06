@@ -1,8 +1,8 @@
 {
-  "name": "postforge",
+  "name": "postgenx",
   "version": "1.0.0",
   "private": true,
-  "description": "PostForge — social media design creator for small businesses (multi-user SaaS)",
+  "description": "PostGenX — social media design creator for small businesses (multi-user SaaS)",
   "main": "server/index.js",
   "engines": {
     "node": ">=22.13"

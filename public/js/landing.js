@@ -70,7 +70,7 @@
     $('baGrid').innerHTML = r.items.map(e => `<div class="ba">
       <div class="pair">
         <figure><img src="${esc(e.before)}" alt="Original photo${e.industry ? ' — ' + esc(e.industry) : ''}" loading="lazy" width="600" height="600"><figcaption>Before</figcaption></figure>
-        <figure class="after"><img src="${esc(e.after)}" alt="Finished social post made in PostForge" loading="lazy" width="600" height="600"><figcaption>After</figcaption></figure>
+        <figure class="after"><img src="${esc(e.after)}" alt="Finished social post made in PostGenX" loading="lazy" width="600" height="600"><figcaption>After</figcaption></figure>
       </div>
       <div class="cap">${e.industry ? `<b>${esc(e.industry)}</b> · ` : ''}${esc(e.caption || '')}</div></div>`).join('');
     $('sampleNote').classList.toggle('hidden', !r.sample);

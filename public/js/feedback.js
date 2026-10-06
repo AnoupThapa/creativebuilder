@@ -32,11 +32,11 @@
   const wrap = document.createElement('div');
   wrap.className = 'pf-fb-wrap';
   wrap.innerHTML = `<form class="pf-fb" novalidate>
-    <h3>How is PostForge working for you?</h3>
+    <h3>How is PostGenX working for you?</h3>
     <p>Your feedback shapes what we build next. It goes straight to the founder.</p>
     <div class="stars" role="radiogroup" aria-label="Rating">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div>
     <textarea name="message" maxlength="2000" placeholder="What do you like? What's missing or annoying?"></textarea>
-    <label class="ck"><input type="checkbox" name="allow"> <span>You may quote this on the PostForge website (we'll show only the name and business below).</span></label>
+    <label class="ck"><input type="checkbox" name="allow"> <span>You may quote this on the PostGenX website (we'll show only the name and business below).</span></label>
     <div class="quote hidden-q" style="display:none">
       <input type="text" name="displayName" maxlength="60" placeholder="Name to show, e.g. Priya S.">
       <input type="text" name="business" maxlength="80" placeholder="Business, e.g. Sunrise Café, Sydney">

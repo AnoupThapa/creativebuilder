@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""PostForge built-in music library.
+"""PostGenX built-in music library.
 
 Every track here is composed and synthesised by this script (no samples, no third-party
-recordings), so PostForge owns them outright and users can put them in any post.
+recordings), so PostGenX owns them outright and users can put them in any post.
 
 Run:  python3 tools/make_music.py   (needs numpy + scipy + ffmpeg on PATH or FFMPEG=…)
 Writes public/music/<key>.mp3 and public/music/library.json
@@ -386,7 +386,7 @@ def main():
         pcm = (st * 32767).astype('<i2').tobytes()
         mp3 = os.path.join(OUT, key + '.mp3')
         subprocess.run([FFMPEG, '-v', 'error', '-y', '-f', 's16le', '-ar', str(SR), '-ac', '2', '-i', '-', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', '128k',
-                        '-metadata', f'title={name}', '-metadata', 'artist=PostForge', '-metadata', 'copyright=PostForge original — free to use in your posts', mp3],
+                        '-metadata', f'title={name}', '-metadata', 'artist=PostGenX', '-metadata', 'copyright=PostGenX original — free to use in your posts', mp3],
                        input=pcm, check=True)
         lib.append({'key': key, 'name': name, 'mood': mood, 'description': desc, 'bpm': t.bpm, 'seconds': LEN, 'file': f'/music/{key}.mp3'})
         print('made', key)

@@ -11,7 +11,7 @@
     try { status = await api('/social/status'); } catch (e) { toast(e.message, { error: true }); return; }
     $('socDemo').innerHTML = status.demo
       ? '<div class="soc-demo"><b>Demo mode.</b> Meta (Facebook &amp; Instagram) isn’t set up on this server yet, so connecting adds sample accounts and posts are simulated. See the README “Social media posting” section to switch on real posting.</div>'
-      : (!status.instagramReady ? '<div class="soc-demo">PostForge is running on this computer (localhost). Facebook posting works, but Instagram needs PostForge online (e.g. Fly.io) because Instagram downloads the picture from your PostForge address.</div>' : '');
+      : (!status.instagramReady ? '<div class="soc-demo">PostGenX is running on this computer (localhost). Facebook posting works, but Instagram needs PostGenX online (e.g. Fly.io) because Instagram downloads the picture from your PostGenX address.</div>' : '');
     $('socConnect').classList.toggle('hidden', !status.canManage);
     renderAccounts();
     loadPosts();
@@ -76,7 +76,7 @@
         await api(`/social/posts/${t.dataset.cancel}/cancel`, { method: 'POST' }); toast('Cancelled'); loadPosts();
       }
       if (t.dataset.retry) { await api(`/social/posts/${t.dataset.retry}/retry`, { method: 'POST' }); toast('Retrying…'); setTimeout(loadPosts, 800); }
-      if (t.dataset.del && await confirmBox('Remove this post from PostForge?', 'This only removes it from this list — it does not delete it from Facebook or Instagram.', 'Remove', true)) {
+      if (t.dataset.del && await confirmBox('Remove this post from PostGenX?', 'This only removes it from this list — it does not delete it from Facebook or Instagram.', 'Remove', true)) {
         await api('/social/posts/' + t.dataset.del, { method: 'DELETE' }); loadPosts();
       }
       if (t.dataset.resched) {

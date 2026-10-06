@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title PostForge - switch on real Facebook and Instagram posting
+title PostGenX - switch on real Facebook and Instagram posting
 set "PATH=%USERPROFILE%\.fly\bin;%PATH%"
 echo.
 echo  Paste the details from your Meta app (developers.facebook.com - App settings - Basic).
@@ -19,7 +19,7 @@ if "%MCONF%"=="" (
 )
 if not %errorlevel%==0 goto :fail
 echo.
-echo  Done. PostForge restarts by itself in about a minute.
+echo  Done. PostGenX restarts by itself in about a minute.
 echo  Then open Social posts and click "Connect Facebook ^& Instagram".
 pause
 exit /b 0

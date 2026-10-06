@@ -46,8 +46,8 @@ router.get('/me/export', async (req, res) => {
     activity_log: q.all('SELECT action, detail, ip, created_at FROM audit_log WHERE user_id = ? ORDER BY id', u.id),
     files: media.map(m => ({ id: m.id, filename: m.filename, type: m.mime, size: m.size, uploaded_at: m.created_at, zip_path: `files/${m.id}-${m.filename}` })),
   };
-  zip.file('postforge-data.json', JSON.stringify(data, null, 2));
-  zip.file('README.txt', `PostForge data export\nCreated: ${data.exported_at}\nScope: ${data.scope}\n\npostforge-data.json  - your account, designs, brand kits, download history, sessions and activity\nfiles/               - the photos, videos and logos you uploaded\nthumbnails/          - preview images of your designs\n`);
+  zip.file('postgenx-data.json', JSON.stringify(data, null, 2));
+  zip.file('README.txt', `PostGenX data export\nCreated: ${data.exported_at}\nScope: ${data.scope}\n\npostgenx-data.json  - your account, designs, brand kits, download history, sessions and activity\nfiles/               - the photos, videos and logos you uploaded\nthumbnails/          - preview images of your designs\n`);
   for (const d of designs) {
     const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(d.thumbnail || '');
     if (m) zip.file(`thumbnails/${d.id}.${m[1] === 'jpeg' ? 'jpg' : m[1]}`, Buffer.from(m[2], 'base64'));
@@ -58,7 +58,7 @@ router.get('/me/export', async (req, res) => {
   S.audit(req, 'account.data_exported', { designs: designs.length, files: media.length });
   const buf = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
   const stamp = new Date().toISOString().slice(0, 10);
-  res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="postforge-data-${stamp}.zip"`, 'Cache-Control': 'no-store' });
+  res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="postgenx-data-${stamp}.zip"`, 'Cache-Control': 'no-store' });
   res.send(buf);
 });
 

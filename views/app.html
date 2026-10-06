@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PostForge — Dashboard</title>
+<title>PostGenX — Dashboard</title>
 <link rel="icon" href="/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <link rel="stylesheet" href="/css/fonts.css">
@@ -15,7 +15,7 @@
 <body class="m-app">
 <div class="shell">
   <aside class="sidebar" id="sidebar">
-    <a class="brand" href="/app"><span class="brand-mark">P</span>PostForge</a>
+    <a class="brand" href="/app"><span class="brand-mark">P</span>PostGenX</a>
     <div class="ws-name" id="wsName">—</div>
     <nav class="nav" id="nav">
       <a href="#designs" data-view="designs"><span>🖼</span>Designs</a>
@@ -82,7 +82,7 @@
       <div id="socDemo"></div>
       <div class="card">
         <div class="row wrap"><div class="grow" style="min-width:240px"><h3>Connected accounts</h3>
-          <p class="muted small">Facebook Pages and Instagram Business or Creator accounts you can post to. Connecting opens Facebook’s own login window — PostForge never sees your password.</p></div>
+          <p class="muted small">Facebook Pages and Instagram Business or Creator accounts you can post to. Connecting opens Facebook’s own login window — PostGenX never sees your password.</p></div>
           <button class="btn btn-primary btn-sm" id="socConnect">＋ Connect Facebook &amp; Instagram</button></div>
         <div id="socAccounts" style="margin-top:12px"></div>
       </div>
@@ -186,7 +186,7 @@
       </div>
       <div class="card" id="acctTypeCard">
         <h3>Account type</h3>
-        <p class="muted small">Choose how PostForge works for you. You can switch any time — nothing is deleted.</p>
+        <p class="muted small">Choose how PostGenX works for you. You can switch any time — nothing is deleted.</p>
         <div class="acct-types" id="acctTypes" style="margin-top:12px">
           <button type="button" data-type="retail"><span class="qi">🛍️</span><b>Retail / Shop owner</b><small>I post for my own shop or business. Simple snap → edit → post, AI photos, festival posts.</small></button>
           <button type="button" data-type="business"><span class="qi">🏢</span><b>Business / Agency (B2B)</b><small>I manage several brands or clients — wholesalers, multi-store brands, marketing agencies. Brand switcher, client logins, activity log.</small></button>
@@ -194,7 +194,7 @@
       </div>
       <div class="card biz-only" id="portalCard">
         <h3>White-label review portal</h3>
-        <p class="muted small">How your client review links look. Clients see your name, logo and colour — never PostForge.</p>
+        <p class="muted small">How your client review links look. Clients see your name, logo and colour — never PostGenX.</p>
         <form class="row wrap" id="portalForm" style="margin-top:12px;gap:12px;align-items:flex-end">
           <div class="field" style="margin:0;min-width:200px"><label for="ptName">Portal name</label><input id="ptName" maxlength="80" placeholder="e.g. Pixel Agency"></div>
           <div class="field" style="margin:0"><label for="ptColor">Colour</label><input type="color" id="ptColor" value="#1a1a2e" style="width:52px;height:38px;padding:2px"></div>
@@ -206,7 +206,7 @@
       </div>
       <div class="card hidden" id="devCard">
         <div class="row wrap"><div class="grow"><h3>Developer API &amp; website widget</h3>
-          <p class="muted small">Connect PostForge to your own shop or systems. <a href="/developers" target="_blank" rel="noopener">Read the guide →</a></p></div></div>
+          <p class="muted small">Connect PostGenX to your own shop or systems. <a href="/developers" target="_blank" rel="noopener">Read the guide →</a></p></div></div>
         <div id="devLocked" class="alert alert-warn hidden" style="margin-top:12px"><div class="grow">The developer API and website widget are included in the Business and Agency plans.</div><a class="btn btn-ghost btn-sm" href="#billing">See plans</a></div>
         <div id="devBody" class="hidden">
           <div id="devNew" class="dev-new hidden"></div>
@@ -318,7 +318,7 @@
   <div class="modal-backdrop" data-close></div>
   <div class="modal">
     <h3 id="linkTitle">Client review link</h3>
-    <p class="muted small">Send this secret link to your client. They see only this brand’s designs that you’ve sent for review — in your portal’s name, logo and colours, with no PostForge branding — and can approve, ask for changes, comment and download. No login needed.</p>
+    <p class="muted small">Send this secret link to your client. They see only this brand’s designs that you’ve sent for review — in your portal’s name, logo and colours, with no PostGenX branding — and can approve, ask for changes, comment and download. No login needed.</p>
     <div id="linkList" style="margin-top:12px"></div>
     <div class="row wrap" style="gap:8px;margin-top:12px">
       <select class="input" id="linkDays" style="width:auto"><option value="0">Never expires</option><option value="7">Expires in 7 days</option><option value="30" selected>Expires in 30 days</option><option value="90">Expires in 90 days</option></select>

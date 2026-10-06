@@ -65,7 +65,7 @@
         ${a.status !== 'active' ? '<span class="soc-badge bad">Reconnect</span>' : ''}
       </label>`).join('')
       : `<div class="soc-acct" style="display:block"><b>No accounts connected yet.</b><br><span class="muted" style="font-size:13px">${status.canManage
-        ? 'Connect your Facebook Page and Instagram account — Facebook opens its own login window, and PostForge never sees your password.'
+        ? 'Connect your Facebook Page and Instagram account — Facebook opens its own login window, and PostGenX never sees your password.'
         : 'Ask your workspace owner or admin to connect your Facebook Page and Instagram account.'}</span></div>`;
 
     $('pmBody').innerHTML = `
@@ -89,7 +89,7 @@
               <label><input type="radio" name="pmPlace" value="story" ${igFeedOk ? '' : 'checked'}> Story</label>
             </div>
             ${igFeedOk ? '' : '<div class="pm-warn">This size is too tall/wide for an Instagram feed post, so it will go to your Story. For a feed post choose the “Instagram Post” or “Instagram Portrait” size.</div>'}
-            ${!status.instagramReady ? '<div class="pm-warn">Instagram can only receive posts when PostForge is online (e.g. on Fly.io), not on localhost. Facebook works from here.</div>' : ''}
+            ${!status.instagramReady ? '<div class="pm-warn">Instagram can only receive posts when PostGenX is online (e.g. on Fly.io), not on localhost. Facebook works from here.</div>' : ''}
           </div>
           <div class="pm-sec" id="pmCapSec">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><label for="pmCap" style="margin-right:auto">Caption</label>
@@ -214,7 +214,7 @@
     $('pmBody').innerHTML = `
       <div class="pm-result">
         <p style="margin-bottom:10px;font-size:15px">${scheduled
-          ? `🗓 Scheduled for <b>${esc(S.when(post.scheduled_at))}</b>. PostForge will publish it automatically — you can change or cancel it in <a href="/app#social" target="_blank">Social posts</a>.`
+          ? `🗓 Scheduled for <b>${esc(S.when(post.scheduled_at))}</b>. PostGenX will publish it automatically — you can change or cancel it in <a href="/app#social" target="_blank">Social posts</a>.`
           : '📣 Posting… you can keep working, this only takes a moment.'}</p>
         <div id="pmTargets">${targetsHtml(post)}</div>
         <div class="pm-foot"><a class="pill" href="/app#social" target="_blank">See all posts</a><button class="btn-export" type="button" data-pm-close>Done</button></div>

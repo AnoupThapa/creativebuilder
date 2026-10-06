@@ -47,7 +47,7 @@
 
   const form = $('f-' + mode) || $('f-login');
   form.classList.remove('hidden');
-  document.title = 'PostForge — ' + ({ login: 'Log in', signup: 'Sign up', forgot: 'Reset password', reset: 'New password', invite: 'Join team' }[mode] || 'Log in');
+  document.title = 'PostGenX — ' + ({ login: 'Log in', signup: 'Sign up', forgot: 'Reset password', reset: 'New password', invite: 'Join team' }[mode] || 'Log in');
 
   /* ---------- LOGIN ---------- */
   $('f-login').addEventListener('submit', async e => {
@@ -72,7 +72,7 @@
     if (c.betaMode) {
       $('codeField').classList.remove('hidden');
       $('su-code').required = true;
-      $('signupLead').textContent = 'PostForge is in private beta. Enter the invite code you were sent.';
+      $('signupLead').textContent = 'PostGenX is in private beta. Enter the invite code you were sent.';
     }
   }).catch(() => {});
   const wantPlan = params.get('plan');

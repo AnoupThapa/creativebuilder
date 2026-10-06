@@ -424,7 +424,7 @@ test('privacy: download my data + delete account (member and owner)', async () =
   assert.equal(r.status, 200);
   assert.equal(r.headers.get('content-type'), 'application/zip');
   let zip = await JSZip.loadAsync(Buffer.from(await r.arrayBuffer()));
-  let data = JSON.parse(await zip.file('postforge-data.json').async('string'));
+  let data = JSON.parse(await zip.file('postgenx-data.json').async('string'));
   assert.equal(data.account.email, 'max@example.com');
   assert.equal(data.account.password_hash, undefined, 'no password hash in export');
   assert.equal(data.designs.length, 2);
@@ -444,7 +444,7 @@ test('privacy: download my data + delete account (member and owner)', async () =
   // owner export includes uploaded files
   r = await fetch(base + '/api/me/export', { headers: { cookie: zoe.cookie } });
   zip = await JSZip.loadAsync(Buffer.from(await r.arrayBuffer()));
-  data = JSON.parse(await zip.file('postforge-data.json').async('string'));
+  data = JSON.parse(await zip.file('postgenx-data.json').async('string'));
   assert.ok(zip.file(`files/${media.id}-cake.png`), 'uploaded file included');
   assert.ok(data.designs.length >= 2);
 

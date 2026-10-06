@@ -1,12 +1,12 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title PostForge - repair the Fly.io app
+title PostGenX - repair the Fly.io app
 set "APP=creativebuilder"
 set "PATH=%USERPROFILE%\.fly\bin;%PATH%"
 echo.
 echo  ============================================================
-echo    PostForge - repair the Fly.io app "%APP%"
+echo    PostGenX - repair the Fly.io app "%APP%"
 echo    Moves it to ONE server in Singapore with a permanent disk.
 echo  ============================================================
 echo.
@@ -75,7 +75,7 @@ fly secrets set --stage -a %APP% APP_URL=https://%APP%.fly.dev
 
 rem ---- publish: one server, Singapore ------------------------------------------
 echo.
-echo  Building and starting PostForge (3-6 minutes)...
+echo  Building and starting PostGenX (3-6 minutes)...
 fly deploy -a %APP% --ha=false
 if not %errorlevel%==0 goto :fail
 fly scale count 1 -a %APP% -y >nul 2>nul

@@ -1,4 +1,4 @@
-# PostForge — Social Media Design Creator (SaaS)
+# PostGenX — Social Media Design Creator (SaaS)
 
 A multi-user web app that lets small businesses turn one photo or video into ready-to-post designs
 for 14 platform sizes — now with accounts, teams, plans, billing and security controls.
@@ -11,16 +11,16 @@ brand-colour extraction, batch/video export), which now runs inside a full Node.
 ## 1. Run it on Windows — no Command Prompt
 
 1. Install **Node.js LTS** from https://nodejs.org (default options) — one time only.
-2. In the `postforge-app` folder, double-click **PostForge.vbs**.
-   * The first time, this adds a **PostForge** shortcut (coral "P" icon) to your **Desktop** and **Start menu** — use that from then on.
-3. The **PostForge Control Panel** opens:
+2. In the `postforge-app` folder, double-click **PostGenX.vbs**.
+   * The first time, this adds a **PostGenX** shortcut (coral "P" icon) to your **Desktop** and **Start menu** — use that from then on.
+3. The **PostGenX Control Panel** opens:
    * **Platform admin login** — type your admin email + password (twice) and click **Save admin login**. No need to edit `.env` in Notepad; changing it later also updates the admin account's password.
    * **Start & open** — installs packages automatically on the first run, starts the app in the background (no black window) and opens it in your browser.
    * **Stop app**, **Open in browser**, **Admin** (opens /admin), port setting, "Desktop shortcut" (re-creates it), "Open app folder", and an activity log.
    * Tick *Start the app automatically when this window opens* so the shortcut is a one-click start.
    * Closing the panel keeps the app running; use **Stop app** to turn it off.
 
-If Windows asks about running the script, choose *Open/Run* (it only starts PostForge on your own computer).
+If Windows asks about running the script, choose *Open/Run* (it only starts PostGenX on your own computer).
 Logs are in `data\server.log` and `data\server-error.log`.
 
 ## 1b. Run it from a terminal (macOS / Linux / advanced)
@@ -258,7 +258,7 @@ open the site, sign up, upload a photo from the camera roll, download, and post 
 
 ## 11. Put it online (GitHub + Render)
 
-PostForge is an always-on server with a database and uploaded photos on disk, so it needs a host with a
+PostGenX is an always-on server with a database and uploaded photos on disk, so it needs a host with a
 **persistent disk**. Vercel and Netlify only run short-lived serverless functions with no lasting disk,
 so the database and uploads would be lost — they are not suitable. Render (or Railway / a VPS) is.
 
@@ -282,14 +282,14 @@ Fly.io needs a card after its short free trial and bills by use.
   `https://<app-name>.fly.dev`.
 * **After changes:** double-click `fly-update.cmd`.
 * Settings live in `fly.toml` (region, memory, `BETA_MODE`). Secrets are set with `fly secrets set NAME=value`.
-* Fly also takes a daily snapshot of the disk (kept 5 days) on top of PostForge's own backups.
+* Fly also takes a daily snapshot of the disk (kept 5 days) on top of PostGenX's own backups.
 
 ## 13. Social media posting (Facebook Pages + Instagram)
 
 Open a design → **📣 Post** → tick accounts → caption → **Post now** or **Schedule**. Scheduled posts, history,
 retries and connected accounts live under **Social posts** in the dashboard. Each post counts as one download.
 
-* **Connecting** uses Meta's own login pop-up (OAuth). People type their password on facebook.com — PostForge only
+* **Connecting** uses Meta's own login pop-up (OAuth). People type their password on facebook.com — PostGenX only
   receives Page tokens for the Pages/Instagram accounts they tick, stored encrypted.
 * **Demo mode** (no `META_APP_ID`): connecting adds sample accounts and posts are simulated, so the team can try the flow.
 * **Real posting:** create a Meta app (use cases *Manage everything on your Page* + *Manage messaging & content on
@@ -300,7 +300,7 @@ retries and connected accounts live under **Social posts** in the dashboard. Eac
 * While the Meta app is unpublished/standard access, only people with a role on the app (you, your team) can connect
   and their posts may only be visible to app roles. To let customers connect their own Pages, publish the app and
   complete Meta **App Review** + **Business Verification** for the permissions above.
-* **Instagram** needs PostForge online (Instagram downloads the post from `APP_URL/pub/...`), Business/Creator
+* **Instagram** needs PostGenX online (Instagram downloads the post from `APP_URL/pub/...`), Business/Creator
   accounts linked to a Page, feed images between 4:5 and 1.91:1 (taller designs go to Stories; videos become Reels).
 * Scheduled posts are published by the server every 30 seconds — on Fly.io the machine is kept always on for this.
 * **Going back to v1.0:** the version before this feature is saved as Git tag `v1.0-before-social` and as zips in

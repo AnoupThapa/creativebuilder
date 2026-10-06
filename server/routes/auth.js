@@ -70,7 +70,7 @@ router.post('/auth/signup', async (req, res) => {
     beta = codeIn ? q.get('SELECT * FROM beta_codes WHERE code = ?', codeIn) : null;
     const usable = beta && beta.uses < beta.max_uses && (!beta.expires_at || beta.expires_at > Date.now());
     if (!usable) {
-      if (config.betaMode) throw new S.HttpError(403, codeIn ? 'That invite code is not valid or has been used up.' : 'PostForge is in private beta — you need an invite code to sign up.', { code: 'beta_code_required' });
+      if (config.betaMode) throw new S.HttpError(403, codeIn ? 'That invite code is not valid or has been used up.' : 'PostGenX is in private beta — you need an invite code to sign up.', { code: 'beta_code_required' });
       beta = null;
     }
   }

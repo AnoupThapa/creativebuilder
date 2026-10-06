@@ -87,3 +87,11 @@ test('pages link scripts and styles with a version, so an update never runs old 
     for (const r of refs) assert.match(r, /\?v=[0-9a-f]{10}"$/, `${u}: ${r}`);
   }
 });
+
+test('brand name is PostGenX on every public page', async () => {
+  for (const u of ['/', '/help', '/privacy', '/login', '/developers']) {
+    const html = await (await fetch(base + u)).text();
+    assert.ok(!/postforge/i.test(html), `${u} still mentions the old name`);
+    assert.match(html, /PostGenX/, u);
+  }
+});

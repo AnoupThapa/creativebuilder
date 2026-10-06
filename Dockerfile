@@ -1,4 +1,4 @@
-# Container recipe used by Fly.io (and any Docker host) to run PostForge
+# Container recipe used by Fly.io (and any Docker host) to run PostGenX
 FROM node:22-slim
 
 WORKDIR /app

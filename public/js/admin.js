@@ -194,7 +194,7 @@
     const rows = await api('/admin/support?status=' + supStatus);
     $('supList').innerHTML = rows.map(t => `<div class="card"><div class="row wrap"><strong class="grow">PF-${String(t.id).padStart(5, '0')} · ${esc(t.topic)}</strong>
       <span class="small muted">${ago(t.created_at)}</span>
-      <a class="btn btn-ghost btn-sm" href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Re: your PostForge message PF-' + String(t.id).padStart(5, '0'))}">Reply by email</a>
+      <a class="btn btn-ghost btn-sm" href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Re: your PostGenX message PF-' + String(t.id).padStart(5, '0'))}">Reply by email</a>
       <button class="btn btn-sm ${t.status === 'open' ? 'btn-dark' : 'btn-ghost'}" data-close="${t.id}" data-to="${t.status === 'open' ? 'closed' : 'open'}">${t.status === 'open' ? 'Mark done' : 'Reopen'}</button></div>
       <div class="small muted">${esc(t.name)} &lt;${esc(t.email)}&gt;${t.user_id ? ' · user #' + t.user_id : ' · not logged in'}${t.page ? ' · from ' + esc(t.page) : ''}</div>
       <pre class="mail">${esc(t.message)}</pre></div>`).join('') || `<p class="muted">No ${supStatus} messages.</p>`;

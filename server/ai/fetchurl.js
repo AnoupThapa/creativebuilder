@@ -39,7 +39,7 @@ async function safeFetch(raw, { max, accept }) {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 10000);
     let r;
     try {
-      r = await fetch(url, { redirect: 'manual', signal: ctl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PostForgeBot/1.0; +https://creativebuilder.fly.dev)', Accept: accept } });
+      r = await fetch(url, { redirect: 'manual', signal: ctl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PostGenXBot/1.0; +https://creativebuilder.fly.dev)', Accept: accept } });
     } catch (e) { clearTimeout(t); throw Object.assign(new Error('Could not open that link. Check it opens in your browser.'), { status: 400 }); }
     if (r.status >= 300 && r.status < 400 && r.headers.get('location')) {
       clearTimeout(t);

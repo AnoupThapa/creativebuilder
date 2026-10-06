@@ -1,4 +1,4 @@
-/* White-label review portal — no PostForge branding; colours come from the agency */
+/* White-label review portal — no PostGenX branding; colours come from the agency */
 :root{--acc:#1a1a2e;--ink:#1a1a2e;--muted:#6e6d80;--line:#e7e4dc;--paper:#f7f5f1;--F:"Space Grotesk","Inter",system-ui,sans-serif;--FB:"Inter",system-ui,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--FB);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}

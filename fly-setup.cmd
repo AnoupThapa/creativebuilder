@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title PostForge - put it online with Fly.io
+title PostGenX - put it online with Fly.io
 echo.
 echo  ============================================================
-echo    PostForge - put it online with Fly.io (first-time setup)
+echo    PostGenX - put it online with Fly.io (first-time setup)
 echo  ============================================================
 echo.
 
@@ -79,13 +79,13 @@ if not %errorlevel%==0 goto :fail
 
 rem ---- 6. build and start it ---------------------------------------------------
 echo.
-echo  Building and starting PostForge online (3-6 minutes the first time)...
+echo  Building and starting PostGenX online (3-6 minutes the first time)...
 fly deploy -a %APP% --ha=false
 if not %errorlevel%==0 goto :fail
 
 echo.
 echo  ============================================================
-echo    Done! PostForge is online at  https://%APP%.fly.dev
+echo    Done! PostGenX is online at  https://%APP%.fly.dev
 echo    Next: log in, then Account ^& security - turn on 2-step login.
 echo    To publish changes later, double-click fly-update.cmd
 echo  ============================================================

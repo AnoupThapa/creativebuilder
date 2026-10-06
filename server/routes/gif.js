@@ -61,7 +61,7 @@ router.post('/gif/make', (req, res, next) => upload(req, res, err => {
 router.get('/gif/out/:id/:file', (req, res) => {
   const p = gif.outputPath(req.user.id, req.params.id, req.params.file);
   if (!p) return res.status(404).json({ error: 'This file has expired — make it again.' });
-  const name = 'postforge-' + req.params.file;
+  const name = 'postgenx-' + req.params.file;
   if (req.query.download) res.attachment(name);
   res.set('Cache-Control', 'private, max-age=3600');
   res.sendFile(p);

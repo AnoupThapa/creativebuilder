@@ -1,7 +1,7 @@
 'use strict';
 /* Publishing to Facebook Pages and Instagram (Business/Creator) accounts through Meta's official
    Graph API. People connect their accounts with Meta's own login pop-up (OAuth): they type their
-   Facebook password on facebook.com, never in PostForge, and PostForge only receives a Page token
+   Facebook password on facebook.com, never in PostGenX, and PostGenX only receives a Page token
    with the permissions they approved.
 
    Without META_APP_ID/META_APP_SECRET the feature runs in DEMO mode: sample accounts can be
@@ -173,7 +173,7 @@ async function publishFacebook(post, acct, token) {
 
 async function publishInstagram(post, acct, token) {
   if (isLocalUrl(publicBase()))
-    throw new Error('Instagram fetches the picture from your PostForge address, so PostForge must be online (e.g. on Fly.io) — not on localhost.');
+    throw new Error('Instagram fetches the picture from your PostGenX address, so PostGenX must be online (e.g. on Fly.io) — not on localhost.');
   const url = publicUrl(post.file);
   const params = { access_token: token };
   if (post.ig_placement === 'story') {

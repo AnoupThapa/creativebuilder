@@ -1,4 +1,4 @@
-# Publishes PostForge to Fly.io automatically every time code is pushed to the main branch.
+# Publishes PostGenX to Fly.io automatically every time code is pushed to the main branch.
 # Needs one GitHub secret: FLY_API_TOKEN (a Fly.io deploy token).
 # You can also run it by hand: GitHub -> Actions -> "Publish to Fly.io" -> Run workflow.
 name: Publish to Fly.io
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      # PostForge keeps its database and photos on a permanent disk in Singapore
+      # PostGenX keeps its database and photos on a permanent disk in Singapore
       - name: Make sure the permanent disk exists
         run: |
           if flyctl volumes list --json | jq -e '.[] | select(.name=="postforge_data" and .region=="sin")' > /dev/null; then
@@ -26,7 +26,7 @@ jobs:
             flyctl volumes create postforge_data --region sin --size 1 --yes
           fi
 
-      # Old servers created by the Fly.io website (other region / no disk) can't run PostForge correctly
+      # Old servers created by the Fly.io website (other region / no disk) can't run PostGenX correctly
       - name: Remove old servers without the disk
         run: |
           for id in $(flyctl machine list --json | jq -r '.[] | select(.region != "sin" or ((.config.mounts // []) | length) == 0) | .id'); do
@@ -35,5 +35,5 @@ jobs:
           done
 
       # one server, settings from fly.toml
-      - name: Build and start PostForge
+      - name: Build and start PostGenX
         run: flyctl deploy --remote-only --ha=false

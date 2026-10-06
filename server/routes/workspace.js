@@ -304,7 +304,7 @@ router.get('/workspace/activity', S.requireRole('admin'), (req, res) => {
     ip: r.ip || '', detail: r.detail === '{}' ? '' : r.detail, hash: r.hash || '' }));
   if (req.query.format === 'csv' || req.query.format === 'json') {
     S.audit(req, 'workspace.activity_exported', { format: req.query.format, days, rows: out.length });
-    const name = `postforge-activity-${new Date().toISOString().slice(0, 10)}.${req.query.format}`;
+    const name = `postgenx-activity-${new Date().toISOString().slice(0, 10)}.${req.query.format}`;
     res.attachment(name);
     if (req.query.format === 'json') return res.json({ workspace: req.user.workspace_id, exported_at: new Date().toISOString(), days, rows: out });
     const cell = v => { const s = String(v ?? ''); return /[",\n\r]/.test(s) || /^[=+\-@]/.test(s) ? `"${(/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""')}"` : s; };

@@ -1,4 +1,4 @@
-# Fly.io settings for PostForge.
+# Fly.io settings for PostGenX.
 # The app name must be unique across Fly.io — if "postforge-anoup" is taken, change it here
 # and use the same name in the setup commands.
 app = "creativebuilder"

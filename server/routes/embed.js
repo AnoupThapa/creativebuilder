@@ -22,7 +22,7 @@ const lookup = raw => {
 /* the loader script businesses paste on their site */
 router.get('/widget.js', (req, res) => {
   res.set({ 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=3600', 'Access-Control-Allow-Origin': '*', 'Cross-Origin-Resource-Policy': 'cross-origin' });
-  res.send(`/* PostForge widget loader */
+  res.send(`/* PostGenX widget loader */
 (function(){var s=document.currentScript;if(!s)return;var k=s.getAttribute('data-key')||'';var h=parseInt(s.getAttribute('data-height')||'640',10);
 var o=new URL(s.src).origin;var t=s.getAttribute('data-target');var box=t?document.querySelector(t):null;
 var f=document.createElement('iframe');f.src=o+'/embed?key='+encodeURIComponent(k);f.title='Photo resizer';f.loading='lazy';

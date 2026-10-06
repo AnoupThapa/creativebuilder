@@ -439,7 +439,7 @@
       progress(0.97, 'Packing the ZIP…');
       const blob = await zip.generateAsync({ type: 'blob' });
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = `postforge-bulk-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.href = URL.createObjectURL(blob); a.download = `postgenx-bulk-${new Date().toISOString().slice(0, 10)}.zip`;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       PF.toast(`Done ✓ ${all.length} images downloaded${capNote ? ' — captions stopped: ' + capNote : ''}`, { ms: 6000 });
     } catch (e) {

@@ -1,8 +1,8 @@
 # =====================================================================
-#  PostForge Control Panel (Windows)
+#  PostGenX Control Panel (Windows)
 #  Start / stop the app, open it in the browser, and set the admin
 #  email + password - no Command Prompt needed.
-#  Launched by "PostForge.vbs" (or the PostForge desktop shortcut).
+#  Launched by "PostGenX.vbs" (or the PostGenX desktop shortcut).
 # =====================================================================
 param([switch]$SelfTest)
 
@@ -159,7 +159,7 @@ $FontBold = New-Object System.Drawing.Font('Segoe UI Semibold', 10)
 $FontBig  = New-Object System.Drawing.Font('Segoe UI Semibold', 16)
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'PostForge Control Panel'
+$form.Text = 'PostGenX Control Panel'
 $form.Size = New-Object System.Drawing.Size(600, 700)
 $form.StartPosition = 'CenterScreen'
 $form.FormBorderStyle = 'FixedSingle'
@@ -190,7 +190,7 @@ function New-Group($text, $y, $h) {
 }
 
 # --- header ---
-$title = New-Label 'PostForge' 18 12 300 34; $title.Font = $FontBig; $title.ForeColor = $Ink
+$title = New-Label 'PostGenX' 18 12 300 34; $title.Font = $FontBig; $title.ForeColor = $Ink
 $status = New-Label 'Checking...' 330 20 240 24; $status.TextAlign = 'MiddleRight'; $status.Font = $FontBold; $status.ForeColor = $Muted
 $form.Controls.AddRange(@($title, $status))
 
@@ -266,18 +266,18 @@ function Start-App {
 
   $node = Get-NodeInfo
   if (-not $node) {
-    $r = [System.Windows.Forms.MessageBox]::Show("Node.js is not installed.`r`n`r`nInstall the LTS version from nodejs.org (default options), then open PostForge again.`r`n`r`nOpen nodejs.org now?", 'PostForge', 'YesNo', 'Warning')
+    $r = [System.Windows.Forms.MessageBox]::Show("Node.js is not installed.`r`n`r`nInstall the LTS version from nodejs.org (default options), then open PostGenX again.`r`n`r`nOpen nodejs.org now?", 'PostGenX', 'YesNo', 'Warning')
     if ($r -eq 'Yes') { Start-Process 'https://nodejs.org/en/download' }
     return
   }
   if (-not (Test-NodeVersion $node.Version)) {
-    [System.Windows.Forms.MessageBox]::Show("Node.js $($node.Version) is too old. PostForge needs version 22.13 or newer.`r`nInstall the current LTS from nodejs.org, then try again.", 'PostForge', 'OK', 'Warning') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show("Node.js $($node.Version) is too old. PostGenX needs version 22.13 or newer.`r`nInstall the current LTS from nodejs.org, then try again.", 'PostGenX', 'OK', 'Warning') | Out-Null
     Start-Process 'https://nodejs.org/en/download'; return
   }
 
   $vals = Read-EnvFile
   if (-not $vals['ADMIN_EMAIL'] -or -not $vals['ADMIN_PASSWORD']) {
-    [System.Windows.Forms.MessageBox]::Show('Please set the admin email and password first (Platform admin login), then click Start again.', 'PostForge', 'OK', 'Information') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show('Please set the admin email and password first (Platform admin login), then click Start again.', 'PostGenX', 'OK', 'Information') | Out-Null
     $tEmail.Focus() | Out-Null; return
   }
 
@@ -299,14 +299,14 @@ function Start-App {
       Wait-Process-UI $p
       if ($p.ExitCode -ne 0 -or -not (Test-Path (Join-Path $Root 'node_modules'))) {
         Write-Log 'Package install failed - see data\install.log'
-        [System.Windows.Forms.MessageBox]::Show("Installing packages failed. Check your internet connection and see data\install.log.", 'PostForge', 'OK', 'Error') | Out-Null
+        [System.Windows.Forms.MessageBox]::Show("Installing packages failed. Check your internet connection and see data\install.log.", 'PostGenX', 'OK', 'Error') | Out-Null
         return
       }
       Set-Content -Path $hashFile -Value $pkgHash -Encoding ASCII
       Write-Log 'Packages installed.'
     }
 
-    Write-Log 'Starting PostForge...'
+    Write-Log 'Starting PostGenX...'
     $status.Text = 'Starting...'; $status.ForeColor = $Coral
     $proc = Start-Process -FilePath $node.Path -ArgumentList '--disable-warning=ExperimentalWarning', 'server/index.js' `
       -WorkingDirectory $Root -WindowStyle Hidden -PassThru `
@@ -320,14 +320,14 @@ function Start-App {
       if (Test-Running) { $ok = $true; break }
     }
     if ($ok) {
-      Write-Log "PostForge is running at http://localhost:$(Get-Port)"
+      Write-Log "PostGenX is running at http://localhost:$(Get-Port)"
       if ($chkBrowser.Checked) { Open-App '/login' }
     } else {
       $err = ''
       if (Test-Path $ErrFile) { $err = (Get-Content $ErrFile -Tail 6) -join "`r`n" }
       if ($err -match 'EADDRINUSE') { $err = "Port $(Get-Port) is already used by another program. Pick another port under Settings." }
       Write-Log ('Could not start. ' + $err)
-      [System.Windows.Forms.MessageBox]::Show("PostForge could not start.`r`n`r`n$err", 'PostForge', 'OK', 'Error') | Out-Null
+      [System.Windows.Forms.MessageBox]::Show("PostGenX could not start.`r`n`r`n$err", 'PostGenX', 'OK', 'Error') | Out-Null
     }
   } finally {
     $form.Cursor = [System.Windows.Forms.Cursors]::Default; $btnStart.Enabled = $true; Update-Status
@@ -340,7 +340,7 @@ function Stop-App {
   foreach ($id in $ids) { Stop-Process -Id $id -Force -ErrorAction SilentlyContinue }
   Remove-Item $PidFile -ErrorAction SilentlyContinue
   Start-Sleep -Milliseconds 400
-  Write-Log 'PostForge stopped.'
+  Write-Log 'PostGenX stopped.'
   Update-Status
 }
 
@@ -352,7 +352,7 @@ function Test-PackagesChanged {
 
 function Restart-IfRunning([string]$why) {
   if (Test-Running) {
-    $r = [System.Windows.Forms.MessageBox]::Show("$why`r`n`r`nRestart PostForge now to apply it?", 'PostForge', 'YesNo', 'Question')
+    $r = [System.Windows.Forms.MessageBox]::Show("$why`r`n`r`nRestart PostGenX now to apply it?", 'PostGenX', 'YesNo', 'Question')
     if ($r -eq 'Yes') {
       $keep = $chkBrowser.Checked; $chkBrowser.Checked = $false
       Stop-App; Start-App
@@ -363,18 +363,18 @@ function Restart-IfRunning([string]$why) {
 
 function New-DesktopShortcut([bool]$quiet) {
   $sh = New-Object -ComObject WScript.Shell
-  $vbs = Join-Path $Root 'PostForge.vbs'
+  $vbs = Join-Path $Root 'PostGenX.vbs'
   foreach ($dir in @($sh.SpecialFolders.Item('Desktop'), $sh.SpecialFolders.Item('Programs'))) {
     if (-not $dir) { continue }
-    $lnk = $sh.CreateShortcut((Join-Path $dir 'PostForge.lnk'))
+    $lnk = $sh.CreateShortcut((Join-Path $dir 'PostGenX.lnk'))
     $lnk.TargetPath = (Join-Path $env:WINDIR 'System32\wscript.exe')
     $lnk.Arguments = '"' + $vbs + '"'
     $lnk.WorkingDirectory = $Root
     if (Test-Path $iconPath) { $lnk.IconLocation = $iconPath }
-    $lnk.Description = 'PostForge - start the app and manage settings'
+    $lnk.Description = 'PostGenX - start the app and manage settings'
     $lnk.Save()
   }
-  if (-not $quiet) { Write-Log 'Shortcut "PostForge" added to your Desktop and Start menu.' }
+  if (-not $quiet) { Write-Log 'Shortcut "PostGenX" added to your Desktop and Start menu.' }
 }
 
 # ---------------------------------------------------------------------
@@ -391,7 +391,7 @@ $chkBrowser.Add_CheckedChanged({ $p = Get-Prefs; $p.openBrowser = $chkBrowser.Ch
 $btnSave.Add_Click({
   $email = $tEmail.Text.Trim().ToLower()
   $problem = Test-AdminInput $email $tPw.Text $tPw2.Text
-  if ($problem) { [System.Windows.Forms.MessageBox]::Show($problem, 'PostForge', 'OK', 'Warning') | Out-Null; return }
+  if ($problem) { [System.Windows.Forms.MessageBox]::Show($problem, 'PostGenX', 'OK', 'Warning') | Out-Null; return }
   Set-EnvValues @{ ADMIN_EMAIL = $email; ADMIN_PASSWORD = $tPw.Text }
   $tPw2.Text = ''
   Write-Log "Admin login saved for $email."
@@ -432,7 +432,7 @@ $form.Add_Shown({
   } elseif ($chkAuto.Checked -and -not (Test-Running)) {
     Start-App
   } elseif ((Test-Running) -and (Test-PackagesChanged)) {
-    Write-Log 'An update was installed. PostForge needs a restart to finish it.'
+    Write-Log 'An update was installed. PostGenX needs a restart to finish it.'
     Restart-IfRunning 'An update was installed and needs new app packages (about a minute).'
   } else {
     Write-Log 'Ready.'

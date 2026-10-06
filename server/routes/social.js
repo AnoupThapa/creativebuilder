@@ -108,7 +108,7 @@ function createPost(req, res) {
     if (r < 0.79 || r > 1.92) throw new S.HttpError(400, 'Instagram feed posts must be between portrait 4:5 and landscape 1.91:1. Choose “Story” or switch to the Instagram Post / Portrait size.');
   }
   if (accounts.some(a => a.platform === 'instagram') && !social.isDemo() && social.isLocalUrl(config.appUrl))
-    throw new S.HttpError(400, 'Instagram can only fetch posts from an online PostForge (e.g. on Fly.io), not from localhost. Facebook works from here.');
+    throw new S.HttpError(400, 'Instagram can only fetch posts from an online PostGenX (e.g. on Fly.io), not from localhost. Facebook works from here.');
 
   let scheduledAt = null;
   if (b.scheduledAt) {

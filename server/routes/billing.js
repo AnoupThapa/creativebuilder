@@ -82,7 +82,7 @@ router.post('/billing/ai-topup', S.requireRole('admin'), async (req, res) => {
   }
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: cents, product_data: { name: `${credits} AI credits (PostForge)` } } }],
+    line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: cents, product_data: { name: `${credits} AI credits (PostGenX)` } } }],
     client_reference_id: String(ws.id),
     ...(ws.stripe_customer_id ? { customer: ws.stripe_customer_id } : { customer_email: req.user.email }),
     metadata: { workspace_id: String(ws.id), ai_credits: String(credits) },

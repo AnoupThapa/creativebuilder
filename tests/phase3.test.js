@@ -103,7 +103,7 @@ test('review portal: send sizes, client link, approve / changes, revoke', async 
   r = await pc.get(`/portal-api/${token}`);
   assert.equal(r.status, 200);
   assert.equal(r.data.portal.name, 'Pixel Studio'); assert.equal(r.data.portal.color, '#0055aa');
-  assert.ok(!JSON.stringify(r.data).includes('PostForge'), 'white-label: no PostForge branding');
+  assert.ok(!JSON.stringify(r.data).includes('PostGenX'), 'white-label: no PostGenX branding');
   assert.equal(r.data.designs.length, 1);
   const dd = r.data.designs[0];
   assert.equal(dd.status, 'in_review'); assert.equal(dd.snapshots.length, 2); assert.equal(dd.comments[0].body, 'First draft for you');
@@ -178,7 +178,7 @@ test('developer API: keys, auth, resize, cut-out, captions', async () => {
   r = await v1('POST', '/api/v1/resize', form({ sizes: 'ig_story', background: 'blur' }));
   assert.equal(r.status, 200, String(r.data));
   assert.equal(r.headers.get('content-type'), 'image/jpeg');
-  assert.ok(r.headers.get('x-postforge-downloads-left'));
+  assert.ok(r.headers.get('x-postgenx-downloads-left'));
   const probe = require('../server/imaging').probe;
   const f = path.join(tmp, 'o.jpg'); fs.writeFileSync(f, r.data);
   const pr = await probe(f); assert.equal(pr.w, 1080); assert.equal(pr.h, 1920);

@@ -37,7 +37,7 @@
   /* support channels configured on the server */
   function channels(c) {
     if (!c) return;
-    if (c.whatsapp) { $('waLink').href = `https://wa.me/${encodeURIComponent(c.whatsapp)}?text=${encodeURIComponent('Hi PostForge support, ')}`; $('waLink').classList.remove('hidden'); }
+    if (c.whatsapp) { $('waLink').href = `https://wa.me/${encodeURIComponent(c.whatsapp)}?text=${encodeURIComponent('Hi PostGenX support, ')}`; $('waLink').classList.remove('hidden'); }
     if (c.supportEmail) { $('mailLink').href = 'mailto:' + c.supportEmail; $('mailText').textContent = c.supportEmail; $('mailLink').classList.remove('hidden'); }
   }
   if (window.PF_PUBLIC) channels(window.PF_PUBLIC);

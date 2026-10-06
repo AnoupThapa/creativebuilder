@@ -352,7 +352,7 @@
   }
   function watermark(ctx, W, H) {
     const s = Math.min(W, H) * 0.03; ctx.font = `700 ${s}px ${stack('Space Grotesk')}`; ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 6; ctx.fillText('Made with PostForge', W - s, H - s); ctx.shadowColor = 'transparent';
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 6; ctx.fillText('Made with PostGenX', W - s, H - s); ctx.shadowColor = 'transparent';
   }
 
   /* ------------------------------------------------------------------ preview playback */

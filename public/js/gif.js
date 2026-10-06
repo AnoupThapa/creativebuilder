@@ -169,10 +169,10 @@
       for (const x of last.results) for (const f of [x.gif, x.mp4].filter(Boolean)) {
         const res = await fetch(`/api/gif/out/${last.id}/${encodeURIComponent(f)}`, { credentials: 'same-origin' });
         if (!res.ok) throw new Error('These files have expired — make them again.');
-        zip.file('postforge-' + f, await res.blob());
+        zip.file('postgenx-' + f, await res.blob());
       }
       const blob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'postforge-gifs.zip'; a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'postgenx-gifs.zip'; a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     } catch (e) { PF.toast(e.message, { error: true }); }
     b.disabled = false; b.textContent = '⬇ Download all (ZIP)';
