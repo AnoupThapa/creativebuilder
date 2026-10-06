@@ -239,26 +239,76 @@
     }
   }
 
+  /* ---------- caption writer (used while posting is switched off: write + copy, post it yourself) ---------- */
+  const CAP_PLATFORMS = [['instagram', 'Instagram'], ['facebook', 'Facebook'], ['tiktok', 'TikTok'], ['linkedin', 'LinkedIn'], ['x', 'X (Twitter)'], ['whatsapp', 'WhatsApp'], ['pinterest', 'Pinterest'], ['youtube', 'YouTube']];
+  function guessPlatform() {
+    const k = String(state.platformKey || '');
+    const m = [['ig', 'instagram'], ['instagram', 'instagram'], ['fb', 'facebook'], ['facebook', 'facebook'], ['tiktok', 'tiktok'], ['li', 'linkedin'], ['linkedin', 'linkedin'], ['x_', 'x'], ['twitter', 'x'], ['wa', 'whatsapp'], ['whatsapp', 'whatsapp'], ['pin', 'pinterest'], ['yt', 'youtube'], ['youtube', 'youtube']].find(([a]) => k.toLowerCase().startsWith(a));
+    return m ? m[1] : 'instagram';
+  }
+  function openCaption() {
+    wrap.classList.add('open');
+    wrap.querySelector('.modal-head span').textContent = '💬 Write a caption';
+    const plat = guessPlatform();
+    $('pmBody').innerHTML = `
+      <p class="pm-info" style="margin:0 0 12px;font-size:13px">Write a ready-to-post caption, copy it, then post your downloaded image or video from your phone or computer.</p>
+      <div class="pm-sec">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <select id="pmAiPlat" class="pm-ai-sel" aria-label="Platform">${CAP_PLATFORMS.map(([k, l]) => `<option value="${k}" ${k === plat ? 'selected' : ''}>${l}</option>`).join('')}</select>
+          <select id="pmAiLang" class="pm-ai-sel" aria-label="Caption language"><option>English</option><option>Nepali</option><option>Hindi</option><option>Bengali</option><option>Urdu</option><option>Tamil</option><option>Sinhala</option><option>Thai</option><option>Arabic</option><option>Spanish</option><option>French</option></select>
+          <select id="pmAiTone" class="pm-ai-sel" aria-label="Tone"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="fun">Fun</option><option value="luxury">Luxury</option><option value="urgent">Urgent sale</option></select>
+          <button class="pill" type="button" id="pmAi">✨ Write with AI</button></div>
+        <textarea class="pm-cap" id="pmCap" maxlength="2200" style="margin-top:8px" placeholder="Write a caption… #hashtags work too">${esc(defaultCaption())}</textarea>
+        <div class="pm-count" id="pmCount"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn-export" type="button" id="pmCopy" style="width:auto;padding:10px 18px">📋 Copy caption</button></div>`;
+    const count = () => { $('pmCount').textContent = `${$('pmCap').value.length} / 2200`; };
+    $('pmCap').addEventListener('input', count); count();
+    $('pmAi').addEventListener('click', async () => {
+      const b = $('pmAi'); b.disabled = true; b.textContent = '✨ Writing…';
+      const platform = $('pmAiPlat').value;
+      try {
+        const r = await api('/ai/captions', { method: 'POST', body: {
+          product: state.contentType === 'review' ? `Customer review: ${state.reviewQuote || ''}` : (state.headline || ''),
+          details: state.subheadline || '', price: state.price || '', contact: (state.contact || '').replace(/📞\s*/, ''),
+          brand: (typeof ME !== 'undefined' && ME && ME.workspace && ME.workspace.name) || '', language: $('pmAiLang').value, tone: $('pmAiTone').value, platforms: [platform] } });
+        const c = r.captions[platform];
+        $('pmCap').value = (c.text + (c.hashtags.length ? '\n\n' + c.hashtags.join(' ') : '')).slice(0, 2200);
+        count();
+        showToast(r.source === 'template' ? (r.note || 'Caption written — edit it as you like') : `Caption written ✓ (${r.left} left today)`);
+      } catch (e) { showToast(e.message); }
+      b.disabled = false; b.textContent = '✨ Write with AI';
+    });
+    $('pmCopy').addEventListener('click', async () => {
+      const t = $('pmCap').value.trim(); if (!t) { showToast('Write a caption first'); return; }
+      try { await navigator.clipboard.writeText(t); showToast('Caption copied ✓'); }
+      catch { $('pmCap').select(); showToast('Press Ctrl+C (or ⌘C) to copy'); }
+    });
+  }
+
   /* ---------- buttons ---------- */
   function addButtons() {
+    const posting = !!(ME && ME.features && ME.features.socialPosting);
+    const handler = posting ? open : openCaption;
     const bar = document.querySelector('.stage-bar-bottom');
     if (bar && !$('btnPostSocial')) {
       const b = document.createElement('button');
       b.className = 'btn-export btn-post'; b.id = 'btnPostSocial'; b.type = 'button';
-      b.innerHTML = '📣&nbsp; Post';
+      b.innerHTML = posting ? '📣&nbsp; Post' : '💬&nbsp; Caption';
       bar.insertBefore(b, $('btnGenerateAll'));
-      b.addEventListener('click', open);
+      b.addEventListener('click', handler);
     }
     const ex = $('btnExport2');
     if (ex && !$('btnPostSocial2')) {
       const b2 = document.createElement('button');
       b2.className = 'btn-export btn-wide btn-post'; b2.id = 'btnPostSocial2'; b2.type = 'button';
       b2.style.marginTop = '8px';
-      b2.innerHTML = '📣 Post to Facebook / Instagram';
+      b2.innerHTML = posting ? '📣 Post to Facebook / Instagram' : '💬 Write a caption';
       ex.insertAdjacentElement('afterend', b2);
-      b2.addEventListener('click', open);
+      b2.addEventListener('click', handler);
     }
   }
-  addButtons();
-  window.PFPost = { open };
+  // wait until the editor has loaded the account (ME) so we know whether posting is switched on
+  (function whenReady(n) { if (typeof ME !== 'undefined' && ME) addButtons(); else if (n < 100) setTimeout(() => whenReady(n + 1), 100); })(0);
+  window.PFPost = { open, openCaption };
 })();

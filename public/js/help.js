@@ -8,7 +8,7 @@
   $('q').addEventListener('input', e => {
     const term = e.target.value.trim().toLowerCase();
     let any = false;
-    document.querySelectorAll('#faq section').forEach(sec => {
+    document.querySelectorAll('#faq section:not([hidden])').forEach(sec => {
       let secAny = false;
       sec.querySelectorAll('details').forEach(d => {
         const hit = !term || d.textContent.toLowerCase().includes(term);

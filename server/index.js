@@ -108,7 +108,7 @@ api.use(designs.router);
 api.use(media.router);
 api.use(workspace.router);
 api.use(account.router);
-api.use(socialRoutes.router);
+if (config.socialPosting) api.use(socialRoutes.router);
 api.use(gifRoutes.router);
 api.use(aiRoutes.router);
 api.use(reviewRoutes.router);
@@ -163,9 +163,11 @@ app.use('/site', express.static(path.join(config.DATA_DIR, 'site'), { index: fal
 for (const p of ['/login', '/signup', '/forgot', '/reset', '/invite']) app.get(p, page('auth.html'));
 app.get('/help', page('help.html'));
 app.get('/privacy', page('privacy.html'));
-app.get('/social/done', page('social-done.html'));
-app.get('/social/connect-demo', S.pageAuth(), page('social-demo.html'));
-app.get('/pub/:file', socialRoutes.servePublic);
+if (config.socialPosting) {
+  app.get('/social/done', page('social-done.html'));
+  app.get('/social/connect-demo', S.pageAuth(), page('social-demo.html'));
+  app.get('/pub/:file', socialRoutes.servePublic);
+}
 app.get('/app', S.pageAuth(), page('app.html'));
 app.get('/editor', S.pageAuth(), page('editor.html'));
 app.get('/gif', S.pageAuth({ noClient: true }), page('gif.html'));
@@ -251,7 +253,7 @@ if (require.main === module) {
   process.on('unhandledRejection', e => console.error('[unhandled]', e));
   require('./errors').init();
   require('./backup').schedule();
-  require('./social').startScheduler();
+  if (config.socialPosting) require('./social').startScheduler();
   ensureAdmin().then(() => {
     app.listen(config.port, () => {
       console.log(`${config.appName} running at ${config.appUrl}  (${config.isProd ? 'production' : 'development'})`);

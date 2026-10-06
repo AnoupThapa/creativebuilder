@@ -270,3 +270,14 @@ test('developers page and sitemap', async () => {
   assert.equal(r.status, 200); assert.match(await r.text(), /api\/v1\/resize/);
   assert.match(await (await fetch(base + '/sitemap.xml')).text(), /\/developers/);
 });
+
+test('creative-only beta: posting & scheduling are switched off unless SOCIAL_POSTING=on', async () => {
+  const c = await signup('No Post', 'nopost@example.com');
+  const me = await c.get('/api/me');
+  assert.equal(me.data.features.socialPosting, false);
+  assert.equal((await c.get('/api/social/status')).status, 404);
+  assert.equal((await c.post('/api/social/posts', {})).status, 404);
+  assert.equal((await fetch(base + '/social/connect-demo')).status, 404);
+  const home = await (await fetch(base + '/')).text();
+  assert.ok(!/Post &amp; schedule/.test(home));
+});

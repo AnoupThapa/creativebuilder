@@ -61,6 +61,8 @@ module.exports = {
     email: env.SUPPORT_EMAIL || '',              // where support requests are sent
     whatsapp: (env.SUPPORT_WHATSAPP || '').replace(/[^\d]/g, ''), // e.g. 9779800000000 (country code, no +)
   },
+  // Posting & scheduling to Facebook / Instagram. Off for the creative-only beta; set SOCIAL_POSTING=on to bring it back.
+  socialPosting: /^(on|true|1)$/i.test(env.SOCIAL_POSTING || ''),
   meta: {                                       // Facebook + Instagram publishing (Meta app)
     appId: env.META_APP_ID || '',
     appSecret: env.META_APP_SECRET || '',

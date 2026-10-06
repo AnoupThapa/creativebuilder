@@ -13,6 +13,7 @@ process.env.NODE_ENV = 'test';
 process.env.ADMIN_EMAIL = 'root@example.com';
 process.env.ADMIN_PASSWORD = 'RootPassword123';
 process.env.APP_URL = 'https://postforge.example';
+process.env.SOCIAL_POSTING = 'on'; // posting is switched off by default in the beta
 
 /* ---------------- fake Meta ---------------- */
 const calls = [];

@@ -35,7 +35,7 @@ function meResponse(req) {
     storage: { used: storageUsed(ws.id), limit: plan.storage_mb * 1024 * 1024 },
     requireVerifiedEmail: config.security.requireVerifiedEmailToExport,
     requireAdmin2fa: config.requireAdmin2fa,
-    features: { mp4Convert: video.available() },
+    features: { mp4Convert: video.available(), socialPosting: config.socialPosting },
     csrf: req.session.csrf,
   };
 }

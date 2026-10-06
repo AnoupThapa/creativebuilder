@@ -14,6 +14,7 @@
   const TITLES = { designs: 'Designs', social: 'Social posts', brand: 'Brand kits', team: 'Team', billing: 'Plan & billing', account: 'Account & security', activity: 'Activity log' };
   const isBiz = () => me && me.workspace.account_type === 'business';
   const isClient = () => !!(me && me.user.client_brand);
+  const posting = () => !!(me && me.features && me.features.socialPosting); // posting & scheduling switched off in the creative-only beta
   const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
 
   /* ================= Shell ================= */
@@ -37,6 +38,7 @@
     document.body.classList.toggle('acct-business', isBiz());
     document.body.classList.toggle('acct-retail', !isBiz());
     document.body.classList.toggle('client', isClient());
+    document.querySelector('#nav a[data-view=social]')?.classList.toggle('hidden', !posting());
     TITLES.brand = isBiz() ? 'Brands & clients' : 'Brand kit';
     $('navBrand').lastChild.textContent = TITLES.brand;
     $('navActivity').classList.toggle('hidden', !(isBiz() && can('admin')));
@@ -74,6 +76,7 @@
     const v = (location.hash.replace('#', '') || 'designs').split('?')[0];
     let view = TITLES[v] ? v : 'designs';
     if (isClient() && !['designs', 'account'].includes(view)) view = 'designs';
+    if (view === 'social' && !posting()) view = 'designs';
     document.querySelectorAll('.view').forEach(s => s.classList.toggle('hidden', s.id !== 'view-' + view));
     document.querySelectorAll('#nav a[data-view]').forEach(a => a.classList.toggle('active', a.dataset.view === view));
     $('viewTitle').textContent = TITLES[view];
