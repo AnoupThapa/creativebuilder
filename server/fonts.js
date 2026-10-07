@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const PKGS = ['space-grotesk', 'inter', 'poppins', 'montserrat', 'nunito', 'raleway', 'oswald', 'bebas-neue', 'anton',
+const PKGS = ['fraunces', 'manrope', 'space-grotesk', 'inter', 'poppins', 'montserrat', 'nunito', 'raleway', 'oswald', 'bebas-neue', 'anton',
   'archivo-black', 'playfair-display', 'dm-serif-display', 'merriweather', 'lobster', 'pacifico', 'dancing-script', 'caveat', 'courier-prime',
   // local languages — each file is only downloaded by a browser when that script is actually typed (unicode-range)
   'mukta', 'hind', 'baloo-2', 'tiro-devanagari-hindi', 'yatra-one', 'kalam', 'rozha-one', 'noto-sans-devanagari', 'noto-serif-devanagari', // Nepali, Hindi, Marathi
@@ -17,6 +17,7 @@ const PKGS = ['space-grotesk', 'inter', 'poppins', 'montserrat', 'nunito', 'rale
   'cairo', 'tajawal', 'noto-naskh-arabic', 'noto-sans-arabic', // Arabic, Urdu, Persian
   'noto-sans-hebrew', 'noto-sans-myanmar', 'noto-sans-khmer', 'noto-serif-tibetan'];
 const WEIGHTS = ['400', '500', '600', '700', '800', '900'];
+const ITALIC = new Set(['fraunces']); // the brand serif's italic is used for emphasis
 const ROOT = path.join(__dirname, '..', 'node_modules', '@fontsource');
 
 let css = '';
@@ -32,9 +33,10 @@ for (const pkg of PKGS) {
       .filter(n => !NOT_SCRIPTS.has(n) && !n.endsWith('-italic')).map(n => n.replace(/-ext$/, '')))];
   } catch { /* package without index.css */ }
   for (const w of WEIGHTS) {
-    const f = path.join(dir, `${w}.css`);
-    if (!fs.existsSync(f)) continue;
-    css += fs.readFileSync(f, 'utf8').replace(/url\(\.\/files\//g, `url(/fontsource/${pkg}/files/`) + '\n';
+    for (const f of [path.join(dir, `${w}.css`), ...(ITALIC.has(pkg) ? [path.join(dir, `${w}-italic.css`)] : [])]) {
+      if (!fs.existsSync(f)) continue;
+      css += fs.readFileSync(f, 'utf8').replace(/url\(\.\/files\//g, `url(/fontsource/${pkg}/files/`) + '\n';
+    }
   }
 }
 

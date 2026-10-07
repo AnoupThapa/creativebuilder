@@ -133,5 +133,5 @@ body.acct-business .biz-only{display:revert}
 .dev-form{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:12px}
 .dev-new{margin-top:12px;padding:12px;border-radius:12px;background:#fff8e6;border:1px solid #f1d58a}
 .dev-code{display:flex;gap:8px;align-items:center;margin:8px 0}
-.dev-code code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;background:#1a1a2e;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px}
+.dev-code code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;background:var(--ink);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px}
 @media (max-width:720px){.dev-forms{grid-template-columns:1fr}}

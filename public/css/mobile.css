@@ -17,47 +17,47 @@
 
 /* ---------- landing page ---------- */
 @media (max-width: 640px) {
-  body.m-landing nav.top { padding: 12px 0; }
-  body.m-landing nav.top .links { gap: 2px; }
-  body.m-landing nav.top .links a.l { padding: 8px 10px; }
-  body.m-landing .hero { padding-top: 10px; padding-bottom: 36px; gap: 18px; }
-  body.m-landing .eyebrow { font-size: 12px; margin-bottom: 12px; }
-  body.m-landing .hero h1 { font-size: 38px; line-height: 1.05; }
-  body.m-landing .hero p.lead { font-size: 16px; margin: 14px 0 20px; }
-  body.m-landing .hero .cta { flex-direction: column; }
-  body.m-landing .hero .cta .btn { width: 100%; padding: 14px 18px; font-size: 15px; }
-  body.m-landing .hero .note { text-align: center; }
+  body.m-landing:not(.lp) nav.top { padding: 12px 0; }
+  body.m-landing:not(.lp) nav.top .links { gap: 2px; }
+  body.m-landing:not(.lp) nav.top .links a.l { padding: 8px 10px; }
+  body.m-landing:not(.lp) .hero { padding-top: 10px; padding-bottom: 36px; gap: 18px; }
+  body.m-landing:not(.lp) .eyebrow { font-size: 12px; margin-bottom: 12px; }
+  body.m-landing:not(.lp) .hero h1 { font-size: 38px; line-height: 1.05; }
+  body.m-landing:not(.lp) .hero p.lead { font-size: 16px; margin: 14px 0 20px; }
+  body.m-landing:not(.lp) .hero .cta { flex-direction: column; }
+  body.m-landing:not(.lp) .hero .cta .btn { width: 100%; padding: 14px 18px; font-size: 15px; }
+  body.m-landing:not(.lp) .hero .note { text-align: center; }
   /* tidy hero collage: three neat cards that fit the screen */
-  body.m-landing .mock { height: 330px; max-width: 360px; margin: 0 auto; width: 100%; }
-  body.m-landing .post { padding: 14px; border-radius: 16px; }
-  body.m-landing .post h4 { font-size: 19px; }
-  body.m-landing .post .p { font-size: 15px; }
-  body.m-landing .post .c { font-size: 11px; padding: 6px 11px; }
-  body.m-landing .post .b { top: 12px; left: 12px; font-size: 10px; }
-  body.m-landing .p1 { width: 58%; height: auto; aspect-ratio: 1; left: 0; top: 40px; }
-  body.m-landing .p2 { width: 40%; height: 250px; right: 0; top: 0; transform: rotate(3deg); }
-  body.m-landing .p3 { width: 62%; height: 96px; right: 4%; bottom: 0; padding: 12px; }
-  body.m-landing .p3 h4 { font-size: 15px; }
-  body.m-landing .chip-float { font-size: 11px; padding: 6px 10px; }
-  body.m-landing section.wrap { padding-top: 40px; padding-bottom: 40px; }
-  body.m-landing section h2 { font-size: 27px; }
-  body.m-landing section .sub { font-size: 15px; margin-bottom: 22px; }
+  body.m-landing:not(.lp) .mock { height: 330px; max-width: 360px; margin: 0 auto; width: 100%; }
+  body.m-landing:not(.lp) .post { padding: 14px; border-radius: 16px; }
+  body.m-landing:not(.lp) .post h4 { font-size: 19px; }
+  body.m-landing:not(.lp) .post .p { font-size: 15px; }
+  body.m-landing:not(.lp) .post .c { font-size: 11px; padding: 6px 11px; }
+  body.m-landing:not(.lp) .post .b { top: 12px; left: 12px; font-size: 10px; }
+  body.m-landing:not(.lp) .p1 { width: 58%; height: auto; aspect-ratio: 1; left: 0; top: 40px; }
+  body.m-landing:not(.lp) .p2 { width: 40%; height: 250px; right: 0; top: 0; transform: rotate(3deg); }
+  body.m-landing:not(.lp) .p3 { width: 62%; height: 96px; right: 4%; bottom: 0; padding: 12px; }
+  body.m-landing:not(.lp) .p3 h4 { font-size: 15px; }
+  body.m-landing:not(.lp) .chip-float { font-size: 11px; padding: 6px 10px; }
+  body.m-landing:not(.lp) section.wrap { padding-top: 40px; padding-bottom: 40px; }
+  body.m-landing:not(.lp) section h2 { font-size: 27px; }
+  body.m-landing:not(.lp) section .sub { font-size: 15px; margin-bottom: 22px; }
   /* features: compact two-column tiles */
-  body.m-landing .features { grid-template-columns: 1fr 1fr; gap: 10px; }
-  body.m-landing .feat { padding: 14px; border-radius: 14px; }
-  body.m-landing .feat .i { width: 34px; height: 34px; font-size: 17px; margin-bottom: 8px; }
-  body.m-landing .feat h3 { font-size: 14px; line-height: 1.25; }
-  body.m-landing .feat p { font-size: 12.5px; line-height: 1.45; }
+  body.m-landing:not(.lp) .features { grid-template-columns: 1fr 1fr; gap: 10px; }
+  body.m-landing:not(.lp) .feat { padding: 14px; border-radius: 14px; }
+  body.m-landing:not(.lp) .feat .i { width: 34px; height: 34px; font-size: 17px; margin-bottom: 8px; }
+  body.m-landing:not(.lp) .feat h3 { font-size: 14px; line-height: 1.25; }
+  body.m-landing:not(.lp) .feat p { font-size: 12.5px; line-height: 1.45; }
   /* steps: swipe sideways */
-  body.m-landing .steps { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 -20px; padding: 0 20px 6px; scrollbar-width: none; }
-  body.m-landing .steps::-webkit-scrollbar { display: none; }
-  body.m-landing .step { flex: 0 0 78%; scroll-snap-align: start; padding: 18px; }
-  body.m-landing .plan { padding: 20px; }
-  body.m-landing .plan .pr { font-size: 34px; }
-  body.m-landing .ba-grid { grid-template-columns: 1fr; }
-  body.m-landing .trust { grid-template-columns: 1fr 1fr; gap: 10px; }
-  body.m-landing .trust div { padding: 12px; }
-  body.m-landing .beta-band { padding: 20px; }
+  body.m-landing:not(.lp) .steps { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 -20px; padding: 0 20px 6px; scrollbar-width: none; }
+  body.m-landing:not(.lp) .steps::-webkit-scrollbar { display: none; }
+  body.m-landing:not(.lp) .step { flex: 0 0 78%; scroll-snap-align: start; padding: 18px; }
+  body.m-landing:not(.lp) .plan { padding: 20px; }
+  body.m-landing:not(.lp) .plan .pr { font-size: 34px; }
+  body.m-landing:not(.lp) .ba-grid { grid-template-columns: 1fr; }
+  body.m-landing:not(.lp) .trust { grid-template-columns: 1fr 1fr; gap: 10px; }
+  body.m-landing:not(.lp) .trust div { padding: 12px; }
+  body.m-landing:not(.lp) .beta-band { padding: 20px; }
   body.m-landing footer { padding-bottom: 96px; }
 }
 /* sticky "Start free" bar once the visitor scrolls past the top */
@@ -76,7 +76,7 @@
 /* ---------- log in / sign up / forgot password ---------- */
 .m-auth-brand { display: none; }
 @media (max-width: 860px) {
-  body.m-auth { background: linear-gradient(180deg, #1a1a2e 0, #1a1a2e 170px, var(--paper) 170px); }
+  body.m-auth { background: linear-gradient(180deg, var(--ink) 0, var(--ink) 170px, var(--paper) 170px); }
   body.m-auth .main { align-items: flex-start; padding: 22px 16px calc(28px + env(safe-area-inset-bottom)); }
   .m-auth-brand { display: block; color: #fff; margin: 0 0 22px; }
   .m-auth-brand .brand { color: #fff; }

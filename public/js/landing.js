@@ -4,6 +4,62 @@
   const $ = id => document.getElementById(id);
   $('yr').textContent = new Date().getFullYear();
 
+  /* ---------- sticky nav shadow ---------- */
+  const nav = $('lpNav');
+  const onScroll = () => nav && nav.classList.toggle('scrolled', window.scrollY > 12);
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* ---------- reveal on scroll ---------- */
+  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let io = null;
+  function reveal() {
+    const els = document.querySelectorAll('.reveal:not(.in)');
+    if (still || !('IntersectionObserver' in window)) { els.forEach(el => el.classList.add('in')); return; }
+    if (!io) io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    els.forEach(el => io.observe(el));
+  }
+  reveal();
+
+  /* ---------- feature tabs (auto-advance, pause on hover / focus) ---------- */
+  const PANELS = [
+    ['editor-text', 'The PostGenX editor with Instagram-style text on a coffee photo'],
+    ['ai', 'AI product photo studio placing a real product in a professional scene'],
+    ['models', 'Choosing a made-up AI model to hold and present a product'],
+    ['slideshow', 'Slideshow studio turning three photos into a Reel with music'],
+    ['bulk', 'Bulk studio making every size and caption for many products at once'],
+  ];
+  const tabs = $('lpTabs');
+  if (tabs) {
+    const btns = [...tabs.querySelectorAll('[role="tab"]')], img = $('lpPanelImg');
+    PANELS.forEach(([f]) => { const i = new Image(); i.src = `/img/landing/${f}.webp`; });
+    let cur = 0, timer = null; const DUR = 6000;
+    tabs.style.setProperty('--dur', DUR + 'ms');
+    function show(i, user) {
+      cur = (i + btns.length) % btns.length;
+      btns.forEach((b, k) => { b.setAttribute('aria-selected', k === cur ? 'true' : 'false'); b.tabIndex = k === cur ? 0 : -1; });
+      const [f, alt] = PANELS[cur];
+      img.classList.add('swap');
+      setTimeout(() => { img.src = `/img/landing/${f}.webp`; img.alt = alt; img.classList.remove('swap'); }, still ? 0 : 180);
+      if (user) stop(); else restart();
+    }
+    function restart() { clearTimeout(timer); if (!still && !tabs.classList.contains('paused')) timer = setTimeout(() => show(cur + 1), DUR); }
+    function stop() { clearTimeout(timer); tabs.classList.add('paused'); }
+    btns.forEach((b, k) => b.addEventListener('click', () => show(k, true)));
+    tabs.querySelector('[role="tablist"]').addEventListener('keydown', e => {
+      const d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return; e.preventDefault(); show(cur + d, true); btns[cur].focus();
+    });
+    tabs.addEventListener('mouseenter', () => { if (!tabs.dataset.user) { clearTimeout(timer); tabs.classList.add('paused'); } });
+    tabs.addEventListener('mouseleave', () => { if (!tabs.dataset.user) { tabs.classList.remove('paused'); restart(); } });
+    btns.forEach(b => b.addEventListener('click', () => { tabs.dataset.user = '1'; }));
+    if (still) tabs.classList.add('paused');
+    // start auto-advance only once the section is on screen
+    if ('IntersectionObserver' in window) {
+      const o = new IntersectionObserver(es => { if (es[0].isIntersecting) { restart(); o.disconnect(); } }, { threshold: 0.3 });
+      o.observe(tabs);
+    } else restart();
+  }
+
   /* ---------- pricing with monthly / yearly toggle ---------- */
   let plans = [], interval = 'month';
   function features(p) {
@@ -39,7 +95,7 @@
       if (audience === 'business') qs.set('type', 'business');
       const href = `/signup${qs.toString() ? '?' + qs : ''}`;
       return `<div class="plan ${hl ? 'hl' : ''}">
-        <div class="nm">${esc(p.name)} ${hl ? '<span class="badge badge-coral">Best value</span>' : ''}</div>
+        <div class="nm">${esc(p.name)} ${hl ? '<span class="lp-badge">Most popular</span>' : ''}</div>
         <div class="pr">${priceLine}<small>${small}</small></div>${note}
         <div class="d" style="margin-top:8px">${esc(p.description)}</div>
         <ul>${features(p)}</ul>
@@ -82,6 +138,8 @@
     $('quotes').innerHTML = list.map(t => `<div class="quote"><div class="st">${'★'.repeat(t.rating)}</div>
       <p>“${esc(t.message)}”</p><div class="who"><b>${esc(t.display_name)}</b>${t.business ? ' · ' + esc(t.business) : ''}</div></div>`).join('');
     $('reviews').classList.remove('hidden');
+    const f = $('founders'); if (f) f.classList.add('hidden');
+    reveal();
   }).catch(() => {});
 
   /* ---------- demo video + beta mode ---------- */
@@ -110,6 +168,6 @@
   // If already signed in, swap nav to "Open app"
   fetch('/api/me', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).then(me => {
     if (!me) return;
-    $('navLinks').innerHTML = `<span class="small muted" style="margin-right:6px">${esc(me.user.name)}</span><a class="btn btn-primary btn-sm" href="/app">Open app</a>`;
+    $('navLinks').innerHTML = `<span class="lp-me">${esc(me.user.name)}</span><a class="btn btn-primary btn-sm" href="/app">Open app</a>`;
   }).catch(() => {});
 })();

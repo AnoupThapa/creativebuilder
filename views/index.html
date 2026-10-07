@@ -6,7 +6,7 @@
 <title>{{APP_NAME}} — Social media post &amp; video maker for small businesses</title>
 <meta name="description" content="Turn one photo into ready-to-post designs and MP4 videos for Instagram, Facebook, TikTok, LinkedIn and more. Templates for cafés, restaurants, salons and shops. Free to start.">
 <link rel="canonical" href="{{APP_URL}}/">
-<meta name="theme-color" content="#1d1b2e">
+<meta name="theme-color" content="#0B1A17">
 <link rel="icon" href="/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <meta property="og:type" content="website">
@@ -24,269 +24,231 @@
 <script type="application/ld+json">{{JSON_LD}}</script>
 <link rel="stylesheet" href="/css/fonts.css">
 <link rel="stylesheet" href="/css/base.css">
-<style>
-.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
-nav.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
-nav.top .links{display:flex;gap:6px;align-items:center}
-nav.top .links a.l{color:var(--slate);font-weight:600;padding:8px 12px;border-radius:8px}
-nav.top .links a.l:hover{background:var(--paper-deep);text-decoration:none}
-.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding-top:48px;padding-bottom:72px}
-.eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:700;color:var(--coral-deep);background:var(--coral-soft);padding:6px 12px;border-radius:50px;margin-bottom:18px}
-.hero h1{font-size:clamp(34px,5vw,58px);font-weight:800;letter-spacing:-.035em}
-.hero h1 em{font-style:normal;color:var(--coral)}
-.hero p.lead{font-size:18px;color:var(--muted);margin:18px 0 26px;max-width:520px}
-.hero .cta{display:flex;gap:10px;flex-wrap:wrap}
-.hero .note{font-size:12.5px;color:var(--muted);margin-top:14px}
-.mock{position:relative;height:460px}
-.post{position:absolute;border-radius:18px;overflow:hidden;box-shadow:0 30px 60px -24px rgba(26,26,46,.45);color:#fff;font-family:var(--F);display:flex;flex-direction:column;justify-content:flex-end;padding:22px}
-.post .b{position:absolute;top:16px;left:16px;background:var(--yellow);color:var(--ink);font-weight:800;font-size:11px;padding:4px 10px;border-radius:50px}
-.post h4{color:#fff;font-size:26px;font-weight:800;line-height:1.05}
-.post .p{color:var(--yellow);font-weight:700;font-size:20px;margin-top:6px}
-.post .c{display:inline-block;margin-top:10px;background:var(--coral);padding:7px 14px;border-radius:50px;font-size:12px;font-weight:700;width:max-content}
-.p1{width:300px;height:300px;left:0;top:70px;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.75)),radial-gradient(circle at 30% 30%,#f6a55b,#b8452c 70%);z-index:2}
-.p2{width:190px;height:338px;right:10px;top:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.8)),radial-gradient(circle at 60% 30%,#6fc9a8,#1a2e2a 75%);transform:rotate(4deg)}
-.p2 .c{background:#3ecf8e;color:var(--ink)}
-.p3{width:250px;height:130px;right:40px;bottom:10px;background:linear-gradient(90deg,#1a1a2e,#3b3b6e);z-index:3;padding:16px}
-.p3 h4{font-size:18px}
-.chip-float{position:absolute;background:#fff;color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12px;font-weight:700;box-shadow:var(--shadow);z-index:4;display:flex;gap:6px;align-items:center}
-section.wrap{padding-top:64px;padding-bottom:64px}
-section h2{font-size:clamp(26px,3.4vw,38px);font-weight:800;text-align:center}
-section .sub{text-align:center;color:var(--muted);font-size:16px;margin:10px auto 36px;max-width:620px}
-.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.who{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.who-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:10px}
-.who-card.biz{background:var(--ink);color:#d9d8e6;border-color:var(--ink)}
-.who-card.biz h3{color:#fff}.who-card.biz .muted{color:#b9b7cc}
-.who-ic{font-size:30px}
-.who-card h3{font-size:20px}
-.who-card ul{list-style:none;padding:0;margin:4px 0 10px;display:grid;gap:8px;font-size:14px;flex:1}
-.who-card li{padding-left:24px;position:relative}
-.who-card li::before{content:'✓';position:absolute;left:0;color:var(--coral);font-weight:800}
-.who-card .btn{align-self:flex-start}
-.feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
-.feat .i{width:40px;height:40px;border-radius:11px;background:var(--coral-soft);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px}
-.feat h3{font-size:16px;margin-bottom:6px}
-.feat p{color:var(--muted);font-size:13.5px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s}
-.step{padding:22px;border-radius:16px;background:var(--ink);color:#d9d8e6}
-.step h3{color:#fff;font-size:17px;margin:10px 0 6px}
-.step .n{font-family:var(--F);font-weight:800;color:var(--coral);font-size:14px}
-.pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:1180px;margin:0 auto}
-.plan{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column}
-.plan.hl{border-color:var(--coral);box-shadow:0 20px 40px -24px var(--coral-glow)}
-.plan .nm{font-family:var(--F);font-weight:700;font-size:18px;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
-.plan .pr{font-family:var(--F);font-size:40px;font-weight:800;color:var(--ink);margin:10px 0 2px}
-.plan .pr small{font-size:14px;font-weight:600;color:var(--muted)}
-.plan .d{color:var(--muted);font-size:13px;min-height:40px}
-.plan ul{list-style:none;margin:16px 0 22px;display:grid;gap:8px;font-size:13.5px}
-.plan li{display:flex;gap:8px}
-.plan li::before{content:'✓';color:var(--green);font-weight:800}
-.plan li.no{color:var(--faint)}
-.plan li.no::before{content:'–';color:var(--faint)}
-.plan .btn{margin-top:auto}
-.trust{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.trust div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;font-size:13px;color:var(--muted)}
-.trust strong{display:block;color:var(--ink);font-family:var(--F);margin-bottom:3px}
-.faq{max-width:760px;margin:0 auto}
-.faq details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
-.faq summary{cursor:pointer;font-weight:700;color:var(--ink)}
-.faq p{color:var(--muted);margin-top:8px}
-.demo{max-width:900px;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--ink);box-shadow:0 30px 60px -24px rgba(26,26,46,.45)}
-.demo video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
-.ba-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
-.ba{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px}
-.ba .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative}
-.ba figure{margin:0;position:relative}
-.ba img{width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block;background:var(--paper)}
-.ba figcaption{position:absolute;left:8px;top:8px;background:rgba(26,26,46,.8);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:50px}
-.ba figure.after figcaption{background:var(--coral)}
-.ba .pair::after{content:'→';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--coral)}
-.ba .cap{font-size:13.5px;color:var(--muted);margin-top:10px}
-.ba .cap b{color:var(--ink)}
-.sample-note{text-align:center;font-size:12px;color:var(--faint);margin-top:14px}
-.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.quote{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
-.quote .st{color:#ffb400;letter-spacing:2px}
-.quote p{margin:8px 0 12px;color:var(--slate);font-size:15px}
-.quote .who{font-size:13px;color:var(--muted)}.quote .who b{color:var(--ink)}
-.tabs{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:50px;padding:3px}
-.tabs button{padding:8px 16px;border-radius:50px;font-weight:700;font-size:13px;color:var(--muted)}
-.tabs button.active{background:var(--ink);color:#fff}
-.int-toggle{display:flex;justify-content:center;margin:-18px 0 26px}
-.beta-band{background:var(--ink);color:#d9d8e6;border-radius:20px;padding:28px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.beta-band h3{color:#fff;font-size:22px}
-.btn-on-dark{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
-.btn-on-dark:hover:not(:disabled){background:rgba(255,255,255,.1);border-color:#fff;color:#fff}
-footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:13px}
-footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-@media(max-width:900px){
-  .who{grid-template-columns:1fr}
-  .hero{grid-template-columns:1fr;padding-top:24px;gap:28px}
-  .mock{height:380px;max-width:420px}
-  .features,.steps{grid-template-columns:1fr}
-  .trust{grid-template-columns:1fr 1fr}
-  nav.top .links a.l.hide-m{display:none}
-}
-@media(max-width:420px){.p1{width:240px;height:240px}.p2{width:150px;height:270px}.p3{width:200px}}
-</style>
+<link rel="stylesheet" href="/css/landing.css">
 <link rel="stylesheet" href="/css/mobile.css">
 </head>
-<body class="m-landing">
-<header class="wrap">
-  <nav class="top">
-    <a class="brand" href="/"><span class="brand-mark">P</span>PostGenX</a>
-    <div class="links" id="navLinks">
-      <a class="l hide-m" href="#features">Features</a>
-      <a class="l hide-m" href="#who">For agencies</a>
-      <a class="l hide-m" href="#examples">Examples</a>
-      <a class="l hide-m" href="#pricing">Pricing</a>
-      <a class="l hide-m" href="/help">Help</a>
-      <a class="l" href="/login">Log in</a>
-      <a class="btn btn-primary btn-sm" href="/signup" data-cta>Start free</a>
-    </div>
-  </nav>
-</header>
+<body class="m-landing lp">
+<a class="lp-skip" href="#main">Skip to content</a>
 
-<main>
-  <div class="wrap hero">
-    <div>
-      <span class="eyebrow">✨ For shops, cafés, salons, wholesalers &amp; agencies</span>
-      <h1>One photo in.<br><em>Every social post</em> out.</h1>
-      <p class="lead">Snap a product with your phone — or paste its web link. PostGenX turns it into pro-looking posts, AI product photos and short videos with captions in your language, sized for Instagram, Facebook, TikTok, LinkedIn, Pinterest, YouTube and WhatsApp.</p>
-      <div class="cta">
-        <a class="btn btn-primary" href="/signup" data-cta>Create your first post — free</a>
-        <a class="btn btn-ghost" href="#demo">▶ Watch the 30-second demo</a>
-      </div>
-      <p class="note">No design skills needed · No card required for the free trial</p>
-    </div>
-    <div class="mock" aria-hidden="true">
-      <div class="post p1"><span class="b">WEEKEND SPECIAL</span><h4>Lunch Combo Deal</h4><div class="p">20% OFF</div><span class="c">Order Now →</span></div>
-      <div class="post p2"><span class="b">NEW</span><h4>Fresh Arrivals</h4><span class="c">Shop Now →</span></div>
-      <div class="post p3"><h4>Happy Hour · 2–5 PM</h4><span class="c">Visit Store →</span></div>
-      <div class="chip-float" style="left:10px;top:12px">📐 14 platform sizes</div>
-      <div class="chip-float" style="right:10px;top:46%">✨ AI photos, videos &amp; captions</div>
-      <div class="chip-float" style="left:10px;bottom:30px">📦 50 products → 1 ZIP</div>
+<header class="lp-nav" id="lpNav">
+  <div class="lp-wrap lp-nav-in">
+    <a class="brand" href="/" aria-label="PostGenX home"><span class="brand-mark">P</span>PostGenX</a>
+    <nav class="lp-links" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#who">For agencies</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/help">Help</a>
+    </nav>
+    <div class="lp-nav-cta" id="navLinks">
+      <a class="lp-login" href="/login">Log in</a>
+      <a class="btn btn-primary btn-sm lp-arrow" href="/signup" data-cta>Start free</a>
     </div>
   </div>
+</header>
 
-  <section id="demo" class="wrap" style="padding-top:8px">
-    <h2>See it in 30 seconds</h2>
-    <p class="sub">A real recording of the latest app: product photo → post in every size, AI caption, AI product photo, Bulk studio and client review.</p>
-    <div class="demo"><video id="demoVideo" controls playsinline muted preload="none" poster="/media-site/demo-poster.jpg?v=3">
-      <source src="/media-site/demo.mp4?v=3" type="video/mp4"></video></div>
-  </section>
-
-  <section id="examples" class="wrap">
-    <h2>Before and after</h2>
-    <p class="sub">An everyday phone photo on the left. A post ready for Instagram and Facebook on the right — made in PostGenX in about a minute.</p>
-    <div class="ba-grid" id="baGrid"></div>
-    <p class="sample-note hidden" id="sampleNote">Sample photos for illustration. Customer examples coming soon.</p>
-  </section>
-
-  <section id="features" class="wrap">
-    <h2>Everything you need to post every day</h2>
-    <p class="sub">Simple enough for anyone, polished enough to look like you hired a designer.</p>
-    <div class="features">
-      <div class="feat"><div class="i">📸</div><h3>Snap &amp; create from your phone</h3><p>Take a product photo, add your offer and download — the photo is fitted perfectly to every size. Nothing to install.</p></div>
-      <div class="feat"><div class="i">✨</div><h3>AI product photos</h3><p>Pick your business type and a style — your real product gets a professional scene. Every image is checked so no stray writing, misspelled labels or changed products reach you.</p></div>
-      <div class="feat"><div class="i">🎬</div><h3>AI product videos</h3><p>Turn a product photo into a smooth 4–8 second video for Reels and Stories. The camera and light move; your product stays exactly the same.</p></div>
-      <div class="feat"><div class="i">💬</div><h3>AI captions in your language</h3><p>Ready-to-post captions and hashtags tuned for each platform — in English, नेपाली, हिन्दी, বাংলা, Arabic, Thai and more.</p></div>
-      <div class="feat"><div class="i">📦</div><h3>Bulk studio</h3><p>Upload up to 50 product photos or paste product links — get branded posts in every size, plus captions, in one ZIP.</p></div>
-      <div class="feat"><div class="i">🧑</div><h3>AI models &amp; presenter videos</h3><p>Pick a made-up AI model — young, professional or senior executive — to hold your product, or to talk to the camera about its features in a short video with a natural voice.</p></div>
-      <div class="feat"><div class="i">🎬</div><h3>Slideshow videos with music</h3><p>Three photos + one of 12 templates = a 10–15 second Reel with smooth transitions and royalty-free music.</p></div>
-      <div class="feat"><div class="i">✍️</div><h3>Instagram-style text</h3><p>Put your post text right on the photo or video — highlight, neon, outline, shadow, 3D and typewriter looks.</p></div>
-      <div class="feat"><div class="i">🔁</div><h3>One-click variations</h3><p>Turn one design into a flash sale, new arrival, customer review, festival greeting or hiring post in a click.</p></div>
-      <div class="feat"><div class="i">📐</div><h3>Every platform size</h3><p>Instagram posts, stories and reels, Facebook, TikTok, LinkedIn, Pinterest, X, YouTube and WhatsApp — from one design.</p></div>
-      <div class="feat"><div class="i">✂️</div><h3>Background removal</h3><p>Turn product shots into clean cut-outs on your brand colour — instantly, in the browser.</p></div>
-      <div class="feat"><div class="i">🎨</div><h3>Brand kits</h3><p>Logo, colours, fonts, contact details and social accounts saved once and applied in one click.</p></div>
-      <div class="feat"><div class="i">🤝</div><h3>Client review links</h3><p>Agencies send designs to clients on a link with their own name and logo — clients approve, comment and download.</p></div>
-      <div class="feat"><div class="i">🎞</div><h3>GIF maker &amp; your own videos</h3><p>Looping GIFs under 1 MB for your online store, and your own videos turned into branded MP4 posts.</p></div>
-      <div class="feat"><div class="i">🌏</div><h3>Local languages</h3><p>Write posts in Nepali, Hindi, Bengali, Tamil, Thai, Arabic, Urdu and more — with fonts that display them correctly.</p></div>
-    </div>
-  </section>
-
-  <section id="who" class="wrap">
-    <h2>Built for shops — and for the people who run many brands</h2>
-    <p class="sub">Choose your account type when you sign up. Switch any time.</p>
-    <div class="who">
-      <div class="who-card">
-        <div class="who-ic">🛍️</div>
-        <h3>Shops &amp; small businesses</h3>
-        <p class="muted">Cafés, restaurants, salons, clothing and mobile shops that post for themselves.</p>
-        <ul>
-          <li>Snap → edit → download, right from your phone</li>
-          <li>AI product photos, videos and captions</li>
-          <li>3-photo slideshow Reels with free music</li>
-          <li>Festival, sale and new-arrival templates</li>
-          <li>Download every size in one tap — ready for any app</li>
-          <li>Plans from Free, then US$9 a month</li>
+<main id="main">
+  <!-- 1 · HERO: asymmetric, left-aligned promise + CTA, real product preview on the right -->
+  <section class="lp-hero hero">
+    <div class="lp-wrap lp-hero-grid">
+      <div class="lp-hero-copy">
+        <p class="lp-eyebrow"><span class="dot"></span>For shops, cafés, salons, wholesalers &amp; agencies</p>
+        <h1>Turn one product photo into a week of <em>scroll-stopping</em> posts.</h1>
+        <p class="lp-lead">Snap it on your phone. PostGenX builds branded posts, AI product photos, Reels with music and captions in your language — sized for every platform in one tap.</p>
+        <div class="lp-cta-row">
+          <a class="btn lp-btn-xl btn-primary lp-arrow" href="/signup" data-cta>Create your first post — free</a>
+          <a class="lp-play" href="#demo"><span class="ring">▶</span>Watch the 30-second demo</a>
+        </div>
+        <ul class="lp-assure">
+          <li>No card needed</li><li>5 free downloads</li><li>Works on any phone</li>
         </ul>
-        <a class="btn btn-dark" href="/signup" data-cta>Start free as a shop</a>
       </div>
-      <div class="who-card biz">
-        <div class="who-ic">🏢</div>
-        <h3>Agencies, wholesalers &amp; multi-store brands</h3>
-        <p class="muted">Marketing agencies, distributors and brands that manage many products or clients.</p>
-        <ul>
-          <li>Up to 50 brands, each with its own logo, colours, fonts and socials</li>
-          <li>Brand switcher — new designs start in the right brand</li>
-          <li>Free client logins: each client reviews and downloads only their own designs</li>
-          <li>Bulk studio: 50 products or product links → every size + captions in one ZIP</li>
-          <li>White-label review portal: clients approve, comment and download from a link with your name and logo</li>
-          <li>Developer API &amp; website widget to plug PostGenX into your shop or platform</li>
-          <li>Team roles, 2-step login and a downloadable, tamper-evident activity log</li>
-        </ul>
-        <a class="btn btn-primary" href="/signup?type=business">Start as an agency</a>
+      <div class="lp-hero-visual" aria-hidden="true">
+        <div class="lp-browser">
+          <div class="bar"><i></i><i></i><i></i><span>PostGenX · Editor</span></div>
+          <img src="/img/landing/editor.webp" alt="" width="1200" height="750" fetchpriority="high">
+        </div>
+        <figure class="lp-phone"><img src="/img/landing/post-latte.webp" alt="" width="540" height="960"></figure>
+        <figure class="lp-tile"><img src="/img/landing/post-donuts.webp" alt="" width="640" height="640"></figure>
+        <div class="lp-chip c1"><b>14</b> sizes in one tap</div>
+        <div class="lp-chip c2">✨ Caption written in नेपाली</div>
       </div>
     </div>
   </section>
 
-  <section class="wrap">
-    <h2>Three steps. Under a minute.</h2>
-    <p class="sub">Most posts are done before your coffee cools.</p>
-    <div class="steps">
-      <div class="step"><span class="n">01</span><h3>Snap, upload or paste a link</h3><p>A phone photo, a video, or your product page — we pick up the name, price and photo.</p></div>
-      <div class="step"><span class="n">02</span><h3>Add your offer — or let AI help</h3><p>Headline, price and logo in one click, plus AI scenes, videos and captions when you want them.</p></div>
-      <div class="step"><span class="n">03</span><h3>Download every size</h3><p>Get every platform in one ZIP, copy your caption and post from your phone.</p></div>
+  <!-- 2 · SOCIAL PROOF (honest: where posts go + what's inside) -->
+  <section class="lp-proof" aria-label="Works everywhere you post">
+    <div class="lp-wrap">
+      <p class="lp-proof-label">Ready-to-post sizes for</p>
+      <div class="lp-marquee"><div class="lp-marquee-track">
+        <span>Instagram</span><span>Facebook</span><span>TikTok</span><span>YouTube Shorts</span><span>LinkedIn</span><span>Pinterest</span><span>WhatsApp Status</span><span>X</span>
+        <span aria-hidden="true">Instagram</span><span aria-hidden="true">Facebook</span><span aria-hidden="true">TikTok</span><span aria-hidden="true">YouTube Shorts</span><span aria-hidden="true">LinkedIn</span><span aria-hidden="true">Pinterest</span><span aria-hidden="true">WhatsApp Status</span><span aria-hidden="true">X</span>
+      </div></div>
+      <dl class="lp-stats">
+        <div><dt>Post sizes</dt><dd>14</dd></div>
+        <div><dt>Reel templates</dt><dd>12</dd></div>
+        <div><dt>AI models</dt><dd>15</dd></div>
+        <div><dt>Caption languages</dt><dd>11</dd></div>
+      </dl>
     </div>
   </section>
 
-  <section id="reviews" class="wrap hidden">
-    <h2>What business owners say</h2>
-    <p class="sub">From our beta users.</p>
-    <div class="quotes" id="quotes"></div>
-  </section>
-
-  <section id="pricing" class="wrap">
-    <h2>Simple per-user pricing</h2>
-    <p class="sub">Every person on your team gets their own download allowance. Prices in US dollars. Cancel any time.</p>
-    <div class="int-toggle" style="gap:10px;flex-wrap:wrap"><div class="tabs" id="audToggle"><button class="active" data-aud="retail">🛍️ Shops &amp; small businesses</button><button data-aud="business">🏢 Agencies &amp; wholesalers</button></div>
-      <div class="tabs" id="intToggle"><button class="active" data-int="month">Monthly</button><button data-int="year">Yearly · 2 months free</button></div></div>
-    <div class="pricing" id="pricingGrid"><p class="center muted">Loading plans…</p></div>
-  </section>
-
-  <section class="wrap">
-    <h2>Your account is protected</h2>
-    <p class="sub">Security controls you'd expect from much bigger software.</p>
-    <div class="trust">
-      <div><strong>🔐 2-step login</strong>Optional authenticator-app codes on every account.</div>
-      <div><strong>🛡 Locked-down sessions</strong>Secure cookies, automatic sign-out and device management.</div>
-      <div><strong>👥 Role-based access</strong>Owner, admin, designer and viewer permissions.</div>
-      <div><strong>🧾 Activity log</strong>Sign-ins, sharing and billing changes are recorded.</div>
+  <!-- 3 · PROBLEM → SOLUTION -->
+  <section class="lp-sec lp-ps" id="how">
+    <div class="lp-wrap">
+      <div class="lp-head reveal">
+        <p class="lp-kicker">The problem</p>
+        <h2>Posting every day shouldn’t feel like a second job.</h2>
+      </div>
+      <div class="lp-ps-grid">
+        <div class="lp-old reveal">
+          <h3>The old way</h3>
+          <ul>
+            <li>Wait days — and pay — for a designer</li>
+            <li>Resize the same post seven times</li>
+            <li>AI images with misspelled, made-up labels</li>
+            <li>Captions written at midnight</li>
+          </ul>
+        </div>
+        <div class="lp-new reveal">
+          <h3>With PostGenX</h3>
+          <ul>
+            <li><b>Under a minute</b> from photo to finished post</li>
+            <li><b>Every platform size</b> in one ZIP</li>
+            <li><b>Your real product</b> — every AI image is checked for stray writing</li>
+            <li><b>Captions in your language</b>, written for each platform</li>
+          </ul>
+          <div class="lp-ba">
+            <figure><img src="/img/landing/before-candle.webp" alt="Phone photo of a candle" loading="lazy" width="640" height="640"><figcaption>Your photo</figcaption></figure>
+            <span class="arrow" aria-hidden="true">→</span>
+            <figure><img src="/img/landing/post-candle.webp" alt="Finished candle post made in PostGenX" loading="lazy" width="640" height="800"><figcaption>Ready to post</figcaption></figure>
+          </div>
+        </div>
+      </div>
+      <ol class="lp-steps">
+        <li class="reveal"><span>01</span><h3>Snap, upload or paste a link</h3><p>A phone photo, a video, or your product page — we pick up the name, price and photo.</p></li>
+        <li class="reveal"><span>02</span><h3>Add your offer — or let AI help</h3><p>Headline, price and logo in one click, plus AI scenes, models, videos and captions when you want them.</p></li>
+        <li class="reveal"><span>03</span><h3>Download every size</h3><p>Every platform in one ZIP. Copy your caption and post from your phone.</p></li>
+      </ol>
     </div>
   </section>
 
-  <section class="wrap hidden" id="betaBand">
-    <div class="beta-band">
-      <div class="grow" style="flex:1;min-width:240px"><h3>We're in private beta</h3><p>We're working closely with 20 small businesses before launch. Beta users get Pro free for 60 days in return for honest feedback.</p></div>
-      <a class="btn btn-primary" href="/help?topic=beta#contact">Apply for an invite</a>
-      <a class="btn btn-ghost btn-on-dark" href="/signup">I have a code</a>
+  <!-- 4 · INTERACTIVE FEATURE SHOWCASE -->
+  <section class="lp-sec lp-show" id="features">
+    <div class="lp-wrap">
+      <div class="lp-head reveal">
+        <p class="lp-kicker">What you can make</p>
+        <h2>One studio for every post, photo and Reel.</h2>
+      </div>
+      <div class="lp-tabs" id="lpTabs">
+        <div class="lp-tablist" role="tablist" aria-label="Features">
+          <button role="tab" aria-selected="true" aria-controls="lpPanel" data-i="0"><b>Snap &amp; post editor</b><span>Your photo fitted to every size, with Instagram-style text, shadows and highlights.</span><i class="bar"></i></button>
+          <button role="tab" aria-selected="false" aria-controls="lpPanel" data-i="1"><b>AI product photos</b><span>Pick your business and a style — your real product in a professional scene.</span><i class="bar"></i></button>
+          <button role="tab" aria-selected="false" aria-controls="lpPanel" data-i="2"><b>AI models &amp; presenters</b><span>15 made-up models hold your product or present its features on video.</span><i class="bar"></i></button>
+          <button role="tab" aria-selected="false" aria-controls="lpPanel" data-i="3"><b>Slideshow Reels with music</b><span>3 photos + 12 templates + royalty-free tracks = a 15-second Reel.</span><i class="bar"></i></button>
+          <button role="tab" aria-selected="false" aria-controls="lpPanel" data-i="4"><b>Bulk studio</b><span>50 products or product links → every size and caption, in one ZIP.</span><i class="bar"></i></button>
+        </div>
+        <div class="lp-panel" id="lpPanel" role="tabpanel">
+          <img id="lpPanelImg" src="/img/landing/editor-text.webp" alt="The PostGenX editor with Instagram-style text on a coffee photo" width="1200" height="750" loading="lazy">
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="wrap">
-    <h2>Questions</h2>
-    <div class="faq" style="margin-top:28px">
+  <!-- 5 · BENTO: everything around it -->
+  <section class="lp-sec lp-bento-sec">
+    <div class="lp-wrap">
+      <div class="lp-head reveal"><p class="lp-kicker">And everything around it</p><h2>Built for real businesses, not demo screenshots.</h2></div>
+      <div class="lp-bento">
+        <article class="b-lang reveal"><h3>Speaks your customers’ language</h3><p>Write posts and AI captions in Nepali, Hindi, Bengali, Tamil, Thai, Arabic and more — with fonts that render them correctly.</p>
+          <div class="lp-langs" aria-hidden="true"><span>नयाँ अफर</span><span>নতুন অফার</span><span>ข้อเสนอใหม่</span><span>عرض جديد</span><span>New offer</span></div></article>
+        <article class="b-cut reveal"><h3>Clean cut-outs</h3><p>Remove the background in your browser and place the product on your brand colour.</p></article>
+        <article class="b-brand reveal"><h3>Brand kits</h3><p>Logo, colours, fonts and contact details — applied in one click.</p><div class="lp-swatches" aria-hidden="true"><i></i><i></i><i></i><i></i></div></article>
+        <article class="b-review reveal"><h3>Client review links</h3><p>Agencies share designs on a white-label link. Clients approve, comment and download — no login.</p><img src="/img/landing/portal.webp" alt="" loading="lazy" width="1200" height="790"></article>
+        <article class="b-api reveal"><h3>API &amp; website widget</h3><p>Plug resizing, cut-outs and captions into your own shop.</p><code>POST /api/v1/resize</code></article>
+        <article class="b-safe reveal"><h3>Locked-down by default</h3><p>2-step login, team roles, a tamper-evident activity log — and your data is never sold.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · DEMO -->
+  <section class="lp-sec lp-demo" id="demo">
+    <div class="lp-wrap lp-demo-grid">
+      <div class="lp-head reveal"><p class="lp-kicker">See it in 30 seconds</p><h2>A real recording of the app.</h2>
+        <p class="lp-sub">Product photo → post in every size, AI caption, AI product photo, Bulk studio and client review.</p></div>
+      <div class="lp-video reveal"><video id="demoVideo" controls playsinline muted preload="none" poster="/media-site/demo-poster.jpg?v=3">
+        <source src="/media-site/demo.mp4?v=3" type="video/mp4"></video></div>
+    </div>
+  </section>
+
+  <!-- before/after from real customers (filled when examples exist) -->
+  <section id="examples" class="lp-sec hidden">
+    <div class="lp-wrap">
+      <div class="lp-head"><p class="lp-kicker">Before &amp; after</p><h2>Everyday photos, finished posts.</h2></div>
+      <div class="ba-grid" id="baGrid"></div>
+      <p class="sample-note hidden" id="sampleNote">Sample photos for illustration. Customer examples coming soon.</p>
+    </div>
+  </section>
+
+  <!-- 7 · TESTIMONIALS (only real customers who agreed to be quoted) -->
+  <section id="reviews" class="lp-sec hidden">
+    <div class="lp-wrap">
+      <div class="lp-head"><p class="lp-kicker">From business owners</p><h2>What our early users say.</h2></div>
+      <div class="lp-quotes" id="quotes"></div>
+    </div>
+  </section>
+  <section class="lp-sec lp-founders" id="founders">
+    <div class="lp-wrap">
+      <div class="lp-founder-card reveal">
+        <p class="lp-kicker">Founding members</p>
+        <h2>We’re new — and building it with the first 100 businesses.</h2>
+        <p>No paid reviews, no made-up logos. Join early, tell us what you need, and your feedback shapes what we build next.</p>
+        <a class="btn btn-primary lp-arrow" href="/signup" data-cta>Become a founding member</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · WHO IT'S FOR -->
+  <section id="who" class="lp-sec lp-who">
+    <div class="lp-wrap">
+      <div class="lp-head reveal"><p class="lp-kicker">Two ways to work</p><h2>Built for shops — and for people who run many brands.</h2></div>
+      <div class="lp-who-grid">
+        <article class="reveal"><h3>Shops &amp; small businesses</h3><p>Cafés, restaurants, salons, clothing and mobile shops that post for themselves.</p>
+          <ul><li>Snap → edit → download, right from your phone</li><li>AI product photos, videos and captions</li><li>Slideshow Reels with free music</li><li>Festival, sale and new-arrival templates</li></ul>
+          <a class="lp-link" href="/signup" data-cta>Start free as a shop →</a></article>
+        <article class="dark reveal"><h3>Agencies, wholesalers &amp; multi-store brands</h3><p>Teams managing many products, stores or clients.</p>
+          <ul><li>Up to 50 brands with their own kits</li><li>White-label client review portal</li><li>Bulk studio: 50 products → one ZIP</li><li>Developer API, team roles and an activity log</li></ul>
+          <a class="lp-link" href="/signup?type=business">Start as an agency →</a></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · PRICING -->
+  <section id="pricing" class="lp-sec lp-pricing">
+    <div class="lp-wrap">
+      <div class="lp-head center reveal"><p class="lp-kicker">Pricing</p><h2>Start free. Upgrade when it pays for itself.</h2>
+        <p class="lp-sub">Prices per user in US dollars. Cancel any time — your designs stay yours.</p></div>
+      <div class="lp-toggles">
+        <div class="lp-seg" id="audToggle"><button class="active" data-aud="retail">Shops</button><button data-aud="business">Agencies &amp; wholesalers</button></div>
+        <div class="lp-seg" id="intToggle"><button class="active" data-int="month">Monthly</button><button data-int="year">Yearly <em>2 months free</em></button></div>
+      </div>
+      <div class="lp-plans" id="pricingGrid"><p class="center">Loading plans…</p></div>
+    </div>
+  </section>
+
+  <section class="lp-sec hidden" id="betaBand">
+    <div class="lp-wrap"><div class="lp-founder-card">
+      <p class="lp-kicker">Private beta</p><h2>We’re working closely with our first businesses.</h2>
+      <p>Beta users get Pro free for 60 days in return for honest feedback.</p>
+      <div class="lp-cta-row"><a class="btn btn-primary" href="/help?topic=beta#contact">Apply for an invite</a><a class="lp-link" href="/signup">I have a code →</a></div>
+    </div></div>
+  </section>
+
+  <!-- 10 · FAQ -->
+  <section class="lp-sec lp-faq">
+    <div class="lp-wrap lp-faq-grid">
+      <div class="lp-head"><p class="lp-kicker">Questions</p><h2>Straight answers.</h2><p class="lp-sub">Can’t find yours? <a href="/help#contact">Ask us</a> — a real person replies.</p></div>
+      <div class="faq">
       <details><summary>What counts as one image?</summary><p>Each downloaded file counts once. Generating 5 platform sizes in one ZIP uses 5 images. Editing and previewing are always free and unlimited.</p></details>
       <details><summary>Does it work on my phone?</summary><p>Yes. PostGenX runs in the browser on iPhone, Android, tablets and computers — nothing to install. Downloads save straight to your phone so you can post from the Instagram or Facebook app.</p></details>
       <details><summary>Which plan should I pick?</summary><p><b>Starter</b> (US$9: 5 images a day, 40 AI credits a month, your own videos up to 30 s) suits most single-location shops. <b>Pro</b> (US$24) adds 15 a day, AI product videos, AI model presenter videos, longer videos and print quality. <b>Business</b> and <b>Agency</b> are for multi-store brands, wholesalers and agencies — up to 50 brands, client logins and bulk posting.</p></details>
@@ -298,11 +260,26 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       <details><summary>What happens to my data?</summary><p>Your photos and designs are private to your team. You can download everything or delete your account yourself at any time from Account &amp; security. We use cookie-free analytics and never sell data.</p></details>
       <details><summary>Can I change or cancel my plan?</summary><p>Any time from Billing. Cancelling keeps your plan active until the end of the period you've paid for.</p></details>
     </div>
+    </div>
+  </section>
+
+  <!-- 11 · FINAL CTA -->
+  <section class="lp-final">
+    <div class="lp-wrap lp-final-in reveal">
+      <h2>Your next post is <em>one photo</em> away.</h2>
+      <a class="btn lp-btn-xl btn-primary lp-arrow" href="/signup" data-cta>Create your first post — free</a>
+    </div>
   </section>
 </main>
 
-<footer>
-  <div class="wrap"><span>© <span id="yr"></span> PostGenX</span><span><a href="/help">Help &amp; FAQ</a> · <a href="/developers">Developers</a> · <a href="/privacy">Privacy</a> · <a href="/help#contact">Contact</a> · <a href="/login">Log in</a> · <a href="/signup">Sign up</a></span></div>
+<footer class="lp-foot">
+  <div class="lp-wrap lp-foot-grid">
+    <div><a class="brand" href="/"><span class="brand-mark">P</span>PostGenX</a><p>Social posts, product photos and Reels for small businesses — in minutes.</p></div>
+    <div><h4>Product</h4><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="/developers">Developers</a></div>
+    <div><h4>Help</h4><a href="/help">Help &amp; FAQ</a><a href="/help#contact">Contact</a><a href="/privacy">Privacy</a></div>
+    <div><h4>Account</h4><a href="/login">Log in</a><a href="/signup">Sign up</a></div>
+  </div>
+  <div class="lp-wrap lp-foot-base">© <span id="yr"></span> PostGenX</div>
 </footer>
 <script src="/js/api.js"></script>
 <script src="/js/landing.js"></script>

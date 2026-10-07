@@ -27,7 +27,7 @@
 
   /* Google Fonts available in the editor (loaded by editor.html) */
   const FONTS = [
-    { name:'Space Grotesk', kind:'Modern' }, { name:'Inter', kind:'Clean' }, { name:'Poppins', kind:'Friendly' },
+    { name:'Space Grotesk', kind:'Modern' }, { name:'Inter', kind:'Clean' }, { name:'Fraunces', kind:'Elegant serif' }, { name:'Manrope', kind:'Modern clean' }, { name:'Poppins', kind:'Friendly' },
     { name:'Montserrat', kind:'Geometric' }, { name:'Nunito', kind:'Rounded' }, { name:'Raleway', kind:'Elegant' },
     { name:'Oswald', kind:'Condensed' }, { name:'Bebas Neue', kind:'Headline' }, { name:'Anton', kind:'Impact' },
     { name:'Archivo Black', kind:'Heavy' }, { name:'Playfair Display', kind:'Serif' }, { name:'DM Serif Display', kind:'Serif' },

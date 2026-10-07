@@ -38,7 +38,7 @@
 .ss-rec .b-bar span{display:block;height:100%;width:0;background:var(--coral)}
 .ss-done{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;width:min(100%,520px)}
 .ss-done video{width:110px;border-radius:10px;background:#111}
-.ss-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:11px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:99;max-width:90vw;display:none}
+.ss-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:99;max-width:90vw;display:none}
 @media (max-width:900px){
   .ss-stage-wrap{position:static}
   .ss-stage{max-height:70vh}

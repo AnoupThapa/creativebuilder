@@ -6,7 +6,7 @@
 .soc-acct{display:flex;align-items:center;gap:0;padding:10px 12px;border:1px solid #e6e3dc;border-radius:10px;margin-bottom:8px;background:#fff}
 .soc-acct .grow{flex:1;min-width:0;display:flex;align-items:center}
 .soc-acct.err{border-color:#f3b4ab;background:#fff6f4}
-.soc-acct input[type=checkbox]{width:18px;height:18px;margin-right:10px;accent-color:#ff6b4a;flex:none}
+.soc-acct input[type=checkbox]{width:18px;height:18px;margin-right:10px;accent-color:var(--coral);flex:none}
 .soc-pick{cursor:pointer}
 .soc-err{font-size:12px;color:#c0392b;margin-top:4px}
 .soc-demo{background:#fff8e1;border:1px solid #ffe08a;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;color:#5c4a00}
@@ -21,7 +21,7 @@
 .soc-post .tgt-err{font-size:11.5px;color:#c0392b;margin-top:4px}
 .soc-post .acts{display:flex;flex-direction:column;gap:6px;flex:none}
 .soc-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:50px;font-size:11px;font-weight:700;background:#efede8;color:#555}
-.soc-badge.ok{background:#e3f6ec;color:#1e8e4e}.soc-badge.bad{background:#fde8e5;color:#c0392b}.soc-badge.busy{background:#fff1ed;color:#e0502f}
+.soc-badge.ok{background:#e3f6ec;color:#1e8e4e}.soc-badge.bad{background:#fde8e5;color:#c0392b}.soc-badge.busy{background:var(--coral-soft);color:#e0502f}
 @media(max-width:640px){.soc-post{flex-wrap:wrap}.soc-post .acts{flex-direction:row;width:100%}}
 
 /* editor: post modal */
@@ -34,7 +34,7 @@
 .pm-count{font-size:11.5px;color:#9a98a8;text-align:right;margin-top:2px}
 .pm-seg{display:flex;gap:6px;flex-wrap:wrap}
 .pm-seg label{display:flex;align-items:center;gap:6px;border:1px solid #dcd9e6;border-radius:50px;padding:6px 12px;font-size:13px;cursor:pointer;background:#fff}
-.pm-seg input{accent-color:#ff6b4a}
+.pm-seg input{accent-color:var(--coral)}
 .pm-when input[type=datetime-local]{border:1px solid #dcd9e6;border-radius:8px;padding:7px 9px;font:inherit;margin-top:8px}
 .pm-warn{font-size:12.5px;color:#a15c00;background:#fff6e5;border-radius:8px;padding:8px 10px;margin-top:8px}
 .pm-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:6px;flex-wrap:wrap}

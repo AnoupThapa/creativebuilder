@@ -48,7 +48,7 @@
   .m-ebar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border-radius: 12px;
     font-size: 10.5px; font-weight: 700; color: var(--muted, #6e6d80); font-family: var(--FB); }
   .m-ebar .ic { font-size: 20px; line-height: 1; filter: grayscale(1); opacity: .7; }
-  .m-ebar button.on { color: var(--ink); background: #fff1ed; }
+  .m-ebar button.on { color: var(--ink); background: var(--coral-soft); }
   .m-ebar button.on .ic { filter: none; opacity: 1; }
 }
 @keyframes pfSheetUp { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
@@ -56,6 +56,6 @@
 /* "Take a photo" — phones only */
 .btn-snap{display:none}
 @media (hover:none) and (pointer:coarse){
-  .btn-snap{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:12px;border-radius:12px;background:var(--ink,#1a1a2e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;position:relative}
+  .btn-snap{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:12px;border-radius:12px;background:var(--ink,var(--ink));color:#fff;font-weight:700;font-size:14px;cursor:pointer;position:relative}
   .btn-snap input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
 }
