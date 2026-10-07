@@ -53,6 +53,7 @@ async function call(url, { method = 'GET', body, timeoutMs = 60000 } = {}) {
 }
 function veoError(r) {
   const msg = r.json?.error?.message || r.text || '';
+  if (require('./providers').isQuota(r.status, msg)) return new AiError('AI videos aren’t available right now — the AI account behind PostGenX needs attention (Veo needs a paid Google AI plan). Your credits were returned; please try again later.', 'quota', `${r.status} ${msg}`);
   if (r.status === 429) return new AiError('The video service is busy right now. Please try again in a few minutes.', 'busy', msg);
   if (r.status === 401 || r.status === 403) return new AiError('The video service rejected our key. (Admin: check the Gemini key and that Veo is enabled with billing.)', 'auth', msg);
   if (/safety|policy|blocked|responsible/i.test(msg)) return new AiError('The video AI refused this picture for safety reasons. Try another start picture.', 'blocked', msg);

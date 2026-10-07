@@ -580,6 +580,8 @@ function stats() {
     models: { gemini: config.ai.geminiImageModel, openai: config.ai.openaiImageModel },
     today: agg(start.getTime()), month: agg(month.getTime()),
     recentErrors: q.all("SELECT id, template_key, provider, error, created_at FROM ai_jobs WHERE status = 'failed' ORDER BY created_at DESC LIMIT 10"),
+    // the AI account itself has a problem (no quota / billing / disabled API) — shown as a banner to admins
+    accountAlert: q.get("SELECT error, provider, created_at FROM ai_jobs WHERE status = 'failed' AND created_at > ? AND error LIKE '%needs attention%' ORDER BY created_at DESC LIMIT 1", Date.now() - DAY) || null,
     queue: { running: running + vrunning, waiting: queue.length + vqueue.length },
     videoProvider: videogen.active(), videoModel: config.ai.veoModel, videoCredits: config.ai.videoCredits,
   };

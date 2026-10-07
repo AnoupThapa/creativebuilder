@@ -334,6 +334,17 @@
       ['Working now', s.queue.running, `${s.queue.waiting} waiting`],
     ];
     $('aiStats').innerHTML = tiles.map(([k, v, sub]) => `<div class="stat"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="s">${esc(sub)}</div></div>`).join('');
+    const al = s.accountAlert;
+    $('aiAlert').classList.toggle('hidden', !al);
+    if (al) {
+      const detail = (al.error || '').split(' || ')[1] || '';
+      const google = al.provider !== 'openai';
+      $('aiAlert').innerHTML = `<div><b>⚠️ The ${google ? 'Google (Gemini)' : 'OpenAI'} AI account needs attention</b> — customers can’t make AI pictures/videos (their credits are returned).<br>
+        <span class="small">Most likely the API key has <b>no quota or billing</b> for image/video models. ${google
+          ? 'Open <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a> → <b>Billing / Usage tier</b> and link a billing account (image and Veo video models need a paid tier), then press <b>Test connection</b> below.'
+          : 'Open the OpenAI dashboard → <b>Billing</b> and add credit, then press <b>Test connection</b> below.'}</span>
+        ${detail ? `<details><summary class="small muted">technical details</summary><pre class="mail">${esc(detail)}</pre></details>` : ''}</div>`;
+    }
     $('aiEnabled').checked = s.enabled;
     $('aiQuality').checked = s.qualityCheck;
     $('aiBudget').value = s.dailyBudget;

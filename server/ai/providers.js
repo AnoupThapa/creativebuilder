@@ -61,9 +61,23 @@ async function postJson(url, body, headers, timeoutMs = 120000) {
   } finally { clearTimeout(t); }
 }
 
+/* 429 means two different things: "slow down" (temporary — retry) or "this key has no quota left / no billing"
+   (retrying won't help — the admin must fix the Google / OpenAI account). */
+const QUOTA_RE = /limit:\s*0\b|billing|insufficient_quota|exceeded your current quota|free[_ ]tier|PerDay|per day|credit balance|payment required|has not been used in project|is disabled/i;
+function isQuota(status, msg) { return (status === 429 || status === 403 || status === 400) && QUOTA_RE.test(msg) && !/per minute|rate limit|PerMinute|requests per/i.test(msg); }
+function retryAfterMs(json, headers) {
+  const d = JSON.stringify(json?.error?.details || '').match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
+  if (d) return Math.min(30000, Math.ceil(parseFloat(d[1]) * 1000));
+  const h = headers && headers.get && parseInt(headers.get('retry-after'), 10);
+  return h ? Math.min(30000, h * 1000) : 0;
+}
+const QUOTA_MSG = 'AI pictures aren’t available right now — the AI account behind PostGenX needs attention. Your credits were returned; please try again later.';
 function providerError(status, json, text) {
   const msg = json?.error?.message || json?.message || text || '';
+  if (isQuota(status, msg)) return new AiError(QUOTA_MSG, 'quota', `${status} ${msg}`);
   if (status === 429) return new AiError('The AI service is busy right now. Please try again in a minute.', 'busy', msg);
+  if (status === 404 && /model|not found|NOT_FOUND/i.test(msg)) return new AiError('The AI model set up for PostGenX isn’t available. Your credits were returned.', 'model', `${status} ${msg}`);
+  if (/location|region|country|not supported in your/i.test(msg)) return new AiError('The AI service isn’t available from the server’s location. Your credits were returned.', 'region', `${status} ${msg}`);
   if (status === 401 || status === 403) return new AiError('The AI service rejected our key. (Admin: check the API key.)', 'auth', msg);
   if (/safety|policy|blocked|moderation/i.test(msg)) return new AiError('The AI refused this request for safety reasons. Try a different photo or description.', 'blocked', msg);
   return new AiError('The AI could not make this image. Please try again or pick another style.', 'failed', `${status} ${msg}`);
@@ -210,13 +224,23 @@ async function demoOnce({ photo, refs = [], aspect, seed = 0, tmpDir }) {
   return buf;
 }
 
+/* temporary "busy" / network hiccups are retried twice (after a short wait) before giving up */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function withRetry(fn, waits = [4000, 12000]) {
+  for (let i = 0; ; i++) {
+    try { return await fn(); } catch (e) {
+      if (!(e instanceof AiError) || !['busy', 'network', 'timeout'].includes(e.reason) || i >= waits.length) throw e;
+      await sleep(e.waitMs || waits[i]);
+    }
+  }
+}
 async function generate({ prompt, photo, refs = [], aspect, n = 1, tmpDir, provider = active() }) {
-  const one = i => provider === 'gemini' ? geminiOnce({ prompt, photo, refs, aspect })
-    : provider === 'openai' ? openaiOnce({ prompt, photo, refs, aspect })
+  const one = i => provider === 'gemini' ? withRetry(() => geminiOnce({ prompt, photo, refs, aspect }))
+    : provider === 'openai' ? withRetry(() => openaiOnce({ prompt, photo, refs, aspect }))
     : demoOnce({ photo, refs, aspect, seed: Date.now() % 7 + i, tmpDir });
   const images = [];
   for (let i = 0; i < n; i++) images.push(await one(i)); // one after another: kinder to rate limits & memory
   return { images, provider, model: provider === 'gemini' ? config.ai.geminiImageModel : provider === 'openai' ? config.ai.openaiImageModel : 'demo', costUsd: COST[provider] * images.length };
 }
 
-module.exports = { generate, checkImage, parseVerdict, active, AiError, COST, CHECK_COST, SIZE, findImages };
+module.exports = { generate, checkImage, parseVerdict, active, AiError, COST, CHECK_COST, SIZE, findImages, providerError, isQuota, withRetry, QUOTA_MSG };

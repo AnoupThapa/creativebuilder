@@ -137,3 +137,17 @@ test('presenter video (demo): plan, start picture, script rules, label, credits'
   r = await f.post('/api/ai/presenter-videos', { fromJob: s.id, n: 0, parts: ['Meet our tea.'], seconds: 8 });
   assert.equal(r.status, 402);
 });
+
+test('AI errors: "no quota / billing" is told apart from "busy", and busy is retried', async () => {
+  const P = require('../server/ai/providers.js');
+  assert.equal(P.providerError(429, { error: { message: 'Quota exceeded for metric: generate_content_free_tier_requests, limit: 0, model: gemini-3.1-flash-image' } }).reason, 'quota');
+  assert.equal(P.providerError(429, { error: { message: 'You exceeded your current quota, please check your plan and billing details.' } }).reason, 'quota');
+  assert.equal(P.providerError(429, { error: { message: 'Resource has been exhausted (e.g. check quota).' } }).reason, 'busy');
+  assert.equal(P.providerError(404, { error: { message: 'models/gemini-x is not found' } }).reason, 'model');
+  let calls = 0;
+  const out = await P.withRetry(async () => { calls++; if (calls < 3) throw new P.AiError('busy', 'busy'); return 'ok'; }, [5, 5]);
+  assert.equal(out, 'ok'); assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(P.withRetry(async () => { calls++; throw new P.AiError(P.QUOTA_MSG, 'quota'); }, [5, 5]), /needs attention/);
+  assert.equal(calls, 1, 'quota problems are not retried');
+});
