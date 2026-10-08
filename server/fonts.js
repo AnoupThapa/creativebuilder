@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const PKGS = ['fraunces', 'manrope', 'space-grotesk', 'inter', 'poppins', 'montserrat', 'nunito', 'raleway', 'oswald', 'bebas-neue', 'anton',
+const PKGS = ['bricolage-grotesque', 'fraunces', 'manrope', 'space-grotesk', 'inter', 'poppins', 'montserrat', 'nunito', 'raleway', 'oswald', 'bebas-neue', 'anton',
   'archivo-black', 'playfair-display', 'dm-serif-display', 'merriweather', 'lobster', 'pacifico', 'dancing-script', 'caveat', 'courier-prime',
   // local languages — each file is only downloaded by a browser when that script is actually typed (unicode-range)
   'mukta', 'hind', 'baloo-2', 'tiro-devanagari-hindi', 'yatra-one', 'kalam', 'rozha-one', 'noto-sans-devanagari', 'noto-serif-devanagari', // Nepali, Hindi, Marathi

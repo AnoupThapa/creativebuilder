@@ -2,15 +2,15 @@
    DESIGN TOKENS
    ============================================================ */
 :root{
-  --ink:#13231F; --slate:#2A3A35; --muted:#5E6B66;
-  --paper:#F6F3EC; --paper-deep:#ECE7DB;
-  --coral:#B4530A; --coral-deep:#8F3F05; --coral-glow:rgba(255,182,39,.55);
-  --pine:#1F4D3F; --marigold:#FFB627; --coral-soft:#FFF4DB;
+  --ink:#1B1240; --slate:#3A3360; --muted:#5F5980;
+  --paper:#F7F6FF; --paper-deep:#EEEBFF;
+  --coral:#D12A66; --coral-deep:#A3164D; --coral-glow:rgba(91,61,245,.55);
+  --pine:#5B3DF5; --marigold:#FFD23F; --coral-soft:#FFE8F1;
   --yellow:#ffd23f; --green:#1d7a5f;
-  --line:#E3DED2; --white:#ffffff;
+  --line:#E6E2F5; --white:#ffffff;
   --r:10px; --r-lg:16px;
   --shadow-stage:0 2px 8px rgba(19,35,31,.04),0 24px 48px -16px rgba(19,35,31,.18);
-  --F:"Fraunces",Georgia,serif; --FB:"Manrope",system-ui,sans-serif;
+  --F:"Bricolage Grotesque","Manrope",system-ui,sans-serif; --FB:"Manrope",system-ui,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:var(--FB)}
@@ -529,7 +529,7 @@ body.noexport .stage-bar-bottom,body.noexport #tab-export .ex-box > *:not(.quota
 .stage-shell{touch-action:none}
 .sel-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
 .sel-box,.hover-box{position:absolute;display:none;box-sizing:border-box}
-.hover-box{border:1.5px dashed rgba(255,182,39,.75);border-radius:3px}
+.hover-box{border:1.5px dashed rgba(91,61,245,.75);border-radius:3px}
 .sel-box{border:2px solid var(--coral);border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
 .sel-tag{position:absolute;left:-2px;top:-24px;background:var(--coral);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px 6px 6px 0;white-space:nowrap;font-family:var(--FB)}
 .sel-box.tag-below .sel-tag{top:auto;bottom:-24px;border-radius:0 6px 6px 6px}

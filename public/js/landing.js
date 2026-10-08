@@ -20,6 +20,43 @@
   }
   reveal();
 
+  /* ---------- hero preview flattens as you scroll (3D tilt → flat) ---------- */
+  const mock = $('lpMock');
+  if (mock && !still) {
+    let ticking = false;
+    const tilt = () => {
+      ticking = false;
+      const p = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.6)));
+      mock.style.setProperty('--tilt', (14 * (1 - p)).toFixed(2) + 'deg');
+      mock.style.setProperty('--sc', (0.96 + 0.04 * p).toFixed(3));
+    };
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(tilt); } }, { passive: true });
+    tilt();
+  }
+
+  /* ---------- numbers count up when they come into view ---------- */
+  const counters = document.querySelectorAll('[data-count]');
+  function countUp(el) {
+    const end = +el.dataset.count; if (still) { el.textContent = end; return; }
+    const t0 = performance.now(), D = 1400;
+    const step = t => { const k = Math.min(1, (t - t0) / D); el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+    el.textContent = '0'; requestAnimationFrame(step);
+  }
+  if ('IntersectionObserver' in window && counters.length) {
+    const co = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { countUp(e.target); co.unobserve(e.target); } }), { threshold: 0.6 });
+    counters.forEach(c => co.observe(c));
+  }
+
+  /* ---------- "What are you selling?" chips fill the box ---------- */
+  const ideaIn = $('ideaIn');
+  const IDEAS = { 'Café special': 'Iced oat latte — Rs. 250 this weekend', 'New arrivals': 'New winter jackets just arrived', 'Festival sale': 'Dashain sale — 20% off everything', 'Salon offer': 'Hair spa + blow-dry for Rs. 1,500', 'Phone deal': 'Latest smartphones on easy EMI' };
+  const chips = $('ideaChips');
+  if (chips && ideaIn) chips.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const key = b.textContent.replace(/^\W+\s*/u, '').trim();
+    ideaIn.value = IDEAS[key] || key; ideaIn.focus();
+  });
+
   /* ---------- feature tabs (auto-advance, pause on hover / focus) ---------- */
   const PANELS = [
     ['editor-text', 'The PostGenX editor with Instagram-style text on a coffee photo'],
@@ -150,7 +187,7 @@
       if (a.dataset.betaDone) return;
       a.dataset.betaDone = '1';
       a.href = '/help?topic=beta#contact';
-      a.textContent = a.closest('.plan') ? 'Apply for the beta' : a.closest('nav') ? 'Join the beta' : 'Apply for the private beta';
+      a.textContent = a.closest('.plan') ? 'Apply for the beta' : a.closest('header') ? 'Join the beta' : 'Apply for the private beta';
     });
   }
   api('/public/config').then(c => {
@@ -160,6 +197,8 @@
       v.load();
     }
     beta = !!c.betaMode;
+    const form = document.querySelector('.lp-idea-form');
+    if (beta && form) form.addEventListener('submit', e => { e.preventDefault(); location.href = '/help?topic=beta#contact'; });
     $('betaBand').classList.toggle('hidden', !beta);
     applyBeta();
   }).catch(() => {});
